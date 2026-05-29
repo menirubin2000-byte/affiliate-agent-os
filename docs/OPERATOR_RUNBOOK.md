@@ -79,6 +79,42 @@ Required in `.env.local`:
 - `APP_ACCESS_PASSWORD` - Dashboard login password
 - `APP_SESSION_SECRET` - HMAC session signing key
 
+## Platform Publishing Workflow
+
+### Before first publish on any platform
+1. Log into the platform in the Chrome browser that has the Claude extension.
+2. Verify Claude can see the browser via the Chrome MCP connection.
+3. Review the content Claude has prepared.
+4. Complete the pre-posting checklist Claude presents.
+
+### Approval phrases
+When Claude asks for permission to publish, reply with one of:
+- **"Approved"** — Claude proceeds with the action.
+- **"Approved to publish"** — Claude posts/publishes the content.
+- **"No"** or **"Not yet"** — Claude stops and waits for further instructions.
+
+### What to do when Claude stops for authentication
+Claude will stop and ask you to handle:
+- **Login page**: Enter your credentials manually.
+- **CAPTCHA**: Complete the challenge manually.
+- **2FA / MFA**: Enter the code from your authenticator.
+- **Email verification**: Check your email and click the link.
+- **Security prompt**: Review and approve the platform's security check.
+
+After you complete the authentication step, tell Claude "Done" or "Continue" and it will resume.
+
+### After publishing
+- Claude will capture the post URL and record it in a publish log.
+- Claude will create a tracking task for performance review.
+- You will need to check real metrics (clicks, conversions) after 48-72 hours.
+- Do not ask Claude to enter fake metrics — only record real observed values.
+
+### Reference docs
+- `docs/PLATFORM_ACCESS_MAP.md` — which platforms, what Claude can do
+- `docs/PUBLISHING_POLICY.md` — content rules, disclosure requirements
+- `docs/PLATFORM_SETUP_CHECKLIST.md` — per-platform setup steps
+- `docs/PLATFORM_PUBLISH_LOG_TEMPLATE.md` — log template for each action
+
 ## Troubleshooting
 
 | Symptom | Fix |

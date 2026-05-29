@@ -76,6 +76,39 @@ npx next build                         # Full build + type check
 - Migration scripts: `scripts/apply-remote-migrations.mjs`
 - Service role key grants full CRUD on all public tables
 
+## Platform Access and Publishing
+
+### Access modes
+- **Browser session (A)**: Human logs in once via Chrome extension. Claude uses the authenticated session. Claude stops for login, CAPTCHA, 2FA, email verification, or password prompts and asks the operator to handle them.
+- **API/env (B)**: Secrets in `.env.local` or Vercel env vars. Claude uses programmatic access. Never prints secrets.
+- **Manual approval gate (C)**: Claude prepares the action, shows it to the operator, waits for explicit "Approved" or "Approved to publish" before proceeding.
+
+### Browser login boundaries
+- Claude never enters passwords, 2FA codes, or CAPTCHA solutions.
+- If a login page, CAPTCHA, 2FA prompt, or security challenge appears, Claude stops immediately and asks the operator to complete it.
+- After the operator completes authentication, Claude resumes from where it stopped.
+
+### Publishing approval phrase
+The operator must reply with one of:
+- "Approved"
+- "Approved to publish"
+- Any clear affirmative confirming the specific publish action
+
+Claude does not interpret silence, implied consent, or partial agreement as approval.
+
+### Recording platform actions
+After every publishing action, Claude:
+1. Captures the post/article URL.
+2. Creates or updates a publish log in `docs/` using `PLATFORM_PUBLISH_LOG_TEMPLATE.md`.
+3. Creates an improvement task: "Check [platform] performance after first share."
+4. Does NOT create fake performance records.
+
+### Reference docs
+- `docs/PLATFORM_ACCESS_MAP.md` — platform-by-platform access details
+- `docs/PUBLISHING_POLICY.md` — content rules and disclosure requirements
+- `docs/PLATFORM_SETUP_CHECKLIST.md` — setup steps per platform
+- `docs/PLATFORM_PUBLISH_LOG_TEMPLATE.md` — log template for each publish action
+
 ## Operation Summary Rule
 
 When completing a stage, update:

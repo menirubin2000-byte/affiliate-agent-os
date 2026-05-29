@@ -73,6 +73,22 @@ Follow the pattern in tests/data-quality.test.ts:
 - Tests use `node:test` runner with `node:assert/strict`
 - shadcn/ui components in `components/ui/`
 
+## Platform Access Limitations
+
+Codex runs in a sandboxed environment and **cannot** access external platforms:
+
+- **No browser access**: Cannot open LinkedIn, Medium, or any external website.
+- **No publishing**: Cannot post, publish, or share content on any platform.
+- **No platform authentication**: Cannot log into any external service.
+- **No live API calls**: Cannot reach Supabase or other external APIs at runtime.
+
+Codex can prepare content for publishing (draft text, campaign links, disclosure text) but all actual publishing is handled by Claude Code sessions with browser access.
+
+For platform operations, see:
+- `docs/PLATFORM_ACCESS_MAP.md`
+- `docs/PUBLISHING_POLICY.md`
+- `docs/CLAUDE_CODE_OPERATIONS.md` (Platform Access section)
+
 ## Verification Checklist
 
 Before marking a task complete:
