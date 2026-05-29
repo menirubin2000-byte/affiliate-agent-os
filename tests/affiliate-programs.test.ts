@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildOperatorActionItems } from "../lib/action-items"
+import { buildOperatorActionItems, summarizeActionItems } from "../lib/action-items"
 import { checkAffiliatePrograms } from "../lib/data-quality"
 import type { AffiliateProgram } from "../types/affiliate-program"
 import {
@@ -262,7 +262,6 @@ test("link_ready program generates no action item", () => {
 })
 
 test("summarizeActionItems includes affiliate_program source", () => {
-  const { summarizeActionItems } = require("../lib/action-items")
   const items = buildOperatorActionItems({
     dataQualityIssues: [],
     improvementTasks: [],
