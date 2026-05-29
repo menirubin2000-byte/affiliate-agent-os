@@ -44,3 +44,5 @@ API CLODE.pdf
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
