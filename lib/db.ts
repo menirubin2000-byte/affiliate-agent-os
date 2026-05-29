@@ -55,6 +55,13 @@ import type {
   CampaignLinkSummary,
   CreateCampaignLinkInput,
 } from "@/types/campaign-link"
+import type {
+  AffiliateProgram,
+  AffiliateProgramApprovalType,
+  AffiliateProgramStatus,
+  AffiliateProgramSummary,
+  CreateAffiliateProgramInput,
+} from "@/types/affiliate-program"
 import type { CreateProductInput, Product } from "@/types/product"
 import type {
   CreateSavedViewInput,
@@ -2711,6 +2718,7 @@ export async function getDataQualityIssues(): Promise<DataQualityIssue[]> {
     performanceMetrics,
     improvementTasks,
     savedViews,
+    affiliatePrograms,
   ] = await Promise.all([
     listProducts(),
     listDrafts(),
@@ -2718,6 +2726,7 @@ export async function getDataQualityIssues(): Promise<DataQualityIssue[]> {
     listPerformanceMetrics(),
     listImprovementTasks(),
     listSavedViews(),
+    listAffiliatePrograms(),
   ])
 
   const versionCounts = await getDraftVersionCounts(drafts)
@@ -2730,6 +2739,7 @@ export async function getDataQualityIssues(): Promise<DataQualityIssue[]> {
     performanceMetrics,
     improvementTasks,
     savedViews,
+    affiliatePrograms,
   })
 }
 
@@ -2749,6 +2759,7 @@ export async function getOperatorActionItems(options?: { limit?: number }): Prom
     products,
     campaignLinks,
     performanceMetrics,
+    affiliatePrograms,
   ] = await Promise.all([
     getDataQualityIssues(),
     listImprovementTasks(),
@@ -2758,6 +2769,7 @@ export async function getOperatorActionItems(options?: { limit?: number }): Prom
     listProducts(),
     listCampaignLinks(),
     listPerformanceMetrics(),
+    listAffiliatePrograms(),
   ])
 
   return buildOperatorActionItems({
@@ -2769,6 +2781,7 @@ export async function getOperatorActionItems(options?: { limit?: number }): Prom
     products,
     campaignLinks,
     performanceMetrics,
+    affiliatePrograms,
     limit: options?.limit,
   })
 }
@@ -2834,4 +2847,166 @@ export async function getDefaultSavedView(viewType: SavedViewType): Promise<Save
 
   if (error || !data) return null
   return mapSavedView(data as SavedViewRow)
+}
+
+// ── Affiliate Programs ──────────────────────────────────────────────
+
+interface AffiliateProgramRow {
+  id: string
+  product_id: string | null
+  program_name: string
+  program_url: string | null
+  signup_url: string | null
+  dashboard_url: string | null
+  network: string | null
+  commission_summary: string | null
+  cookie_duration: string | null
+  approval_type: string
+  status: string
+  affiliate_link: string | null
+  notes: string | null
+  last_checked_at: string | null
+  created_at: string
+  updated_at: string
+  products?: { name: string } | { name: string }[] | null
+}
+
+const AFFILIATE_PROGRAM_SELECT =
+  "id, product_id, program_name, program_url, signup_url, dashboard_url, network, commission_summary, cookie_duration, approval_type, status, affiliate_link, notes, last_checked_at, created_at, updated_at, products(name)"
+
+function mapAffiliateProgram(row: AffiliateProgramRow): AffiliateProgram {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    productName: Array.isArray(row.products)
+      ? (row.products[0]?.name ?? null)
+      : (row.products?.name ?? null),
+    programName: row.program_name,
+    programUrl: row.program_url,
+    signupUrl: row.signup_url,
+    dashboardUrl: row.dashboard_url,
+    network: row.network,
+    commissionSummary: row.commission_summary,
+    cookieDuration: row.cookie_duration,
+    approvalType: row.approval_type as AffiliateProgram["approvalType"],
+    status: row.status as AffiliateProgram["status"],
+    affiliateLink: row.affiliate_link,
+    notes: row.notes,
+    lastCheckedAt: row.last_checked_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+export async function listAffiliatePrograms(filters?: {
+  status?: AffiliateProgramStatus
+  approvalType?: AffiliateProgramApprovalType
+  network?: string
+  productId?: string
+}): Promise<AffiliateProgram[]> {
+  if (!isSupabaseConfigured()) return []
+  const supabase = getServiceRoleSupabase()
+  let query = supabase
+    .from("affiliate_programs")
+    .select(AFFILIATE_PROGRAM_SELECT)
+    .order("created_at", { ascending: false })
+
+  if (filters?.status) query = query.eq("status", filters.status)
+  if (filters?.approvalType) query = query.eq("approval_type", filters.approvalType)
+  if (filters?.network) query = query.eq("network", filters.network)
+  if (filters?.productId) query = query.eq("product_id", filters.productId)
+
+  const { data, error } = await query
+  if (error) throw new Error(`Failed to list affiliate programs: ${error.message}`)
+  return (data ?? []).map((row) => mapAffiliateProgram(row as AffiliateProgramRow))
+}
+
+export async function listAffiliateProgramsForProduct(productId: string): Promise<AffiliateProgram[]> {
+  return listAffiliatePrograms({ productId })
+}
+
+export async function getAffiliateProgramById(id: string): Promise<AffiliateProgram | null> {
+  if (!isSupabaseConfigured()) return null
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("affiliate_programs")
+    .select(AFFILIATE_PROGRAM_SELECT)
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return mapAffiliateProgram(data as AffiliateProgramRow)
+}
+
+export async function createAffiliateProgram(input: CreateAffiliateProgramInput): Promise<AffiliateProgram> {
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("affiliate_programs")
+    .insert({
+      product_id: input.productId ?? null,
+      program_name: input.programName,
+      program_url: input.programUrl ?? null,
+      signup_url: input.signupUrl ?? null,
+      dashboard_url: input.dashboardUrl ?? null,
+      network: input.network ?? null,
+      commission_summary: input.commissionSummary ?? null,
+      cookie_duration: input.cookieDuration ?? null,
+      approval_type: input.approvalType ?? "unknown",
+      status: input.status ?? "research_needed",
+      affiliate_link: input.affiliateLink ?? null,
+      notes: input.notes ?? null,
+    })
+    .select(AFFILIATE_PROGRAM_SELECT)
+    .single()
+
+  if (error) throw new Error(`Failed to create affiliate program: ${error.message}`)
+  return mapAffiliateProgram(data as AffiliateProgramRow)
+}
+
+export async function updateAffiliateProgramStatus(
+  id: string,
+  status: AffiliateProgramStatus,
+): Promise<void> {
+  const supabase = getServiceRoleSupabase()
+  const { error } = await supabase
+    .from("affiliate_programs")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+
+  if (error) throw new Error(`Failed to update affiliate program status: ${error.message}`)
+}
+
+export async function updateAffiliateProgramLink(
+  id: string,
+  affiliateLink: string,
+): Promise<void> {
+  const supabase = getServiceRoleSupabase()
+  const { error } = await supabase
+    .from("affiliate_programs")
+    .update({
+      affiliate_link: affiliateLink,
+      status: "link_ready",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+
+  if (error) throw new Error(`Failed to update affiliate link: ${error.message}`)
+}
+
+export async function getAffiliateProgramSummary(): Promise<AffiliateProgramSummary> {
+  if (!isSupabaseConfigured()) {
+    return { total: 0, researchNeeded: 0, signupNeeded: 0, awaitingHumanApproval: 0, submitted: 0, approved: 0, rejected: 0, closed: 0, linkReady: 0 }
+  }
+  const programs = await listAffiliatePrograms()
+  return {
+    total: programs.length,
+    researchNeeded: programs.filter((p) => p.status === "research_needed").length,
+    signupNeeded: programs.filter((p) => p.status === "signup_needed").length,
+    awaitingHumanApproval: programs.filter((p) => p.status === "awaiting_human_approval").length,
+    submitted: programs.filter((p) => p.status === "submitted").length,
+    approved: programs.filter((p) => p.status === "approved").length,
+    rejected: programs.filter((p) => p.status === "rejected").length,
+    closed: programs.filter((p) => p.status === "closed").length,
+    linkReady: programs.filter((p) => p.status === "link_ready").length,
+  }
 }

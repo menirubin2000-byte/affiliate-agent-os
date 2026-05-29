@@ -6,6 +6,7 @@ export type ActionItemSource =
   | "draft"
   | "product"
   | "campaign_link"
+  | "affiliate_program"
 
 export type ActionItemPriority =
   | "info"

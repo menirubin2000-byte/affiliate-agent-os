@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   BarChart3,
   Bookmark,
+  Building2,
   ClipboardList,
   Command,
   ExternalLink,
@@ -51,6 +52,11 @@ const navigation = [
     href: "/dashboard/campaign-links",
     label: "Campaign Links",
     icon: ExternalLink,
+  },
+  {
+    href: "/dashboard/affiliate-programs",
+    label: "Affiliate Programs",
+    icon: Building2,
   },
   {
     href: "/dashboard/performance",

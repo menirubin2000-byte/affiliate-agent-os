@@ -5,6 +5,7 @@ export type DataQualityArea =
   | "performance"
   | "improvements"
   | "saved_views"
+  | "affiliate_programs"
 
 export type DataQualitySeverity = "info" | "warning" | "critical"
 

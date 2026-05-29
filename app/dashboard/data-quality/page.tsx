@@ -186,6 +186,7 @@ export default async function DataQualityPage({
       performance: 0,
       improvements: 0,
       saved_views: 0,
+      affiliate_programs: 0,
     },
   }
   let pageError: string | null = null

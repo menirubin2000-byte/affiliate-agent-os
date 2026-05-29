@@ -63,6 +63,9 @@ This is still an operator-first system. The operator remains responsible for:
 - **Stage 37:** Final local staging readiness — `.env.local` normalized, preflight passed, verify passed, auth smoke passed locally.
 - **Stage 38:** Vercel staging deploy guidance — deployment method documented, env vars confirmed, post-deploy checklist prepared.
 - **Stage 39:** Live Supabase migration fix — migrations 006–010 applied to the live Supabase database (`gbkwydsodondarccqyet`) via direct PostgreSQL connection. All 8 tables confirmed present. Live deployment verified at `https://affiliate-agent-os.vercel.app`.
+- **Stage 41:** Full operator trial — complete product-to-performance workflow tested via Supabase REST API. Product, draft, version, approval, campaign link, performance record, and improvement task all created and verified.
+- **Stage 43:** Automated product research and intake — 10 real SaaS/AI products (Jasper AI, Surfer SEO, Notion, Loom, Grammarly, Canva, Descript, Ahrefs, Zapier, Riverside) researched and imported as inactive pending affiliate signups.
+- **Stage 44:** Operational Documentation + Affiliate Program Signup Tracker — `affiliate_programs` table (migration 011), `/dashboard/affiliate-programs` page with status pipeline, form, list with transition buttons, product workspace integration, Command Center integration, Data Quality checks. Operational docs: OPERATOR_RUNBOOK.md, CLAUDE_CODE_OPERATIONS.md, CODEX_OPERATIONS.md, OPERATION_LOG_TEMPLATE.md. 10 affiliate programs seeded for Stage 43 products. 18 new tests.
 
 ## Current MVP mode: WordPress-free operation
 

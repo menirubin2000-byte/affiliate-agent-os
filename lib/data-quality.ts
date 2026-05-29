@@ -6,6 +6,7 @@
  */
 
 import { isValidHttpUrl } from "@/lib/utm-builder"
+import type { AffiliateProgram } from "@/types/affiliate-program"
 import type { CampaignLink } from "@/types/campaign-link"
 import type {
   DataQualityArea,
@@ -31,6 +32,7 @@ const DATA_QUALITY_AREAS: DataQualityArea[] = [
   "performance",
   "improvements",
   "saved_views",
+  "affiliate_programs",
 ]
 
 function slugKey(value: string) {
@@ -817,6 +819,98 @@ export function checkSavedViews(params: {
   return issues
 }
 
+export function checkAffiliatePrograms(params: {
+  affiliatePrograms: AffiliateProgram[]
+  productIds?: Set<string>
+}): DataQualityIssue[] {
+  const issues: DataQualityIssue[] = []
+  const href = "/dashboard/affiliate-programs"
+
+  for (const program of params.affiliatePrograms) {
+    // Program linked to non-existent product
+    if (program.productId && params.productIds && !params.productIds.has(program.productId)) {
+      issues.push(
+        makeIssue(
+          "affiliate_programs",
+          "warning",
+          `"${program.programName}" linked to missing product`,
+          "Affiliate program references a product that does not exist.",
+          "affiliate_program",
+          program.id,
+          "View affiliate programs",
+          href,
+        ),
+      )
+    }
+
+    // Approved but no affiliate link
+    if (program.status === "approved" && !program.affiliateLink) {
+      issues.push(
+        makeIssue(
+          "affiliate_programs",
+          "warning",
+          `"${program.programName}" approved but missing link`,
+          "Program is approved but no affiliate link has been saved yet.",
+          "affiliate_program",
+          program.id,
+          "Add affiliate link",
+          href,
+        ),
+      )
+    }
+
+    // Link ready but no link saved
+    if (program.status === "link_ready" && !program.affiliateLink) {
+      issues.push(
+        makeIssue(
+          "affiliate_programs",
+          "critical",
+          `"${program.programName}" marked link ready but has no link`,
+          "Program is marked as link_ready but no affiliate link is saved.",
+          "affiliate_program",
+          program.id,
+          "Add affiliate link",
+          href,
+        ),
+      )
+    }
+
+    // No product linked
+    if (!program.productId) {
+      issues.push(
+        makeIssue(
+          "affiliate_programs",
+          "info",
+          `"${program.programName}" not linked to any product`,
+          "Affiliate program is not associated with a product in the system.",
+          "affiliate_program",
+          program.id,
+          "View affiliate programs",
+          href,
+        ),
+      )
+    }
+
+    // Signup needed but no signup URL
+    if (program.status === "signup_needed" && !program.signupUrl) {
+      issues.push(
+        makeIssue(
+          "affiliate_programs",
+          "info",
+          `"${program.programName}" needs signup but no signup URL`,
+          "Program requires signup but has no signup URL recorded.",
+          "affiliate_program",
+          program.id,
+          "View affiliate programs",
+          href,
+        ),
+      )
+    }
+  }
+
+  return issues
+}
+
 export interface DataQualityInput {
   products: Product[]
   drafts: Draft[]
@@ -825,6 +919,7 @@ export interface DataQualityInput {
   performanceMetrics: PerformanceMetric[]
   improvementTasks: ImprovementTask[]
   savedViews: SavedView[]
+  affiliatePrograms?: AffiliateProgram[]
   now?: Date
 }
 
@@ -856,6 +951,10 @@ export function buildDataQualityIssues(input: DataQualityInput): DataQualityIssu
     }),
     ...checkSavedViews({
       savedViews: input.savedViews,
+    }),
+    ...checkAffiliatePrograms({
+      affiliatePrograms: input.affiliatePrograms ?? [],
+      productIds,
     }),
   ]
 

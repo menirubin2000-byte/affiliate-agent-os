@@ -61,8 +61,12 @@ Current core tables:
 - `improvement_tasks`
 - `campaign_links`
 - `saved_views`
+- `affiliate_programs`
 
 All schema changes should stay aligned with the migrations in `supabase/migrations/` unless the user explicitly asks to expand scope.
+
+## Operation Summary Rule
+When completing a stage, update: README.md stage summary, CLAUDE.md if schema changed, docs/STAGING_RELEASE_CHECKLIST.md if migrations applied. See `docs/OPERATION_LOG_TEMPLATE.md` for the full checklist.
 
 ## Development Rules
 - Prefer small server-rendered pages with client components only where interactivity is needed

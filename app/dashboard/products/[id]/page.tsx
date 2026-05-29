@@ -3,6 +3,7 @@ import {
   Activity,
   Archive,
   ArrowRight,
+  Building2,
   CheckCircle2,
   ClipboardList,
   Copy,
@@ -16,6 +17,7 @@ import {
 
 import { archiveCampaignLinkAction } from "@/app/dashboard/campaign-links/actions"
 import { updateTaskStatusAction } from "@/app/dashboard/improvements/actions"
+import { AffiliateProgramList } from "@/components/affiliate-programs/affiliate-program-list"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { ClaudePromptHelper } from "@/components/products/claude-prompt-helper"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +35,7 @@ import {
   buildProductWorkspaceSummary,
   getProductById,
   getProductPerformanceSignals,
+  listAffiliateProgramsForProduct,
   listCampaignLinksForProduct,
   listDraftsForProduct,
   listImprovementTasksForProduct,
@@ -110,11 +113,12 @@ export default async function ProductWorkspacePage(props: {
     )
   }
 
-  const [drafts, records, tasks, campaignLinks, allSignals, recommendations] = await Promise.all([
+  const [drafts, records, tasks, campaignLinks, affiliatePrograms, allSignals, recommendations] = await Promise.all([
     listDraftsForProduct(id),
     listPerformanceRecordsForProduct(id),
     listImprovementTasksForProduct(id),
     listCampaignLinksForProduct(id),
+    listAffiliateProgramsForProduct(id),
     getProductPerformanceSignals(),
     listRecommendations({ limit: 20 }),
   ])
@@ -438,6 +442,35 @@ export default async function ProductWorkspacePage(props: {
             ) : null}
           </Card>
 
+          {/* Affiliate programs section */}
+          <Card className="border-border/70 bg-card/90 shadow-sm">
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="size-4" />
+                  Affiliate programs
+                </CardTitle>
+                <CardDescription>
+                  {affiliatePrograms.length === 0
+                    ? "No affiliate programs tracked for this product."
+                    : `${affiliatePrograms.length} program${affiliatePrograms.length === 1 ? "" : "s"} tracked`}
+                </CardDescription>
+              </div>
+              <Link
+                href="/dashboard/affiliate-programs#create-affiliate-program"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                <Plus className="size-3.5" />
+                Add program
+              </Link>
+            </CardHeader>
+            {affiliatePrograms.length > 0 ? (
+              <CardContent>
+                <AffiliateProgramList programs={affiliatePrograms} compact />
+              </CardContent>
+            ) : null}
+          </Card>
+
           {/* Recommendations */}
           {productRecommendations.length > 0 ? (
             <Card className="border-border/70 bg-card/90 shadow-sm">
@@ -601,6 +634,13 @@ export default async function ProductWorkspacePage(props: {
               >
                 <ClipboardList className="size-3.5" />
                 Add improvement task
+              </Link>
+              <Link
+                href="/dashboard/affiliate-programs#create-affiliate-program"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "justify-start")}
+              >
+                <Building2 className="size-3.5" />
+                Add affiliate program
               </Link>
             </CardContent>
           </Card>

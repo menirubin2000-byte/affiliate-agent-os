@@ -1,4 +1,5 @@
 import type { ActionItem, ActionItemPriority, ActionItemSource, OperatorActionSummary } from "@/types/action-item"
+import type { AffiliateProgram } from "@/types/affiliate-program"
 import type { CampaignLink } from "@/types/campaign-link"
 import type { DataQualityIssue } from "@/types/data-quality"
 import type { Draft } from "@/types/draft"
@@ -24,6 +25,7 @@ const ACTION_SOURCES: ActionItemSource[] = [
   "draft",
   "product",
   "campaign_link",
+  "affiliate_program",
 ]
 
 export function normalizePriority(value: string): ActionItemPriority {
@@ -214,6 +216,72 @@ function fromCampaignLinkWithoutPerformance(link: CampaignLink, records: Perform
   }
 }
 
+function fromAffiliateProgramNeedingAction(program: AffiliateProgram): ActionItem | null {
+  const href = "/dashboard/affiliate-programs"
+
+  switch (program.status) {
+    case "research_needed":
+      return {
+        id: `affiliate-research:${program.id}`,
+        source: "affiliate_program",
+        priority: "medium",
+        title: `Research "${program.programName}" affiliate program`,
+        description: "Affiliate program needs research before signup.",
+        actionLabel: "View affiliate programs",
+        actionHref: href,
+        relatedEntityType: "affiliate_program",
+        relatedEntityIdOrKey: program.id,
+        detectedAt: program.createdAt,
+      }
+    case "signup_needed":
+      return {
+        id: `affiliate-signup:${program.id}`,
+        source: "affiliate_program",
+        priority: "high",
+        title: `Sign up for "${program.programName}"`,
+        description: program.signupUrl
+          ? "Affiliate program is ready for signup. Human operator must complete the application."
+          : "Affiliate program needs signup but no signup URL is recorded.",
+        actionLabel: "View affiliate programs",
+        actionHref: href,
+        relatedEntityType: "affiliate_program",
+        relatedEntityIdOrKey: program.id,
+        detectedAt: program.updatedAt,
+      }
+    case "awaiting_human_approval":
+      return {
+        id: `affiliate-approval:${program.id}`,
+        source: "affiliate_program",
+        priority: "high",
+        title: `"${program.programName}" awaiting human approval`,
+        description: "Application is prepared and needs operator to submit or approve.",
+        actionLabel: "View affiliate programs",
+        actionHref: href,
+        relatedEntityType: "affiliate_program",
+        relatedEntityIdOrKey: program.id,
+        detectedAt: program.updatedAt,
+      }
+    case "approved":
+      if (!program.affiliateLink) {
+        return {
+          id: `affiliate-add-link:${program.id}`,
+          source: "affiliate_program",
+          priority: "high",
+          title: `Add affiliate link for "${program.programName}"`,
+          description: "Program is approved — paste the affiliate link to make it ready for campaigns.",
+          actionLabel: "Add affiliate link",
+          actionHref: href,
+          relatedEntityType: "affiliate_program",
+          relatedEntityIdOrKey: program.id,
+          detectedAt: program.updatedAt,
+        }
+      }
+      return null
+    default:
+      return null
+  }
+}
+
 export function buildOperatorActionItems(params: {
   dataQualityIssues: DataQualityIssue[]
   improvementTasks: ImprovementTask[]
@@ -223,6 +291,7 @@ export function buildOperatorActionItems(params: {
   products: Product[]
   campaignLinks: CampaignLink[]
   performanceMetrics: PerformanceMetric[]
+  affiliatePrograms?: AffiliateProgram[]
   limit?: number
 }): ActionItem[] {
   const items: ActionItem[] = [
@@ -234,6 +303,7 @@ export function buildOperatorActionItems(params: {
     ...params.products.map((product) => fromProductNeedingDraft(product, params.drafts)).filter((item): item is ActionItem => item !== null),
     ...params.drafts.map((draft) => fromApprovedDraftNeedingPerformance(draft, params.performanceMetrics)).filter((item): item is ActionItem => item !== null),
     ...params.campaignLinks.map((link) => fromCampaignLinkWithoutPerformance(link, params.performanceMetrics)).filter((item): item is ActionItem => item !== null),
+    ...(params.affiliatePrograms ?? []).map(fromAffiliateProgramNeedingAction).filter((item): item is ActionItem => item !== null),
   ]
 
   const deduped = dedupeActionItems(items)

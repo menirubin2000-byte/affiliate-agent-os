@@ -31,6 +31,7 @@ const sourceLabels: Record<ActionItemSource, string> = {
   draft: "Draft",
   product: "Product",
   campaign_link: "Campaign link",
+  affiliate_program: "Affiliate program",
 }
 
 export function ActionItemsPanel(props: {

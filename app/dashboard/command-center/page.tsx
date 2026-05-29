@@ -44,6 +44,7 @@ const sourceOptions: Array<{ value: ActionItemSource; label: string }> = [
   { value: "draft", label: "Drafts" },
   { value: "product", label: "Products" },
   { value: "campaign_link", label: "Campaign links" },
+  { value: "affiliate_program", label: "Affiliate programs" },
 ]
 
 const priorityOptions: Array<{ value: ActionItemPriority; label: string }> = [
@@ -81,6 +82,7 @@ function zeroSummary(): OperatorActionSummary {
       draft: 0,
       product: 0,
       campaign_link: 0,
+      affiliate_program: 0,
     },
   }
 }
@@ -98,6 +100,7 @@ function zeroDataQualitySummary(): DataQualitySummary {
       performance: 0,
       improvements: 0,
       saved_views: 0,
+      affiliate_programs: 0,
     },
   }
 }
