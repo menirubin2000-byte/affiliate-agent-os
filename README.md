@@ -58,6 +58,11 @@ This is still an operator-first system. The operator remains responsible for:
 - **Stage 32:** Operator Command Center — `/dashboard/command-center` aggregates the most urgent manual next actions from data quality issues, improvement tasks, recommendations, performance insights, drafts needing review, products needing drafts, approved drafts needing performance, and campaign links with no performance.
 - **Stage 33:** Single Operator Access Gate — `/dashboard/*` routes are protected by an MVP single-operator password gate using a signed httpOnly session cookie. This is not a multi-user auth or RLS system.
 - **Stage 34:** Vercel staging deployment readiness — `/dashboard/system` shows Vercel staging readiness, required access-gate/Supabase env vars are documented, and the post-deploy smoke checklist is explicit.
+- **Stage 35:** Deployment script and release checklist — `docs/STAGING_RELEASE_CHECKLIST.md`, `docs/STAGING_RELEASE_NOTES.md`, `scripts/preflight-staging.mjs`, `npm run preflight:staging`.
+- **Stage 36:** Access gate secret setup helper — `scripts/generate-access-secret.mjs`, `npm run generate:access-secret`, improved preflight messaging for missing access-gate vars.
+- **Stage 37:** Final local staging readiness — `.env.local` normalized, preflight passed, verify passed, auth smoke passed locally.
+- **Stage 38:** Vercel staging deploy guidance — deployment method documented, env vars confirmed, post-deploy checklist prepared.
+- **Stage 39:** Live Supabase migration fix — migrations 006–010 applied to the live Supabase database (`gbkwydsodondarccqyet`) via direct PostgreSQL connection. All 8 tables confirmed present. Live deployment verified at `https://affiliate-agent-os.vercel.app`.
 
 ## Current MVP mode: WordPress-free operation
 
@@ -623,6 +628,28 @@ After the first Vercel staging deploy:
 ### Middleware warning
 
 Next 16 may warn that the `middleware.ts` file convention is deprecated in favor of `proxy`. The current middleware builds successfully and protects dashboard routes. This warning is acceptable for the MVP staging deployment and can be migrated later as a small follow-up once the staging flow is verified.
+
+## Live staging deployment
+
+The app is deployed and running at:
+
+```
+https://affiliate-agent-os.vercel.app
+```
+
+All 10 migrations (001–010) are applied to the live Supabase database. All 8 tables are confirmed present and accessible via REST API.
+
+Supabase project ref: `gbkwydsodondarccqyet`
+
+### Applied migration helper
+
+To apply missing migrations to a remote Supabase database:
+
+```bash
+node scripts/apply-remote-migrations.mjs <DB_PASSWORD>
+```
+
+The script connects via PostgreSQL, runs migrations 006–010, re-runs grants, and verifies all tables. It is idempotent and safe to re-run.
 
 ## First staging release
 

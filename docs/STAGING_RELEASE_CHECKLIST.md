@@ -29,18 +29,26 @@ WordPress is optional. AI API keys are optional because the app supports Claude 
 
 ## Supabase Migrations Checklist
 
-Apply migrations in order to the staging Supabase project:
+All migrations have been applied to the live Supabase project (`gbkwydsodondarccqyet`):
 
-1. `supabase/migrations/001_init.sql`
-2. `supabase/migrations/002_content_quality.sql`
-3. `supabase/migrations/003_wordpress_queue.sql`
-4. `supabase/migrations/004_performance_metrics.sql`
-5. `supabase/migrations/005_service_role_api_grants.sql`
-6. `supabase/migrations/006_draft_versions.sql`
-7. `supabase/migrations/007_improvement_tasks.sql`
-8. `supabase/migrations/008_campaign_links.sql`
-9. `supabase/migrations/009_performance_campaign_link.sql`
-10. `supabase/migrations/010_saved_views.sql`
+1. ✅ `supabase/migrations/001_init.sql`
+2. ✅ `supabase/migrations/002_content_quality.sql`
+3. ✅ `supabase/migrations/003_wordpress_queue.sql`
+4. ✅ `supabase/migrations/004_performance_metrics.sql`
+5. ✅ `supabase/migrations/005_service_role_api_grants.sql`
+6. ✅ `supabase/migrations/006_draft_versions.sql`
+7. ✅ `supabase/migrations/007_improvement_tasks.sql`
+8. ✅ `supabase/migrations/008_campaign_links.sql`
+9. ✅ `supabase/migrations/009_performance_campaign_link.sql`
+10. ✅ `supabase/migrations/010_saved_views.sql`
+
+All 8 tables confirmed present: `products`, `content_drafts`, `draft_versions`, `publishing_jobs`, `performance_metrics`, `improvement_tasks`, `campaign_links`, `saved_views`.
+
+To re-apply missing migrations on a fresh Supabase project:
+
+```bash
+node scripts/apply-remote-migrations.mjs <DB_PASSWORD>
+```
 
 Optional demo data:
 

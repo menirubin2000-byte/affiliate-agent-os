@@ -1,5 +1,16 @@
 # Affiliate Agent OS - Staging Release Notes
 
+## Deployment Status
+
+- **Live URL:** `https://affiliate-agent-os.vercel.app`
+- **Supabase project:** `gbkwydsodondarccqyet`
+- **All 10 migrations applied:** ✅
+- **All 8 tables present:** ✅
+- **Access gate active:** ✅
+- **193 tests passing:** ✅
+- **WordPress:** optional, not connected
+- **AI API:** optional, not connected
+
 ## Release Scope
 
 This staging MVP is an operator dashboard for managing affiliate content workflows from product intake through draft review, campaign tracking, reporting, and advisory recommendations.
