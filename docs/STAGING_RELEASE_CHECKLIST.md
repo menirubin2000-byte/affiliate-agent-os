@@ -42,8 +42,9 @@ All migrations have been applied to the live Supabase project (`gbkwydsodondarcc
 9. ✅ `supabase/migrations/009_performance_campaign_link.sql`
 10. ✅ `supabase/migrations/010_saved_views.sql`
 11. ✅ `supabase/migrations/011_affiliate_program_tracking.sql`
+12. ✅ `supabase/migrations/012_approval_items.sql`
 
-All 9 tables confirmed present: `products`, `content_drafts`, `draft_versions`, `publishing_jobs`, `performance_metrics`, `improvement_tasks`, `campaign_links`, `saved_views`, `affiliate_programs`.
+All 10 tables confirmed present: `products`, `content_drafts`, `draft_versions`, `publishing_jobs`, `performance_metrics`, `improvement_tasks`, `campaign_links`, `saved_views`, `affiliate_programs`, `approval_items`.
 
 To re-apply missing migrations on a fresh Supabase project:
 

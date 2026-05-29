@@ -79,6 +79,27 @@ Required in `.env.local`:
 - `APP_ACCESS_PASSWORD` - Dashboard login password
 - `APP_SESSION_SECRET` - HMAC session signing key
 
+## Approval Board
+
+### Where to see approvals
+Open `/dashboard/approvals` to see all pending actions Claude has proposed. The sidebar shows a red badge with the count of items waiting for your decision.
+
+### Approval flow
+1. Claude proposes an action (publish, activate, create link, etc.)
+2. The action appears on the Approval Board with full details
+3. Review: product, platform, content preview, campaign link, disclosure status
+4. Choose one:
+   - **Approve** — Claude may proceed with the action
+   - **Reject** — Claude will not proceed
+   - **Needs changes** — Claude will revise and resubmit
+5. Add optional notes to explain your decision
+
+### Exact approval phrases
+When Claude asks for permission in chat (not on the board), reply with:
+- **"Approved"** — general approval
+- **"Approved to publish"** — specific publishing approval
+- **"No"** or **"Reject"** — do not proceed
+
 ## Platform Publishing Workflow
 
 ### Before first publish on any platform

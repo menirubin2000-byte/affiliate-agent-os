@@ -62,6 +62,13 @@ import type {
   AffiliateProgramSummary,
   CreateAffiliateProgramInput,
 } from "@/types/affiliate-program"
+import type {
+  ApprovalItem,
+  ApprovalItemStatus,
+  ApprovalItemSummary,
+  ApprovalItemType,
+  CreateApprovalItemInput,
+} from "@/types/approval-item"
 import type { CreateProductInput, Product } from "@/types/product"
 import type {
   CreateSavedViewInput,
@@ -3008,5 +3015,151 @@ export async function getAffiliateProgramSummary(): Promise<AffiliateProgramSumm
     rejected: programs.filter((p) => p.status === "rejected").length,
     closed: programs.filter((p) => p.status === "closed").length,
     linkReady: programs.filter((p) => p.status === "link_ready").length,
+  }
+}
+
+// ── Approval Items ─────────────────────────────────────────────────
+
+interface ApprovalItemRow {
+  id: string
+  product_id: string | null
+  approval_type: string
+  platform: string | null
+  title: string
+  description: string | null
+  content_preview: string | null
+  campaign_link_url: string | null
+  disclosure_present: boolean
+  status: string
+  operator_notes: string | null
+  resolved_at: string | null
+  created_at: string
+  updated_at: string
+  products?: { name: string } | { name: string }[] | null
+}
+
+const APPROVAL_ITEM_SELECT =
+  "id, product_id, approval_type, platform, title, description, content_preview, campaign_link_url, disclosure_present, status, operator_notes, resolved_at, created_at, updated_at, products(name)"
+
+function mapApprovalItem(row: ApprovalItemRow): ApprovalItem {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    productName: Array.isArray(row.products)
+      ? (row.products[0]?.name ?? null)
+      : (row.products?.name ?? null),
+    approvalType: row.approval_type as ApprovalItem["approvalType"],
+    platform: row.platform,
+    title: row.title,
+    description: row.description,
+    contentPreview: row.content_preview,
+    campaignLinkUrl: row.campaign_link_url,
+    disclosurePresent: row.disclosure_present,
+    status: row.status as ApprovalItem["status"],
+    operatorNotes: row.operator_notes,
+    resolvedAt: row.resolved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+export async function listApprovalItems(filters?: {
+  status?: ApprovalItemStatus
+  approvalType?: ApprovalItemType
+}): Promise<ApprovalItem[]> {
+  if (!isSupabaseConfigured()) return []
+  const supabase = getServiceRoleSupabase()
+  let query = supabase
+    .from("approval_items")
+    .select(APPROVAL_ITEM_SELECT)
+    .order("created_at", { ascending: false })
+
+  if (filters?.status) query = query.eq("status", filters.status)
+  if (filters?.approvalType) query = query.eq("approval_type", filters.approvalType)
+
+  const { data, error } = await query
+  if (error) throw new Error(`Failed to list approval items: ${error.message}`)
+  return (data ?? []).map((row) => mapApprovalItem(row as ApprovalItemRow))
+}
+
+export async function getApprovalItemById(id: string): Promise<ApprovalItem | null> {
+  if (!isSupabaseConfigured()) return null
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("approval_items")
+    .select(APPROVAL_ITEM_SELECT)
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return mapApprovalItem(data as ApprovalItemRow)
+}
+
+export async function createApprovalItem(input: CreateApprovalItemInput): Promise<ApprovalItem> {
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("approval_items")
+    .insert({
+      product_id: input.productId ?? null,
+      approval_type: input.approvalType,
+      platform: input.platform ?? null,
+      title: input.title,
+      description: input.description ?? null,
+      content_preview: input.contentPreview ?? null,
+      campaign_link_url: input.campaignLinkUrl ?? null,
+      disclosure_present: input.disclosurePresent ?? false,
+      status: input.status ?? "waiting_approval",
+    })
+    .select(APPROVAL_ITEM_SELECT)
+    .single()
+
+  if (error) throw new Error(`Failed to create approval item: ${error.message}`)
+  return mapApprovalItem(data as ApprovalItemRow)
+}
+
+export async function updateApprovalItemStatus(
+  id: string,
+  status: ApprovalItemStatus,
+  operatorNotes?: string | null,
+): Promise<void> {
+  const supabase = getServiceRoleSupabase()
+  const isResolved = status === "approved" || status === "rejected" || status === "published"
+  const { error } = await supabase
+    .from("approval_items")
+    .update({
+      status,
+      operator_notes: operatorNotes ?? null,
+      resolved_at: isResolved ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+
+  if (error) throw new Error(`Failed to update approval item status: ${error.message}`)
+}
+
+export async function countPendingApprovalItems(): Promise<number> {
+  if (!isSupabaseConfigured()) return 0
+  const supabase = getServiceRoleSupabase()
+  const { count, error } = await supabase
+    .from("approval_items")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "waiting_approval")
+
+  if (error) return 0
+  return count ?? 0
+}
+
+export async function getApprovalItemSummary(): Promise<ApprovalItemSummary> {
+  if (!isSupabaseConfigured()) {
+    return { total: 0, waitingApproval: 0, approved: 0, rejected: 0, published: 0, needsChanges: 0 }
+  }
+  const items = await listApprovalItems()
+  return {
+    total: items.length,
+    waitingApproval: items.filter((i) => i.status === "waiting_approval").length,
+    approved: items.filter((i) => i.status === "approved").length,
+    rejected: items.filter((i) => i.status === "rejected").length,
+    published: items.filter((i) => i.status === "published").length,
+    needsChanges: items.filter((i) => i.status === "needs_changes").length,
   }
 }

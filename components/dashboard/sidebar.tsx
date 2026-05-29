@@ -8,6 +8,7 @@ import {
   BarChart3,
   Bookmark,
   Building2,
+  CheckSquare,
   ClipboardList,
   Command,
   ExternalLink,
@@ -20,6 +21,7 @@ import {
   Shield,
 } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -37,6 +39,11 @@ const navigation = [
     href: "/dashboard/command-center",
     label: "Command Center",
     icon: Command,
+  },
+  {
+    href: "/dashboard/approvals",
+    label: "Approvals",
+    icon: CheckSquare,
   },
   {
     href: "/dashboard/drafts",
@@ -90,7 +97,11 @@ const navigation = [
   },
 ]
 
-export function DashboardSidebar() {
+export function DashboardSidebar({
+  pendingApprovalCount = 0,
+}: {
+  pendingApprovalCount?: number
+}) {
   const pathname = usePathname()
 
   return (
@@ -123,7 +134,12 @@ export function DashboardSidebar() {
                   )}
                 >
                   <item.icon className="size-4" />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.href === "/dashboard/approvals" && pendingApprovalCount > 0 ? (
+                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0">
+                      {pendingApprovalCount}
+                    </Badge>
+                  ) : null}
                 </Link>
               </li>
             )

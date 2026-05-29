@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Bookmark,
+  CheckSquare,
   ClipboardList,
   Command,
   Clock3,
@@ -39,6 +40,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import {
+  countPendingApprovalItems,
   getCampaignLinkSummary,
   getDashboardNeedsAttention,
   getDashboardSummary,
@@ -529,6 +531,7 @@ export default async function DashboardPage() {
     archived: 0,
     withoutPerformance: 0,
   }
+  let pendingApprovals = 0
   let pageError: string | null = null
 
   try {
@@ -553,6 +556,7 @@ export default async function DashboardPage() {
         campaignLinkSummary,
         dataQualitySummary,
         urgentActionItems,
+        pendingApprovals,
       ] = await Promise.all([
         getDashboardSummary(),
         listRecentDrafts(),
@@ -566,6 +570,7 @@ export default async function DashboardPage() {
         getCampaignLinkSummary(),
         getDataQualitySummary(),
         getOperatorActionItems({ limit: 5 }),
+        countPendingApprovalItems(),
       ])
     } catch (error) {
       pageError =
@@ -805,6 +810,12 @@ export default async function DashboardPage() {
           value={String(dataQualitySummary.total)}
           detail={`${dataQualitySummary.critical} critical, ${dataQualitySummary.warning} warning, ${dataQualitySummary.info} info findings.`}
           icon={<AlertTriangle className="size-4" />}
+        />
+        <StatCard
+          label="Pending approvals"
+          value={String(pendingApprovals)}
+          detail={pendingApprovals > 0 ? "Actions waiting for operator approval." : "No actions waiting for approval."}
+          icon={<CheckSquare className="size-4" />}
         />
       </section>
 

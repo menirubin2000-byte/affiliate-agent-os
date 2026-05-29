@@ -62,6 +62,7 @@ Current core tables:
 - `campaign_links`
 - `saved_views`
 - `affiliate_programs`
+- `approval_items`
 
 All schema changes should stay aligned with the migrations in `supabase/migrations/` unless the user explicitly asks to expand scope.
 

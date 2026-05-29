@@ -2,6 +2,7 @@ import Link from "next/link"
 import {
   AlertTriangle,
   ArrowRight,
+  CheckSquare,
   ClipboardList,
   Command,
   FileText,
@@ -21,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
+  countPendingApprovalItems,
   getDataQualitySummary,
   getImprovementTaskSummary,
   getOperatorActionItems,
@@ -133,6 +135,7 @@ export default async function CommandCenterPage({
   }
   let dataQualitySummary = zeroDataQualitySummary()
   let draftsNeedingReview = 0
+  let pendingApprovals = 0
   let pageError: string | null = null
 
   if (!isSupabaseConfigured()) {
@@ -140,18 +143,20 @@ export default async function CommandCenterPage({
     pageError = `${readiness.summary} ${readiness.guidance}`
   } else {
     try {
-      const [items, actionSummary, improvements, dataQuality, draftRows] = await Promise.all([
+      const [items, actionSummary, improvements, dataQuality, draftRows, approvalCount] = await Promise.all([
         getOperatorActionItems(),
         getOperatorActionSummary(),
         getImprovementTaskSummary(),
         getDataQualitySummary(),
         listDrafts({ status: "draft" }),
+        countPendingApprovalItems(),
       ])
       actionItems = items
       summary = actionSummary
       improvementSummary = improvements
       dataQualitySummary = dataQuality
       draftsNeedingReview = draftRows.length
+      pendingApprovals = approvalCount
     } catch (error) {
       pageError =
         error instanceof Error
@@ -211,7 +216,7 @@ export default async function CommandCenterPage({
         </Card>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label="Critical actions"
           value={String(summary.critical)}
@@ -241,6 +246,12 @@ export default async function CommandCenterPage({
           value={String(draftsNeedingReview)}
           detail="Drafts waiting for human approval or rejection."
           icon={<FileText className="size-4" />}
+        />
+        <StatCard
+          label="Pending approvals"
+          value={String(pendingApprovals)}
+          detail="Actions waiting for operator approval before execution."
+          icon={<CheckSquare className="size-4" />}
         />
       </section>
 
