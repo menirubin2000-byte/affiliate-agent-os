@@ -657,6 +657,24 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
+      <Card className="border-border/70 bg-card/90 shadow-sm">
+        <CardHeader>
+          <CardTitle>Operator Dashboard</CardTitle>
+          <CardDescription>
+            Daily one-screen view for products, affiliate programs, manual distribution, approvals, performance, and next actions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/dashboard/operator"
+            className={cn(buttonVariants({ variant: "default" }))}
+          >
+            Open Operator Dashboard
+            <ArrowRight className="size-4" />
+          </Link>
+        </CardContent>
+      </Card>
+
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <ActionItemsPanel
           title="Command Center"

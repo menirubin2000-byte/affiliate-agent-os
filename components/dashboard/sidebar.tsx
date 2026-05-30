@@ -41,6 +41,16 @@ const navigation = [
     icon: Command,
   },
   {
+    href: "/dashboard/operator",
+    label: "Operator",
+    icon: ClipboardList,
+  },
+  {
+    href: "/dashboard/he",
+    label: "עברית",
+    icon: LayoutDashboard,
+  },
+  {
     href: "/dashboard/approvals",
     label: "Approvals",
     icon: CheckSquare,
