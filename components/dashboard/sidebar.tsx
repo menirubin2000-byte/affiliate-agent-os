@@ -14,6 +14,7 @@ import {
   ExternalLink,
   FileBarChart,
   FileText,
+  Languages,
   LayoutDashboard,
   LogOut,
   Package2,
@@ -24,103 +25,36 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-const navigation = [
-  {
-    href: "/dashboard",
-    label: "Overview",
-    hebrewLabel: "סקירה באנגלית",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/dashboard/products",
-    label: "Products",
-    hebrewLabel: "מוצרים",
-    icon: Package2,
-  },
-  {
-    href: "/dashboard/command-center",
-    label: "Command Center",
-    hebrewLabel: "מרכז פעולות",
-    icon: Command,
-  },
-  {
-    href: "/dashboard/operator",
-    label: "Operator",
-    hebrewLabel: "מפעיל באנגלית",
-    icon: ClipboardList,
-  },
-  {
-    href: "/dashboard/he",
-    label: "Hebrew Home",
-    hebrewLabel: "בית בעברית",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/dashboard/approvals",
-    label: "Approvals",
-    hebrewLabel: "אישורים",
-    icon: CheckSquare,
-  },
-  {
-    href: "/dashboard/drafts",
-    label: "Drafts",
-    hebrewLabel: "טיוטות",
-    icon: FileText,
-  },
-  {
-    href: "/dashboard/publishing",
-    label: "Publishing",
-    hebrewLabel: "הפצה",
-    icon: Send,
-  },
-  {
-    href: "/dashboard/campaign-links",
-    label: "Campaign Links",
-    hebrewLabel: "קישורי קמפיין",
-    icon: ExternalLink,
-  },
-  {
-    href: "/dashboard/affiliate-programs",
-    label: "Affiliate Programs",
-    hebrewLabel: "תוכניות שותפים",
-    icon: Building2,
-  },
-  {
-    href: "/dashboard/performance",
-    label: "Performance",
-    hebrewLabel: "ביצועים",
-    icon: Activity,
-  },
-  {
-    href: "/dashboard/improvements",
-    label: "Improvements",
-    hebrewLabel: "משימות שיפור",
-    icon: ClipboardList,
-  },
-  {
-    href: "/dashboard/reports",
-    label: "Reports",
-    hebrewLabel: "דוחות",
-    icon: FileBarChart,
-  },
-  {
-    href: "/dashboard/data-quality",
-    label: "Data Quality",
-    hebrewLabel: "איכות נתונים",
-    icon: AlertTriangle,
-  },
-  {
-    href: "/dashboard/saved-views",
-    label: "Saved Views",
-    hebrewLabel: "תצוגות שמורות",
-    icon: Bookmark,
-  },
-  {
-    href: "/dashboard/system",
-    label: "System",
-    hebrewLabel: "מערכת",
-    icon: Shield,
-  },
+const englishNavigation = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/products", label: "Products", icon: Package2 },
+  { href: "/dashboard/command-center", label: "Command Center", icon: Command },
+  { href: "/dashboard/operator", label: "Operator", icon: ClipboardList },
+  { href: "/dashboard/he", label: "Hebrew", icon: Languages },
+  { href: "/dashboard/approvals", label: "Approvals", icon: CheckSquare },
+  { href: "/dashboard/drafts", label: "Drafts", icon: FileText },
+  { href: "/dashboard/publishing", label: "Publishing", icon: Send },
+  { href: "/dashboard/campaign-links", label: "Campaign Links", icon: ExternalLink },
+  { href: "/dashboard/affiliate-programs", label: "Affiliate Programs", icon: Building2 },
+  { href: "/dashboard/performance", label: "Performance", icon: Activity },
+  { href: "/dashboard/improvements", label: "Improvements", icon: ClipboardList },
+  { href: "/dashboard/reports", label: "Reports", icon: FileBarChart },
+  { href: "/dashboard/data-quality", label: "Data Quality", icon: AlertTriangle },
+  { href: "/dashboard/saved-views", label: "Saved Views", icon: Bookmark },
+  { href: "/dashboard/system", label: "System", icon: Shield },
+]
+
+const hebrewNavigation = [
+  { href: "/dashboard/he", label: "בית", icon: LayoutDashboard },
+  { href: "/dashboard/he#products", label: "מוצרים", icon: Package2 },
+  { href: "/dashboard/he#programs", label: "תוכניות שותפים", icon: Building2 },
+  { href: "/dashboard/he#published", label: "מה פורסם", icon: Send },
+  { href: "/dashboard/he#where", label: "איפה פורסם", icon: ExternalLink },
+  { href: "/dashboard/he#pending", label: "מחכה לאישור", icon: CheckSquare },
+  { href: "/dashboard/he#rejected", label: "נדחה", icon: AlertTriangle },
+  { href: "/dashboard/he#actions", label: "פעולה עכשיו", icon: Command },
+  { href: "/dashboard/he#performance", label: "נתונים אמיתיים", icon: Activity },
+  { href: "/dashboard/operator", label: "אנגלית", icon: Languages },
 ]
 
 export function DashboardSidebar({
@@ -130,6 +64,7 @@ export function DashboardSidebar({
 }) {
   const pathname = usePathname()
   const isHebrew = pathname === "/dashboard/he" || pathname.startsWith("/dashboard/he/")
+  const navigation = isHebrew ? hebrewNavigation : englishNavigation
 
   return (
     <aside
@@ -141,11 +76,11 @@ export function DashboardSidebar({
           Affiliate Agent OS
         </p>
         <h1 className="mt-2 text-lg font-semibold">
-          {isHebrew ? "דשבורד MVP" : "MVP Dashboard"}
+          {isHebrew ? "דשבורד מפעיל" : "MVP Dashboard"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isHebrew
-            ? "מוצרים, טיוטות, אישור אנושי, הפצה ידנית ומדידת ביצועים."
+            ? "אותה מערכת, אותם נתונים, ממשק עברי מלא לעבודה יומית."
             : "Products, AI drafts, human approval, publishing queue, performance tracking."}
         </p>
       </div>
@@ -154,7 +89,8 @@ export function DashboardSidebar({
         <ul className="space-y-1">
           {navigation.map((item) => {
             const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`)
+              pathname === item.href ||
+              (!item.href.includes("#") && pathname.startsWith(`${item.href}/`))
 
             return (
               <li key={item.href}>
@@ -166,11 +102,11 @@ export function DashboardSidebar({
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground",
                   )}
-                  >
+                >
                   <item.icon className="size-4" />
-                  <span className="flex-1">{isHebrew ? item.hebrewLabel : item.label}</span>
-                  {item.href === "/dashboard/approvals" && pendingApprovalCount > 0 ? (
-                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0">
+                  <span className="flex-1">{item.label}</span>
+                  {!isHebrew && item.href === "/dashboard/approvals" && pendingApprovalCount > 0 ? (
+                    <Badge variant="destructive" className="ml-auto px-1.5 py-0 text-xs">
                       {pendingApprovalCount}
                     </Badge>
                   ) : null}
@@ -184,7 +120,7 @@ export function DashboardSidebar({
       <div className="border-t border-border/70 px-6 py-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <BarChart3 className="size-4" />
-          {isHebrew ? "פרסום חי כבוי." : "Live publishing is disabled."}
+          {isHebrew ? "פרסום אוטומטי כבוי." : "Live publishing is disabled."}
         </div>
         <a
           href="/logout"
