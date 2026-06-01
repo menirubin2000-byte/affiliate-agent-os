@@ -13,6 +13,9 @@ const templateOptions: Array<{ label: string; value: TemplateType }> = [
   { label: "Comparison", value: "comparison" },
   { label: "Buying guide", value: "buying_guide" },
   { label: "Social post", value: "social_post" },
+  { label: "TikTok script", value: "tiktok_script" },
+  { label: "Quora answer", value: "quora_answer" },
+  { label: "Reddit post", value: "reddit_post" },
 ]
 
 function formatValue(value: string | number | null | undefined) {

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Affiliate Agent OS Browser Helper",
+  "version": "0.1.0",
+  "description": "Controlled browser helper for approved Affiliate Agent OS publishing jobs.",
+  "permissions": ["activeTab", "scripting", "tabs", "storage"],
+  "host_permissions": [
+    "https://affiliate-agent-os.vercel.app/*",
+    "http://localhost:3000/*",
+    "https://*.linkedin.com/*",
+    "https://*.medium.com/*",
+    "https://*.substack.com/*",
+    "https://*.tiktok.com/*",
+    "https://*.quora.com/*",
+    "https://*.reddit.com/*",
+    "https://*.partnerstack.com/*",
+    "https://*.impact.com/*",
+    "https://*.systeme.io/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Affiliate Agent OS Browser Helper"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.linkedin.com/*",
+        "https://*.medium.com/*",
+        "https://*.substack.com/*",
+        "https://*.tiktok.com/*",
+        "https://*.quora.com/*",
+        "https://*.reddit.com/*",
+        "https://*.partnerstack.com/*",
+        "https://*.impact.com/*",
+        "https://*.systeme.io/*"
+      ],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

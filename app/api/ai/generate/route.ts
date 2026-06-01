@@ -15,7 +15,10 @@ function isTemplateType(value: unknown): value is TemplateType {
     value === "review" ||
     value === "comparison" ||
     value === "buying_guide" ||
-    value === "social_post"
+    value === "social_post" ||
+    value === "tiktok_script" ||
+    value === "quora_answer" ||
+    value === "reddit_post"
   )
 }
 

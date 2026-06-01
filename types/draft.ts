@@ -1,10 +1,13 @@
-export type DraftStatus = "draft" | "approved" | "rejected"
+export type DraftStatus = "draft" | "needs_review" | "approved" | "needs_changes" | "rejected"
 export type ContentType = "review" | "social_post"
 export type TemplateType =
   | "review"
   | "comparison"
   | "buying_guide"
   | "social_post"
+  | "tiktok_script"
+  | "quora_answer"
+  | "reddit_post"
 
 export interface QualityChecks {
   has_disclosure: boolean
@@ -30,6 +33,7 @@ export interface Draft {
   targetKeyword: string | null
   qualityChecks: QualityChecks
   status: DraftStatus
+  campaignId: string | null
   aiModel: string | null
   approvalNotes: string | null
   createdAt: string

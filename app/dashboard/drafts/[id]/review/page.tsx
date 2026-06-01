@@ -29,7 +29,9 @@ const qualityLabels: Array<{ key: keyof QualityChecks; label: string }> = [
 
 const statusVariantMap = {
   draft: "secondary",
+  needs_review: "secondary",
   approved: "default",
+  needs_changes: "outline",
   rejected: "destructive",
 } as const
 

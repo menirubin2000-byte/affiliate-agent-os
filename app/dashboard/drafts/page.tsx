@@ -28,6 +28,9 @@ const templateOptions: Array<{ label: string; value: "all" | TemplateType }> = [
   { label: "Comparison", value: "comparison" },
   { label: "Buying guide", value: "buying_guide" },
   { label: "Social post", value: "social_post" },
+  { label: "TikTok script", value: "tiktok_script" },
+  { label: "Quora answer", value: "quora_answer" },
+  { label: "Reddit post", value: "reddit_post" },
 ]
 
 const publishingOptions: Array<{ label: string; value: "all" | DraftPublishingState }> = [
@@ -47,7 +50,10 @@ function isTemplateType(value?: string): value is TemplateType {
     value === "review" ||
     value === "comparison" ||
     value === "buying_guide" ||
-    value === "social_post"
+    value === "social_post" ||
+    value === "tiktok_script" ||
+    value === "quora_answer" ||
+    value === "reddit_post"
   )
 }
 

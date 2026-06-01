@@ -80,6 +80,26 @@ function hasRequiredStructure(body: string, templateType: TemplateType) {
     )
   }
 
+  if (templateType === "tiktok_script") {
+    return (
+      includesNormalized(body, "hook") &&
+      includesNormalized(body, "affiliate disclosure")
+    )
+  }
+
+  if (templateType === "quora_answer") {
+    return (
+      includesNormalized(body, "what stands out") &&
+      includesNormalized(body, "affiliate disclosure")
+    )
+  }
+
+  if (templateType === "reddit_post") {
+    return (
+      includesNormalized(body, "affiliate disclosure")
+    )
+  }
+
   return hasDisclosure(body)
 }
 

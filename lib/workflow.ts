@@ -1,4 +1,4 @@
-import type { Draft, QualityChecks } from "@/types/draft"
+import type { Draft, QualityChecks, TemplateType } from "@/types/draft"
 import type { PerformanceMetric } from "@/types/performance"
 import type { PublishingJob } from "@/types/publishing"
 import type { Product } from "@/types/product"
@@ -7,6 +7,13 @@ import type {
   NextAction,
   WorkflowLabel,
 } from "@/types/workflow"
+
+const SHORT_FORM_TEMPLATES: ReadonlySet<TemplateType> = new Set([
+  "social_post",
+  "tiktok_script",
+  "quora_answer",
+  "reddit_post",
+])
 
 export function buildNextAction(label: string, href: string): NextAction {
   return { label, href }
@@ -26,7 +33,7 @@ export function getDraftPublishingState(
     return "queued"
   }
 
-  if (jobs.some((job) => job.status === "sent_to_wordpress")) {
+  if (jobs.some((job) => job.status === "sent" || job.status === "sent_to_wordpress")) {
     return "sent"
   }
 
@@ -71,9 +78,9 @@ export function deriveProductWorkflow(
   const approvedDrafts = productDrafts.filter((draft) => draft.status === "approved")
   const pendingDrafts = productDrafts.filter((draft) => draft.status === "draft")
   const hasOnlySocialDrafts =
-    draftCount > 0 && productDrafts.every((draft) => draft.templateType === "social_post")
+    draftCount > 0 && productDrafts.every((draft) => SHORT_FORM_TEMPLATES.has(draft.templateType))
   const hasApprovedLongForm = approvedDrafts.some(
-    (draft) => draft.templateType !== "social_post",
+    (draft) => !SHORT_FORM_TEMPLATES.has(draft.templateType),
   )
   const hasPerformanceData = (performanceByProductId.get(product.id) ?? []).length > 0
 
@@ -82,7 +89,7 @@ export function deriveProductWorkflow(
   )
   const hasPublishingFailure = relatedJobs.some((job) => job.status === "failed")
   const hasQueuedWordPress = relatedJobs.some((job) => job.status === "pending")
-  const hasSentWordPress = relatedJobs.some((job) => job.status === "sent_to_wordpress")
+  const hasSentWordPress = relatedJobs.some((job) => job.status === "sent" || job.status === "sent_to_wordpress")
   const hasApprovedNotQueued = approvedDrafts.some(
     (draft) => getDraftPublishingState(draft.id, publishingJobsByDraftId) === "not_queued",
   )
@@ -244,7 +251,7 @@ export function deriveDraftWorkflow(
   const publishingState = getDraftPublishingState(draft.id, publishingJobsByDraftId)
   const hasPerformanceData = (performanceByDraftId.get(draft.id) ?? []).length > 0
   const hasOnlySocialCoverage =
-    productDrafts.length > 0 && productDrafts.every((item) => item.templateType === "social_post")
+    productDrafts.length > 0 && productDrafts.every((item) => SHORT_FORM_TEMPLATES.has(item.templateType))
   const signals: string[] = []
 
   if (!draft.qualityChecks.has_meta_description) signals.push("Missing meta description")

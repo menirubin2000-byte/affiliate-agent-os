@@ -37,6 +37,7 @@ yarn-error.log*
 # local private operator files
 סיסמה.txt
 API CLODE.pdf
+.local/
 
 # vercel
 .vercel

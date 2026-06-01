@@ -99,14 +99,78 @@ function getNextAction(params: {
   return "לבדוק ביצועים והמלצות"
 }
 
-function platformUrl(platform: string, links: CampaignLink[], approvals: ApprovalItem[]) {
+const TEMPLATE_FOR_PLATFORM: Record<string, string> = {
+  linkedin: "social_post",
+  medium: "review",
+  substack: "review",
+  tiktok: "tiktok_script",
+  quora: "quora_answer",
+  reddit: "reddit_post",
+}
+
+type PlatformStatus =
+  | { state: "published"; url: string }
+  | { state: "ready"; label: string }
+  | { state: "needs_approval"; label: string }
+  | { state: "no_draft"; label: string }
+
+function getPlatformStatus(
+  platform: string,
+  drafts: Draft[],
+  links: CampaignLink[],
+  approvals: ApprovalItem[],
+): PlatformStatus {
   const published = approvals.find(
     (item) => item.status === "published" && item.platform?.toLowerCase() === platform,
   )
-  if (published?.campaignLinkUrl) return published.campaignLinkUrl
+  if (published?.campaignLinkUrl) {
+    return { state: "published", url: published.campaignLinkUrl }
+  }
 
-  const link = links.find((item) => item.channel.toLowerCase() === platform)
-  return link?.finalUrl ?? null
+  const templateType = TEMPLATE_FOR_PLATFORM[platform] ?? "social_post"
+  const matchingDrafts = drafts.filter(
+    (d) => d.templateType === templateType || d.templateType === "social_post",
+  )
+  const approved = matchingDrafts.find((d) => d.status === "approved")
+  if (approved) {
+    const waiting = approvals.find(
+      (item) => item.status === "waiting_approval" && item.platform?.toLowerCase() === platform,
+    )
+    if (waiting) return { state: "needs_approval", label: "צריך אישור" }
+    return { state: "ready", label: "מוכן לפרסום" }
+  }
+
+  const pending = matchingDrafts.find((d) => d.status === "draft")
+  if (pending) return { state: "needs_approval", label: "צריך אישור" }
+
+  return { state: "no_draft", label: "אין טיוטה" }
+}
+
+function PlatformStatusCell({ status }: { status: PlatformStatus }) {
+  if (status.state === "published") {
+    return (
+      <a
+        href={status.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-sm"
+        dir="ltr"
+      >
+        <Badge variant="default">פורסם</Badge>
+        <ExternalLink className="size-3" />
+      </a>
+    )
+  }
+
+  if (status.state === "ready") {
+    return <Badge variant="secondary">{status.label}</Badge>
+  }
+
+  if (status.state === "needs_approval") {
+    return <Badge variant="outline">{status.label}</Badge>
+  }
+
+  return <span className="text-xs text-muted-foreground">{status.label}</span>
 }
 
 function ExternalUrl({ url }: { url: string | null }) {
@@ -229,7 +293,7 @@ export default async function HebrewOperatorHomePage() {
             ["#products", "מוצרים"],
             ["#programs", "תוכניות שותפים"],
             ["#published", "מה פורסם"],
-            ["#where", "איפה פורסם"],
+            ["#where", "6 פלטפורמות"],
             ["#pending", "מחכה לאישור"],
             ["#rejected", "נדחה"],
             ["#actions", "פעולה עכשיו"],
@@ -310,7 +374,7 @@ export default async function HebrewOperatorHomePage() {
               <th className="px-3 py-2">סטטוס שותפים</th>
               <th className="px-3 py-2">יש קישור שותף</th>
               <th className="px-3 py-2">תוכן מוכן</th>
-              <th className="px-3 py-2">פלטפורמות שפורסמו</th>
+              <th className="px-3 py-2">פורסם (מתוך 6)</th>
               <th className="px-3 py-2">הפעולה הבאה</th>
             </tr>
           </thead>
@@ -343,7 +407,7 @@ export default async function HebrewOperatorHomePage() {
                     <td className="px-3 py-3">{programStatus}</td>
                     <td className="px-3 py-3">{yesNo(Boolean(product.affiliateUrl.trim()))}</td>
                     <td className="px-3 py-3">{yesNo(contentReady)}</td>
-                    <td className="px-3 py-3">{publishedPlatforms.length > 0 ? publishedPlatforms.join(", ") : "לא פורסם"}</td>
+                    <td className="px-3 py-3">{publishedPlatforms.length > 0 ? `${publishedPlatforms.length}/6 (${publishedPlatforms.join(", ")})` : "0/6"}</td>
                     <td className="px-3 py-3">
                       {getNextAction({
                         product,
@@ -437,22 +501,25 @@ export default async function HebrewOperatorHomePage() {
 
       <Section
         id="where"
-        title="איפה פורסם"
-        description="פירוט פלטפורמות לפי נתוני פרסום אמיתיים. אם אין published, יוצג שאין פרסום."
+        title="סטטוס פרסום — 6 פלטפורמות"
+        description="כל מוצר עם קישור שותף פעיל צריך פוסט ב-6 פלטפורמות. פורסם = יש URL אמיתי. מוכן = יש טיוטה מאושרת. צריך אישור = יש טיוטה שממתינה."
       >
-        <table className="w-full min-w-[780px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="border-b text-right text-xs uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
               <th className="px-3 py-2">מוצר</th>
               <th className="px-3 py-2">LinkedIn</th>
               <th className="px-3 py-2">Medium</th>
               <th className="px-3 py-2">Substack</th>
+              <th className="px-3 py-2">TikTok</th>
+              <th className="px-3 py-2">Quora</th>
+              <th className="px-3 py-2">Reddit</th>
               <th className="px-3 py-2">גילוי שותפים</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/70">
             {products.length === 0 ? (
-              <EmptyRow colSpan={5} text="אין מוצרים להצגה." />
+              <EmptyRow colSpan={8} text="אין מוצרים להצגה." />
             ) : (
               products.map((product) => {
                 const productApprovals = approvalsByProduct.get(product.id) ?? []
@@ -463,9 +530,11 @@ export default async function HebrewOperatorHomePage() {
                 return (
                   <tr key={product.id}>
                     <td className="px-3 py-3 font-medium">{product.name}</td>
-                    {["linkedin", "medium", "substack"].map((platform) => (
+                    {["linkedin", "medium", "substack", "tiktok", "quora", "reddit"].map((platform) => (
                       <td key={platform} className="px-3 py-3">
-                        <ExternalUrl url={platformUrl(platform, productLinks, productApprovals)} />
+                        <PlatformStatusCell
+                          status={getPlatformStatus(platform, productDrafts, productLinks, productApprovals)}
+                        />
                       </td>
                     ))}
                     <td className="px-3 py-3">

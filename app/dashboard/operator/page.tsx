@@ -41,12 +41,15 @@ import type { Product } from "@/types/product"
 
 export const dynamic = "force-dynamic"
 
-type PlatformKey = "linkedin" | "medium" | "substack"
+type PlatformKey = "linkedin" | "medium" | "substack" | "tiktok" | "quora" | "reddit"
 
 const platformLabels: Record<PlatformKey, string> = {
   linkedin: "LinkedIn",
   medium: "Medium",
   substack: "Substack",
+  tiktok: "TikTok",
+  quora: "Quora",
+  reddit: "Reddit",
 }
 
 function yesNo(value: boolean) {

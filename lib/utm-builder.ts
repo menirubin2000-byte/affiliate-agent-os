@@ -93,6 +93,22 @@ export function buildUtmUrl(
 }
 
 /**
+ * Build a suggested tracking URL for a campaign.
+ * Does not modify the original affiliate link — returns a new URL.
+ */
+export function buildCampaignTrackingUrl(
+  affiliateUrl: string,
+  channel: string,
+  campaignName: string,
+): BuildUtmUrlResult {
+  return buildUtmUrl(affiliateUrl, {
+    utmSource: channel,
+    utmMedium: "affiliate",
+    utmCampaign: campaignName.toLowerCase().replace(/\s+/g, "-"),
+  })
+}
+
+/**
  * Extract UTM params from an existing URL.
  */
 export function extractUtmParams(urlString: string): UtmParams {

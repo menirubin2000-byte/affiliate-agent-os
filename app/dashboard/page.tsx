@@ -72,13 +72,16 @@ export const dynamic = "force-dynamic"
 
 const publishingStatusVariantMap = {
   pending: "secondary",
+  sent: "default",
   sent_to_wordpress: "default",
   failed: "destructive",
 } as const
 
 const draftStatusVariantMap = {
   draft: "secondary",
+  needs_review: "secondary",
   approved: "default",
+  needs_changes: "outline",
   rejected: "destructive",
 } as const
 
@@ -462,7 +465,9 @@ export default async function DashboardPage() {
     totalDrafts: 0,
     draftsByStatus: {
       draft: 0,
+      needs_review: 0,
       approved: 0,
+      needs_changes: 0,
       rejected: 0,
     },
     draftsByTemplateType: {
@@ -470,10 +475,14 @@ export default async function DashboardPage() {
       comparison: 0,
       buying_guide: 0,
       social_post: 0,
+      tiktok_script: 0,
+      quora_answer: 0,
+      reddit_post: 0,
     },
     totalPublishingJobs: 0,
     publishingJobsByStatus: {
       pending: 0,
+      sent: 0,
       sent_to_wordpress: 0,
       failed: 0,
     },
@@ -919,6 +928,21 @@ export default async function DashboardPage() {
               label: "Social post",
               value: summary.draftsByTemplateType.social_post,
               href: "/dashboard/drafts?template=social_post",
+            },
+            {
+              label: "TikTok script",
+              value: summary.draftsByTemplateType.tiktok_script,
+              href: "/dashboard/drafts?template=tiktok_script",
+            },
+            {
+              label: "Quora answer",
+              value: summary.draftsByTemplateType.quora_answer,
+              href: "/dashboard/drafts?template=quora_answer",
+            },
+            {
+              label: "Reddit post",
+              value: summary.draftsByTemplateType.reddit_post,
+              href: "/dashboard/drafts?template=reddit_post",
             },
           ]}
         />

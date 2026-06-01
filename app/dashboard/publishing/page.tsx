@@ -39,7 +39,12 @@ const statusOptions: Array<{ label: string; value: "all" | PublishingJobStatus }
 ]
 
 function isPublishingJobStatus(value?: string): value is PublishingJobStatus {
-  return value === "pending" || value === "sent_to_wordpress" || value === "failed"
+  return (
+    value === "pending" ||
+    value === "sent" ||
+    value === "sent_to_wordpress" ||
+    value === "failed"
+  )
 }
 
 function SendToWordPressForm({ draft }: { draft: Draft }) {

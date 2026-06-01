@@ -8,6 +8,7 @@ import type { Product } from "@/types/product"
 interface GenerationResult {
   aiModel: string
   draft: DraftCreateInput
+  failureReason?: string | null
 }
 
 let anthropicClient: Anthropic | null = null
@@ -91,6 +92,9 @@ Template guidance:
 - comparison: include how it compares, tradeoffs, best fit, and a careful CTA.
 - buying_guide: include what to look for, who should consider it, and a careful CTA.
 - social_post: write a concise post with disclosure and CTA.
+- tiktok_script: write a 45-60 second video script. Start with a hook (first 3 seconds), then 3 short points about the product, then CTA, then disclosure. Conversational tone, no SEO language.
+- quora_answer: write a helpful answer format. No spam. Include disclosure. Only include affiliate link if appropriate for the platform. Do not use "Target keyword" in the body.
+- reddit_post: write a natural community discussion post. No SEO tone, no "Target keyword" in the body, no fake personal use claims. Ask for real feedback. Include disclosure.
 
 ${buildProductSummary(product, templateType)}
 `.trim()
@@ -126,9 +130,7 @@ function parseDraftPayload(rawText: string) {
 }
 
 function getFallbackBody(product: Product, templateType: TemplateType) {
-  const keywordLine = product.targetKeyword
-    ? `Target keyword: ${product.targetKeyword}.`
-    : "Keyword strategy should be verified before publishing."
+  // targetKeyword belongs in metadata only, never in the post body
 
   if (templateType === "comparison") {
     return [
@@ -144,7 +146,6 @@ function getFallbackBody(product: Product, templateType: TemplateType) {
       "",
       "Affiliate disclosure: This draft may include affiliate links, and a commission may be earned at no extra cost to the buyer.",
       `CTA: Visit ${product.affiliateUrl} to review the official product details before making a decision.`,
-      keywordLine,
     ].join("\n")
   }
 
@@ -162,7 +163,6 @@ function getFallbackBody(product: Product, templateType: TemplateType) {
       "",
       "Affiliate disclosure: This draft may include affiliate links, and a commission may be earned at no extra cost to the buyer.",
       `CTA: Review the official product page here: ${product.affiliateUrl}`,
-      keywordLine,
     ].join("\n")
   }
 
@@ -171,7 +171,42 @@ function getFallbackBody(product: Product, templateType: TemplateType) {
       `${product.name} is worth a closer look for people evaluating ${product.category ?? "this category"} and wanting a more direct option.`,
       "Affiliate disclosure: This post may include affiliate links, and a commission may be earned at no extra cost to the buyer.",
       `CTA: Visit ${product.affiliateUrl} to verify the current offer and product details.`,
-      keywordLine,
+    ].join("\n")
+  }
+
+  if (templateType === "tiktok_script") {
+    return [
+      `[Hook] Looking for a solid ${product.category ?? "tool"} that actually works?`,
+      "",
+      `[Body] ${product.name} caught my attention because it fits a real use case without overcomplicating things.`,
+      "Product details should be verified from the official page before recording.",
+      "",
+      `[CTA] Link in bio to check it out: ${product.affiliateUrl}`,
+      "Affiliate disclosure: This video may include affiliate links, and a commission may be earned at no extra cost to you.",
+    ].join("\n")
+  }
+
+  if (templateType === "quora_answer") {
+    return [
+      `When looking at options in ${product.category ?? "this space"}, ${product.name} is one tool worth considering.`,
+      "",
+      "What stands out:",
+      "- The product page should be checked for current features and pricing.",
+      "- This answer is based on publicly available information and should be verified.",
+      "",
+      `For more details, you can visit: ${product.affiliateUrl}`,
+      "Affiliate disclosure: This answer may include affiliate links, and a commission may be earned at no extra cost to you.",
+    ].join("\n")
+  }
+
+  if (templateType === "reddit_post") {
+    return [
+      `Has anyone tried ${product.name} for ${product.category ?? "this use case"}?`,
+      "",
+      `I've been looking into options in ${product.category ?? "this space"} and came across ${product.name}. The product page lists some interesting features but I'd like to hear real experiences.`,
+      "",
+      `Check it out here: ${product.affiliateUrl}`,
+      "Affiliate disclosure: The link above may be an affiliate link. I may earn a commission at no extra cost to you.",
     ].join("\n")
   }
 
@@ -186,18 +221,21 @@ function getFallbackBody(product: Product, templateType: TemplateType) {
     "",
     "Affiliate disclosure: This draft may include affiliate links, and a commission may be earned at no extra cost to the buyer.",
     `CTA: Visit ${product.affiliateUrl} to verify pricing, features, and current terms.`,
-    keywordLine,
   ].join("\n")
 }
 
 function createStubDraft(product: Product, templateType: TemplateType): DraftCreateInput {
   const keyword = product.targetKeyword ?? `${product.name} review`
 
+  const titleMap: Partial<Record<TemplateType, string>> = {
+    social_post: `${product.name} social draft`,
+    tiktok_script: `${product.name} TikTok script draft`,
+    quora_answer: `${product.name} Quora answer draft`,
+    reddit_post: `${product.name} Reddit post draft`,
+  }
+
   return {
-    title:
-      templateType === "social_post"
-        ? `${product.name} social draft`
-        : `${product.name} ${templateType.replace("_", " ")} draft`,
+    title: titleMap[templateType] ?? `${product.name} ${templateType.replace("_", " ")} draft`,
     body: getFallbackBody(product, templateType),
     metaTitle: `${product.name} ${templateType.replace("_", " ")} | ${keyword}`.slice(0, 60),
     metaDescription: `Draft content for ${product.name}. Verify product details, pricing, and fit before publishing.`.slice(
@@ -246,7 +284,15 @@ async function generateWithOpenAI(product: Product, templateType: TemplateType) 
 }
 
 export function getContentTypeForTemplate(templateType: TemplateType): ContentType {
-  return templateType === "social_post" ? "social_post" : "review"
+  if (
+    templateType === "social_post" ||
+    templateType === "tiktok_script" ||
+    templateType === "quora_answer" ||
+    templateType === "reddit_post"
+  ) {
+    return "social_post"
+  }
+  return "review"
 }
 
 export async function generateDraftForProduct(
@@ -259,10 +305,12 @@ export async function generateDraftForProduct(
   if (provider === "anthropic" && process.env.ANTHROPIC_API_KEY) {
     try {
       return await generateWithAnthropic(product, templateType)
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Anthropic generation failed"
       return {
         aiModel: "stub-fallback",
         draft: createStubDraft(product, templateType),
+        failureReason: `AI fallback used: ${reason}`,
       }
     }
   }
@@ -270,10 +318,12 @@ export async function generateDraftForProduct(
   if (provider === "openai" && process.env.OPENAI_API_KEY) {
     try {
       return await generateWithOpenAI(product, templateType)
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "OpenAI generation failed"
       return {
         aiModel: "stub-fallback",
         draft: createStubDraft(product, templateType),
+        failureReason: `AI fallback used: ${reason}`,
       }
     }
   }
@@ -281,5 +331,6 @@ export async function generateDraftForProduct(
   return {
     aiModel: readiness.status === "configured" ? "stub-fallback" : "stub",
     draft: createStubDraft(product, templateType),
+    failureReason: readiness.status !== "configured" ? "No AI provider configured — using stub template" : null,
   }
 }

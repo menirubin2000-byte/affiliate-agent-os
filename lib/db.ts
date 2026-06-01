@@ -1,6 +1,7 @@
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import { buildOperatorActionItems, summarizeActionItems } from "@/lib/action-items"
 import { getSupabaseReadiness } from "@/lib/env"
+import { buildPostApprovalFingerprint, isPublishApprovalType } from "@/lib/approval-identity"
 import { buildDataQualityIssues, summarizeDataQuality } from "@/lib/data-quality"
 import { assertDraftStatusTransition, assertPublishingEligibility } from "@/lib/publishing-rules"
 import { buildPerformanceInsights, buildProductPerformanceSignal } from "@/lib/performance-insights"
@@ -47,6 +48,13 @@ import type {
   RecommendationType,
 } from "@/types/recommendation"
 import type { DashboardNeedsAttention, DashboardSummary } from "@/types/dashboard"
+import type {
+  Campaign,
+  CampaignStatus,
+  CampaignSummary,
+  CreateCampaignInput,
+} from "@/types/campaign"
+import { buildCampaignTrackingUrl } from "@/lib/utm-builder"
 import type { DataQualityIssue, DataQualitySummary } from "@/types/data-quality"
 import type { ActionItem, OperatorActionSummary } from "@/types/action-item"
 import type {
@@ -91,6 +99,7 @@ interface ProductRow {
   slug: string
   brand: string | null
   category: string | null
+  affiliate_link?: string | null
   affiliate_url: string
   price: number | string | null
   commission_rate: number | string | null
@@ -120,6 +129,7 @@ interface DraftRow {
   approval_notes: string | null
   created_at: string
   updated_at: string
+  campaign_id: string | null
   products?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null
 }
 
@@ -128,6 +138,8 @@ interface PublishingJobRow {
   content_draft_id: string
   target_platform: PublishingTargetPlatform
   status: PublishingJobStatus
+  published_url: string | null
+  external_post_id: string | null
   wordpress_post_id: string | null
   wordpress_post_url: string | null
   error_message: string | null
@@ -272,6 +284,7 @@ function mapProduct(row: ProductRow): Product {
     slug: row.slug,
     brand: row.brand,
     category: row.category,
+    affiliateLink: row.affiliate_link ?? row.affiliate_url,
     affiliateUrl: row.affiliate_url,
     price: toNullableNumber(row.price),
     commissionRate: toNullableNumber(row.commission_rate),
@@ -311,6 +324,7 @@ function mapDraft(row: DraftRow): Draft {
       has_required_structure: false,
     },
     status: row.status,
+    campaignId: row.campaign_id,
     aiModel: row.ai_model,
     approvalNotes: row.approval_notes,
     createdAt: row.created_at,
@@ -337,6 +351,8 @@ function mapPublishingJob(row: PublishingJobRow): PublishingJob {
     productSlug: productRecord?.slug ?? "unknown-product",
     targetPlatform: row.target_platform,
     status: row.status,
+    publishedUrl: row.published_url ?? row.wordpress_post_url ?? null,
+    externalPostId: row.external_post_id ?? row.wordpress_post_id ?? null,
     wordpressPostId: row.wordpress_post_id,
     wordpressPostUrl: row.wordpress_post_url,
     errorMessage: row.error_message,
@@ -388,7 +404,7 @@ function getPublishingWorkflow(
   if (job.status === "failed") {
     return {
       workflowLabel: "wordpress_failed",
-      nextAction: buildNextAction("Investigate failed WordPress job", "/dashboard/publishing"),
+      nextAction: buildNextAction("Investigate failed publishing job", "/dashboard/publishing"),
       signals,
     }
   }
@@ -401,7 +417,7 @@ function getPublishingWorkflow(
     }
   }
 
-  if (job.status === "sent_to_wordpress" && !hasPerformanceData) {
+  if ((job.status === "sent" || job.status === "sent_to_wordpress") && !hasPerformanceData) {
     return {
       workflowLabel: "published_draft_pending_performance",
       nextAction: buildNextAction("Add performance record", "/dashboard/performance"),
@@ -569,7 +585,7 @@ async function computeRecommendations() {
         severity: "warning",
         title: `${draft.productName} approved draft is not queued`,
         description:
-          "This approved draft does not have a WordPress publishing job yet.",
+          "This approved draft is not queued for any target platform yet.",
         relatedEntityType: "draft",
         relatedEntityKey: draft.id,
         actionLabel: "Open publishing queue",
@@ -623,8 +639,8 @@ async function computeRecommendations() {
         id: `failed-publishing-job:${job.id}`,
         type: "failed_publishing_job",
         severity: "critical",
-        title: `${job.productName} WordPress job failed`,
-        description: job.errorMessage ?? "The WordPress handoff failed and needs a manual retry.",
+        title: `${job.productName} publishing job failed`,
+        description: job.errorMessage ?? "The publishing job failed and needs a manual retry.",
         relatedEntityType: "publishing_job",
         relatedEntityKey: job.id,
         actionLabel: "Open publishing queue",
@@ -1008,7 +1024,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       totalDrafts: 0,
       draftsByStatus: {
         draft: 0,
+        needs_review: 0,
         approved: 0,
+        needs_changes: 0,
         rejected: 0,
       },
       draftsByTemplateType: {
@@ -1016,10 +1034,14 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
         comparison: 0,
         buying_guide: 0,
         social_post: 0,
+        tiktok_script: 0,
+        quora_answer: 0,
+        reddit_post: 0,
       },
       totalPublishingJobs: 0,
       publishingJobsByStatus: {
         pending: 0,
+        sent: 0,
         sent_to_wordpress: 0,
         failed: 0,
       },
@@ -1038,6 +1060,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     comparisonDraftResult,
     buyingGuideDraftResult,
     socialPostDraftResult,
+    tiktokScriptDraftResult,
+    quoraAnswerDraftResult,
+    redditPostDraftResult,
     publishingJobsResult,
     queuedJobsResult,
     sentJobsResult,
@@ -1074,6 +1099,18 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       .from("content_drafts")
       .select("*", { count: "exact", head: true })
       .eq("template_type", "social_post"),
+    supabase
+      .from("content_drafts")
+      .select("*", { count: "exact", head: true })
+      .eq("template_type", "tiktok_script"),
+    supabase
+      .from("content_drafts")
+      .select("*", { count: "exact", head: true })
+      .eq("template_type", "quora_answer"),
+    supabase
+      .from("content_drafts")
+      .select("*", { count: "exact", head: true })
+      .eq("template_type", "reddit_post"),
     supabase.from("publishing_jobs").select("*", { count: "exact", head: true }),
     supabase
       .from("publishing_jobs")
@@ -1129,6 +1166,18 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     throw new Error(`Unable to count social post drafts: ${socialPostDraftResult.error.message}`)
   }
 
+  if (tiktokScriptDraftResult.error) {
+    throw new Error(`Unable to count TikTok script drafts: ${tiktokScriptDraftResult.error.message}`)
+  }
+
+  if (quoraAnswerDraftResult.error) {
+    throw new Error(`Unable to count Quora answer drafts: ${quoraAnswerDraftResult.error.message}`)
+  }
+
+  if (redditPostDraftResult.error) {
+    throw new Error(`Unable to count Reddit post drafts: ${redditPostDraftResult.error.message}`)
+  }
+
   if (publishingJobsResult.error) {
     throw new Error(`Unable to count publishing jobs: ${publishingJobsResult.error.message}`)
   }
@@ -1151,7 +1200,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     totalDrafts: allDraftsResult.count ?? 0,
     draftsByStatus: {
       draft: draftOnlyResult.count ?? 0,
+      needs_review: 0,
       approved: approvedDraftResult.count ?? 0,
+      needs_changes: 0,
       rejected: rejectedDraftResult.count ?? 0,
     },
     draftsByTemplateType: {
@@ -1159,10 +1210,14 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       comparison: comparisonDraftResult.count ?? 0,
       buying_guide: buyingGuideDraftResult.count ?? 0,
       social_post: socialPostDraftResult.count ?? 0,
+      tiktok_script: tiktokScriptDraftResult.count ?? 0,
+      quora_answer: quoraAnswerDraftResult.count ?? 0,
+      reddit_post: redditPostDraftResult.count ?? 0,
     },
     totalPublishingJobs: publishingJobsResult.count ?? 0,
     publishingJobsByStatus: {
       pending: queuedJobsResult.count ?? 0,
+      sent: 0,
       sent_to_wordpress: sentJobsResult.count ?? 0,
       failed: failedJobsResult.count ?? 0,
     },
@@ -1181,7 +1236,7 @@ export async function listDrafts(filters?: {
   let query = supabase
     .from("content_drafts")
     .select(
-      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
+      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, campaign_id, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
     )
     .order("created_at", { ascending: false })
 
@@ -1211,7 +1266,7 @@ export async function listRecentDrafts(limit = 5) {
   const { data, error } = await supabase
     .from("content_drafts")
     .select(
-      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
+      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, campaign_id, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
     )
     .order("created_at", { ascending: false })
     .limit(limit)
@@ -1228,7 +1283,7 @@ export async function getDraftById(draftId: string) {
   const { data, error } = await supabase
     .from("content_drafts")
     .select(
-      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
+      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, campaign_id, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
     )
     .eq("id", draftId)
     .maybeSingle()
@@ -1248,6 +1303,7 @@ export async function createDraft(params: {
   aiModel: string
   qualityChecks: QualityChecks
   approvalNotes?: string | null
+  campaignId?: string | null
   changeSource?: DraftChangeSource
 }) {
   const supabase = await requireDatabase()
@@ -1273,6 +1329,7 @@ export async function createDraft(params: {
       target_keyword: params.draft.targetKeyword?.trim() || null,
       quality_checks: params.qualityChecks,
       status: "draft" as const,
+      campaign_id: params.campaignId?.trim() || null,
       ai_model: params.aiModel,
       approval_notes: params.approvalNotes?.trim() || null,
     })
@@ -1403,7 +1460,7 @@ export async function getApprovedDraftById(draftId: string) {
   const { data, error } = await supabase
     .from("content_drafts")
     .select(
-      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
+      "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, campaign_id, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
     )
     .eq("id", draftId)
     .eq("status", "approved")
@@ -1426,7 +1483,7 @@ export async function listApprovedDraftsEligibleForPublishing() {
     supabase
       .from("content_drafts")
       .select(
-        "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
+        "id, product_id, content_type, template_type, title, body, meta_title, meta_description, target_keyword, quality_checks, status, campaign_id, ai_model, approval_notes, created_at, updated_at, products(name, slug)",
       )
       .eq("status", "approved")
       .order("created_at", { ascending: false }),
@@ -1539,7 +1596,8 @@ export async function createPublishingJob(params: {
 
   assertPublishingEligibility({
     draftStatus: draft.status,
-    alreadySentToWordPress: Boolean(existingSuccess),
+    alreadyPublished: Boolean(existingSuccess),
+    targetPlatform,
   })
 
   const { data, error } = await supabase
@@ -1561,16 +1619,32 @@ export async function createPublishingJob(params: {
 
 export async function updatePublishingJobSuccess(params: {
   jobId: string
-  wordpressPostId: string
+  /** Platform-neutral external post ID (preferred) */
+  externalPostId?: string
+  /** Platform-neutral published URL (preferred) */
+  publishedUrl?: string | null
+  /** @deprecated Use externalPostId instead */
+  wordpressPostId?: string
+  /** @deprecated Use publishedUrl instead */
   wordpressPostUrl?: string | null
 }) {
   const supabase = await requireDatabase()
+  const externalPostId = params.externalPostId ?? params.wordpressPostId ?? null
+  const publishedUrl = params.publishedUrl ?? params.wordpressPostUrl ?? null
+
+  if (!publishedUrl) {
+    throw new Error(
+      "Cannot mark publishing job as sent without a real publishedUrl. " +
+      "A draft is only considered published when a real URL exists.",
+    )
+  }
+
   const { error } = await supabase
     .from("publishing_jobs")
     .update({
       status: "sent_to_wordpress" as const,
-      wordpress_post_id: params.wordpressPostId,
-      wordpress_post_url: params.wordpressPostUrl ?? null,
+      wordpress_post_id: externalPostId,
+      wordpress_post_url: publishedUrl,
       error_message: null,
     })
     .eq("id", params.jobId)
@@ -3097,6 +3171,28 @@ export async function getApprovalItemById(id: string): Promise<ApprovalItem | nu
 
 export async function createApprovalItem(input: CreateApprovalItemInput): Promise<ApprovalItem> {
   const supabase = getServiceRoleSupabase()
+
+  if (isPublishApprovalType(input.approvalType)) {
+    const fingerprint = buildPostApprovalFingerprint(input)
+    const { data: existing, error: existingError } = await supabase
+      .from("approval_items")
+      .select(APPROVAL_ITEM_SELECT)
+      .eq("product_id", input.productId ?? null)
+      .eq("platform", input.platform ?? null)
+      .like("approval_type", "publish_%")
+      .order("created_at", { ascending: false })
+
+    if (existingError) {
+      throw new Error(`Failed to check existing approval items: ${existingError.message}`)
+    }
+
+    const duplicate = (existing ?? [])
+      .map((row) => mapApprovalItem(row as ApprovalItemRow))
+      .find((item) => buildPostApprovalFingerprint(item) === fingerprint)
+
+    if (duplicate) return duplicate
+  }
+
   const { data, error } = await supabase
     .from("approval_items")
     .insert({
@@ -3162,4 +3258,167 @@ export async function getApprovalItemSummary(): Promise<ApprovalItemSummary> {
     published: items.filter((i) => i.status === "published").length,
     needsChanges: items.filter((i) => i.status === "needs_changes").length,
   }
+}
+
+// ── Campaigns ──────────────────────────────────────────────────────
+
+interface CampaignRow {
+  id: string
+  name: string
+  product_id: string
+  channel: string
+  status: CampaignStatus
+  notes: string | null
+  created_at: string
+  updated_at: string
+  products?: { name: string; affiliate_url: string } | Array<{ name: string; affiliate_url: string }> | null
+  content_drafts?: Array<{ id: string }> | null
+}
+
+function mapCampaign(row: CampaignRow): Campaign {
+  const productRecord = Array.isArray(row.products) ? row.products[0] : row.products
+  const draftCount = Array.isArray(row.content_drafts) ? row.content_drafts.length : 0
+  const affiliateUrl = productRecord?.affiliate_url ?? ""
+
+  let suggestedTrackingUrl: string | null = null
+  if (affiliateUrl) {
+    const result = buildCampaignTrackingUrl(affiliateUrl, row.channel, row.name)
+    if (result.valid) suggestedTrackingUrl = result.finalUrl
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    productId: row.product_id,
+    productName: productRecord?.name ?? "Unknown product",
+    channel: row.channel,
+    status: row.status,
+    notes: row.notes,
+    suggestedTrackingUrl,
+    draftCount,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+const CAMPAIGN_SELECT =
+  "id, name, product_id, channel, status, notes, created_at, updated_at, products(name, affiliate_url), content_drafts(id)"
+
+export async function listCampaigns(filters?: {
+  channel?: string
+  status?: CampaignStatus
+  productId?: string
+}): Promise<Campaign[]> {
+  if (!isSupabaseConfigured()) return []
+
+  const supabase = await requireDatabase()
+  let query = supabase
+    .from("campaigns")
+    .select(CAMPAIGN_SELECT)
+    .order("created_at", { ascending: false })
+
+  if (filters?.channel) query = query.eq("channel", filters.channel)
+  if (filters?.status) query = query.eq("status", filters.status)
+  if (filters?.productId) query = query.eq("product_id", filters.productId)
+
+  const { data, error } = await query
+  if (error) throw new Error(`Unable to list campaigns: ${error.message}`)
+  return (data as CampaignRow[]).map(mapCampaign)
+}
+
+export async function getCampaignById(id: string): Promise<Campaign | null> {
+  if (!isSupabaseConfigured()) return null
+
+  const supabase = await requireDatabase()
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select(CAMPAIGN_SELECT)
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error) throw new Error(`Unable to load campaign: ${error.message}`)
+  if (!data) return null
+  return mapCampaign(data as CampaignRow)
+}
+
+export async function createCampaign(input: CreateCampaignInput): Promise<{ id: string }> {
+  const supabase = await requireDatabase()
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .insert({
+      name: input.name.trim(),
+      product_id: input.productId,
+      channel: input.channel.trim(),
+      notes: input.notes?.trim() || null,
+      status: "draft" as const,
+    })
+    .select("id")
+    .single()
+
+  if (error) throw new Error(`Unable to create campaign: ${error.message}`)
+  return { id: String(data.id) }
+}
+
+export async function updateCampaignStatus(
+  campaignId: string,
+  status: CampaignStatus,
+): Promise<void> {
+  const supabase = await requireDatabase()
+
+  const { error } = await supabase
+    .from("campaigns")
+    .update({ status })
+    .eq("id", campaignId)
+
+  if (error) throw new Error(`Unable to update campaign status: ${error.message}`)
+}
+
+export async function findOrCreateCampaign(
+  productId: string,
+  channel: string,
+  productName: string,
+): Promise<{ id: string }> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("Supabase is not configured.")
+  }
+
+  const existing = await listCampaigns({ productId, channel })
+  const active = existing.find((c) => c.status !== "archived")
+  if (active) return { id: active.id }
+
+  return createCampaign({
+    name: `${productName} - ${channel}`,
+    productId,
+    channel,
+  })
+}
+
+export async function getCampaignSummary(): Promise<CampaignSummary> {
+  if (!isSupabaseConfigured()) {
+    return { total: 0, active: 0, draftsWithCampaign: 0, draftsWithoutCampaign: 0 }
+  }
+
+  const supabase = await requireDatabase()
+
+  const [allResult, activeResult, withCampaignResult, withoutCampaignResult] = await Promise.all([
+    supabase.from("campaigns").select("*", { count: "exact", head: true }),
+    supabase.from("campaigns").select("*", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("content_drafts").select("*", { count: "exact", head: true }).not("campaign_id", "is", null),
+    supabase.from("content_drafts").select("*", { count: "exact", head: true }).is("campaign_id", null),
+  ])
+
+  if (allResult.error) throw new Error(`Unable to count campaigns: ${allResult.error.message}`)
+  if (activeResult.error) throw new Error(`Unable to count active campaigns: ${activeResult.error.message}`)
+
+  return {
+    total: allResult.count ?? 0,
+    active: activeResult.count ?? 0,
+    draftsWithCampaign: withCampaignResult.count ?? 0,
+    draftsWithoutCampaign: withoutCampaignResult.count ?? 0,
+  }
+}
+
+export async function listDraftsForCampaign(campaignId: string): Promise<Draft[]> {
+  return (await listDrafts()).filter((d) => d.campaignId === campaignId)
 }

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Affiliate Agent OS Browser Helper</title>
+    <style>
+      body {
+        min-width: 300px;
+        margin: 0;
+        padding: 14px;
+        background: #111;
+        color: #f5f5f5;
+        font-family: Arial, sans-serif;
+      }
+      label,
+      input,
+      button {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      input {
+        margin: 6px 0 10px;
+        padding: 8px;
+        background: #1d1d1d;
+        border: 1px solid #555;
+        color: #fff;
+      }
+      button {
+        margin: 4px 0;
+        padding: 8px;
+        background: #06b6d4;
+        border: 0;
+        color: #001014;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 10px;
+        color: #a7f3d0;
+        font-size: 12px;
+      }
+      .note {
+        color: #bbb;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Affiliate Agent OS Browser Helper</h3>
+    <p class="note">Fills approved content only. Does not read passwords, cookies, or payment fields.</p>
+    <label>
+      App origin
+      <input id="appOrigin" value="https://affiliate-agent-os.vercel.app" />
+    </label>
+    <button id="saveOrigin">Save app origin</button>
+    <button id="connect">Connect / heartbeat</button>
+    <button id="openNext">Open next queued job</button>
+    <button id="captureUrl">Capture current post URL</button>
+    <div id="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

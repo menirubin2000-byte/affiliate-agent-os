@@ -6,6 +6,7 @@ export interface Product {
   slug: string
   brand: string | null
   category: string | null
+  affiliateLink: string
   affiliateUrl: string
   price: number | null
   commissionRate: number | null
@@ -24,6 +25,7 @@ export interface CreateProductInput {
   slug: string
   brand?: string | null
   category?: string | null
+  affiliateLink?: string
   affiliateUrl: string
   price?: number | null
   commissionRate?: number | null

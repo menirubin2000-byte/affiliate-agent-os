@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   BarChart3,
   Bookmark,
+  Bot,
   Building2,
   CheckSquare,
   ClipboardList,
@@ -14,6 +15,7 @@ import {
   ExternalLink,
   FileBarChart,
   FileText,
+  FolderKanban,
   Languages,
   LayoutDashboard,
   LogOut,
@@ -34,6 +36,7 @@ const englishNavigation = [
   { href: "/dashboard/approvals", label: "Approvals", icon: CheckSquare },
   { href: "/dashboard/drafts", label: "Drafts", icon: FileText },
   { href: "/dashboard/publishing", label: "Publishing", icon: Send },
+  { href: "/dashboard/campaigns", label: "Campaigns", icon: FolderKanban },
   { href: "/dashboard/campaign-links", label: "Campaign Links", icon: ExternalLink },
   { href: "/dashboard/affiliate-programs", label: "Affiliate Programs", icon: Building2 },
   { href: "/dashboard/performance", label: "Performance", icon: Activity },
@@ -46,6 +49,10 @@ const englishNavigation = [
 
 const hebrewNavigation = [
   { href: "/dashboard/he", label: "בית", icon: LayoutDashboard },
+  { href: "/dashboard/he/campaigns", label: "קמפיינים", icon: FolderKanban },
+  { href: "/dashboard/he/approve", label: "אישור טיוטות", icon: CheckSquare },
+  { href: "/dashboard/he/publish-ready", label: "מוכן לפרסום", icon: Send },
+  { href: "/dashboard/he/browser-control", label: "שליטה בדפדפן", icon: Bot },
   { href: "/dashboard/he#products", label: "מוצרים", icon: Package2 },
   { href: "/dashboard/he#programs", label: "תוכניות שותפים", icon: Building2 },
   { href: "/dashboard/he#published", label: "מה פורסם", icon: Send },
@@ -54,7 +61,7 @@ const hebrewNavigation = [
   { href: "/dashboard/he#rejected", label: "נדחה", icon: AlertTriangle },
   { href: "/dashboard/he#actions", label: "פעולה עכשיו", icon: Command },
   { href: "/dashboard/he#performance", label: "נתונים אמיתיים", icon: Activity },
-  { href: "/dashboard/operator", label: "אנגלית", icon: Languages },
+  { href: "/dashboard/operator", label: "English", icon: Languages },
 ]
 
 export function DashboardSidebar({
@@ -80,7 +87,7 @@ export function DashboardSidebar({
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isHebrew
-            ? "אותה מערכת, אותם נתונים, ממשק עברי מלא לעבודה יומית."
+            ? "אותה מערכת, אותם נתונים, ממשק עברי לעבודה יומית."
             : "Products, AI drafts, human approval, publishing queue, performance tracking."}
         </p>
       </div>
@@ -120,7 +127,7 @@ export function DashboardSidebar({
       <div className="border-t border-border/70 px-6 py-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <BarChart3 className="size-4" />
-          {isHebrew ? "פרסום אוטומטי כבוי." : "Live publishing is disabled."}
+          {isHebrew ? "פרסום חי כבוי עד שיש URL אמיתי." : "Live publishing is disabled."}
         </div>
         <a
           href="/logout"

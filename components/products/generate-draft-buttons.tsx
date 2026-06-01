@@ -12,6 +12,9 @@ const templateOptions: Array<{ label: string; value: TemplateType }> = [
   { label: "Comparison", value: "comparison" },
   { label: "Buying Guide", value: "buying_guide" },
   { label: "Social Post", value: "social_post" },
+  { label: "TikTok Script", value: "tiktok_script" },
+  { label: "Quora Answer", value: "quora_answer" },
+  { label: "Reddit Post", value: "reddit_post" },
 ]
 
 export function GenerateDraftButtons({ productId }: { productId: string }) {

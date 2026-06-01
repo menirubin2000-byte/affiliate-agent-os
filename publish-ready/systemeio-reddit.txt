@@ -1,0 +1,33 @@
+PLATFORM: Reddit
+PRODUCT: Systeme.io
+SUBREDDIT: r/Entrepreneur or r/smallbusiness or r/SaaS
+POST TYPE: Text post
+
+---
+
+TITLE:
+Has anyone used Systeme.io for funnels, email marketing, and online courses?
+
+BODY:
+I'm comparing all-in-one marketing platforms for small online businesses, and Systeme.io came up as one option.
+
+From what I understand, it combines:
+- sales funnels and landing pages in one builder
+- built-in email marketing with automations
+- online course and digital product hosting
+- blog and website builder included
+- free plan available with core features
+
+The main reason I'm checking it is because using too many separate tools can become messy fast, especially when you just want to test an offer or build a simple funnel.
+
+I'm mainly looking for real user feedback:
+
+- Is the funnel builder easy to use?
+- How is the email marketing side?
+- Is it good enough for selling courses or digital products?
+- Any limits or problems after using it for a while?
+- Would you recommend it for beginners?
+
+Affiliate disclosure: This link may be an affiliate link. I may earn a commission at no extra cost to you.
+
+Link: https://systeme.io/?sa=sa0272930337c3024fcafe085f6b63e73bbc0e3365

@@ -49,7 +49,9 @@ export const dynamic = "force-dynamic"
 
 const draftStatusVariant = {
   draft: "secondary",
+  needs_review: "secondary",
   approved: "default",
+  needs_changes: "outline",
   rejected: "destructive",
 } as const
 
