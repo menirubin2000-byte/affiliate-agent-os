@@ -138,6 +138,21 @@ function CampaignCard({ product }: { product: CampaignWorkflowProduct }) {
           </div>
         ) : null}
 
+        {product.sourceContent ? (
+          <div className="rounded-lg border bg-muted/10 p-3 text-sm">
+            {product.eligiblePlatforms.length ? (
+              <span>
+                פלטפורמות מוכנות לאישור קמפיין:{" "}
+                {product.eligiblePlatforms.map((platform) => platformLabels[platform]).join(", ")}
+              </span>
+            ) : product.approvedCampaign ? (
+              <span>אין פלטפורמות חדשות לאישור. הקמפיין כבר אושר, ופרסום עדיין דורש URL חי מאומת.</span>
+            ) : (
+              <span>אין פלטפורמות מוכנות לאישור כרגע. ראה חסימות איכות/מדיניות לכל פלטפורמה.</span>
+            )}
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-2">
           {!product.sourceContent ? (
             <form action={createSourceFromApprovedDraftAction}>
@@ -157,7 +172,7 @@ function CampaignCard({ product }: { product: CampaignWorkflowProduct }) {
               <form action={approveCampaignAction}>
                 <input type="hidden" name="sourceContentId" value={product.sourceContent.id} />
                 <Button type="submit" disabled={product.eligiblePlatforms.length === 0}>
-                  אשר קמפיין מוצר
+                  אשר קמפיין מוצר - לא מפרסם
                 </Button>
               </form>
             </>

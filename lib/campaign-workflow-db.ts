@@ -248,6 +248,28 @@ function mapApproval(row: CampaignApprovalRow): CampaignApprovalRecord {
   }
 }
 
+function isEligibleForCampaignApproval(row: PlatformAdaptationRow) {
+  return (
+    row.auto_quality_status === "auto_quality_passed" &&
+    row.policy_check_status === "allowed" &&
+    row.campaign_approval_status !== "campaign_approved"
+  )
+}
+
+function buildExcludedPlatforms(rows: PlatformAdaptationRow[], eligible: PlatformAdaptationRow[]) {
+  const eligibleIds = new Set(eligible.map((row) => row.id))
+
+  return Object.fromEntries(
+    rows
+      .filter((row) => !eligibleIds.has(row.id))
+      .map((row) => [row.platform, row.blocking_reason ?? row.policy_check_status]),
+  )
+}
+
+function uniqueCampaignPlatforms(platforms: CampaignPlatform[]) {
+  return [...new Set(platforms)]
+}
+
 function mapPublished(row: PublishedRecordRow): PublishedRecord {
   return {
     id: row.id,
@@ -350,7 +372,11 @@ export async function getCampaignWorkflowProducts(): Promise<CampaignWorkflowPro
       .filter((row) => row.product_id === product.id && (!sourceContent || row.source_content_id === sourceContent.id))
       .map((row) => mapAdaptation(row, product.name))
     const approvedCampaign = ((approvalsResult.data ?? []) as CampaignApprovalRow[])
-      .filter((row) => row.product_id === product.id && (!sourceContent || row.source_content_id === sourceContent.id))
+      .filter((row) =>
+        row.status === "approved" &&
+        row.product_id === product.id &&
+        (!sourceContent || row.source_content_id === sourceContent.id),
+      )
       .map(mapApproval)[0] ?? null
     const publishedRecords = ((publishedResult.data ?? []) as PublishedRecordRow[])
       .filter((row) => row.product_id === product.id)
@@ -533,39 +559,65 @@ export async function approveCampaign(sourceContentId: string): Promise<Campaign
   if (adaptationsError) throw new Error(`Unable to load adaptations: ${adaptationsError.message}`)
 
   const rows = (adaptations ?? []) as PlatformAdaptationRow[]
-  const eligible = rows.filter((row) =>
-    row.auto_quality_status === "auto_quality_passed" &&
-    row.policy_check_status === "allowed" &&
-    row.campaign_approval_status !== "campaign_approved",
-  )
-  const excluded = Object.fromEntries(
-    rows
-      .filter((row) => !eligible.some((eligibleRow) => eligibleRow.id === row.id))
-      .map((row) => [row.platform, row.blocking_reason ?? row.policy_check_status]),
-  )
+  const eligible = rows.filter(isEligibleForCampaignApproval)
+  const excluded = buildExcludedPlatforms(rows, eligible)
 
-  if (!eligible.length) throw new Error("No eligible platform adaptations are ready for campaign approval.")
-
-  const { data: approval, error } = await supabase
+  const { data: existingApproval, error: existingApprovalError } = await supabase
     .from("campaign_approvals")
-    .insert({
-      product_id: source.product_id,
-      source_content_id: sourceContentId,
-      status: "approved",
-      approved_platforms: eligible.map((row) => row.platform),
-      excluded_platforms: excluded,
-      approved_by: "MENI",
-      approval_notes: "Single human campaign approval. Blocked platforms remain excluded.",
-    })
     .select("*")
-    .single()
+    .eq("source_content_id", sourceContentId)
+    .eq("status", "approved")
+    .order("approved_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existingApprovalError) {
+    throw new Error(`Unable to load existing campaign approval: ${existingApprovalError.message}`)
+  }
+
+  if (!eligible.length) {
+    if (existingApproval) return mapApproval(existingApproval as CampaignApprovalRow)
+
+    throw new Error("No eligible platform adaptations are ready for campaign approval.")
+  }
+
+  const approvedPlatforms = uniqueCampaignPlatforms([
+    ...(((existingApproval as CampaignApprovalRow | null)?.approved_platforms ?? []) as CampaignPlatform[]),
+    ...eligible.map((row) => row.platform),
+  ])
+  const approvalPayload = {
+    product_id: source.product_id,
+    source_content_id: sourceContentId,
+    status: "approved",
+    approved_platforms: approvedPlatforms,
+    excluded_platforms: excluded,
+    approved_by: "MENI",
+    approval_notes: "Single human campaign approval. Blocked platforms remain excluded.",
+  }
+
+  const approvalQuery = existingApproval
+    ? supabase
+        .from("campaign_approvals")
+        .update(approvalPayload)
+        .eq("id", (existingApproval as CampaignApprovalRow).id)
+        .select("*")
+        .single()
+    : supabase
+        .from("campaign_approvals")
+        .insert(approvalPayload)
+        .select("*")
+        .single()
+
+  const { data: approval, error } = await approvalQuery
 
   if (error) throw new Error(`Unable to approve campaign: ${error.message}`)
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("platform_adaptations")
     .update({ campaign_approval_status: "campaign_approved" })
     .in("id", eligible.map((row) => row.id))
+
+  if (updateError) throw new Error(`Unable to mark adaptations as campaign approved: ${updateError.message}`)
 
   return mapApproval(approval as CampaignApprovalRow)
 }
