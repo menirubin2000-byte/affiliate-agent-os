@@ -158,6 +158,34 @@ type PublishedRecordRow = {
   updated_at: string
 }
 
+type ApprovedDraftRow = {
+  id: string
+  title: string | null
+  body: string | null
+  target_keyword: string | null
+  template_type: string | null
+  quality_checks: Record<string, unknown> | null
+  updated_at: string
+}
+
+const CANONICAL_DRAFT_TEMPLATE_PRIORITY: Record<string, number> = {
+  review: 0,
+  comparison: 1,
+  buying_guide: 2,
+  reddit_post: 3,
+  quora_answer: 4,
+  social_post: 5,
+  tiktok_script: 6,
+}
+
+function compareApprovedDraftsForSource(a: ApprovedDraftRow, b: ApprovedDraftRow) {
+  const aPriority = CANONICAL_DRAFT_TEMPLATE_PRIORITY[a.template_type ?? ""] ?? 99
+  const bPriority = CANONICAL_DRAFT_TEMPLATE_PRIORITY[b.template_type ?? ""] ?? 99
+
+  if (aPriority !== bPriority) return aPriority - bPriority
+  return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+}
+
 function mapSource(row: SourceContentRow, productName?: string | null): SourceContent {
   return {
     id: row.id,
@@ -371,18 +399,28 @@ export async function createSourceContentFromLatestApprovedDraft(productId: stri
 
   const { data: draft, error: draftError } = await supabase
     .from("content_drafts")
-    .select("title, body, target_keyword, quality_checks, updated_at")
+    .select("id, title, body, target_keyword, template_type, quality_checks, updated_at")
     .eq("product_id", productId)
     .eq("status", "approved")
     .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(20)
 
   if (draftError) throw new Error(`Unable to load approved draft: ${draftError.message}`)
-  if (!draft?.body?.trim()) throw new Error("No approved draft exists for this product.")
+  const approvedDraft = ((draft ?? []) as ApprovedDraftRow[])
+    .filter((candidate) => Boolean(candidate.body?.trim()))
+    .sort(compareApprovedDraftsForSource)[0]
 
-  const title = draft.title?.trim() || `${product.name} campaign`
-  const contentHash = hashCampaignContent([productId, title, draft.body, draft.target_keyword])
+  if (!approvedDraft?.body?.trim()) throw new Error("No approved draft exists for this product.")
+
+  const title = approvedDraft.title?.trim() || `${product.name} campaign`
+  const contentHash = hashCampaignContent([productId, title, approvedDraft.body, approvedDraft.target_keyword])
+  // The live source_contents schema intentionally has no source_draft_id column yet.
+  // Preserve traceability in quality_checks so the canonical source can be audited without a schema change.
+  const qualityChecks = {
+    ...(approvedDraft.quality_checks ?? {}),
+    sourceDraftId: approvedDraft.id,
+    sourceDraftTemplateType: approvedDraft.template_type,
+  }
 
   const { data, error } = await supabase
     .from("source_contents")
@@ -391,10 +429,10 @@ export async function createSourceContentFromLatestApprovedDraft(productId: stri
       campaign_name: `${product.name} campaign`,
       angle: product.content_angle ?? null,
       title,
-      body: draft.body,
-      target_keyword: draft.target_keyword ?? null,
+      body: approvedDraft.body,
+      target_keyword: approvedDraft.target_keyword ?? null,
       content_hash: contentHash,
-      quality_checks: draft.quality_checks ?? {},
+      quality_checks: qualityChecks,
       status: "active",
     }, { onConflict: "product_id,content_hash" })
     .select("*")
@@ -433,6 +471,7 @@ export async function syncPlatformAdaptations(sourceContentId: string): Promise<
       platform,
       sourceBody: sourceRow.body,
       campaignLinkUrl,
+      affiliateLink,
     })
     const { quality, policy } = buildCampaignQualityChecks({
       platform,

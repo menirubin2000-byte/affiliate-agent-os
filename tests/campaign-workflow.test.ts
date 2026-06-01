@@ -19,7 +19,7 @@ function baseBody(link = affiliateLink) {
   ].join("\n\n")
 }
 
-test("linkedin content passes deterministic campaign quality checks", () => {
+test("linkedin content requires manual verification before publish readiness", () => {
   const { quality, policy } = buildCampaignQualityChecks({
     platform: "linkedin",
     title: "Systeme.io Review",
@@ -29,9 +29,9 @@ test("linkedin content passes deterministic campaign quality checks", () => {
     campaignLinkUrl: affiliateLink,
   })
 
-  assert.equal(policy.status, "allowed")
-  assert.equal(quality.passed, true)
-  assert.deepEqual(quality.blockers, [])
+  assert.equal(policy.status, "requires_manual_verification")
+  assert.equal(quality.passed, false)
+  assert.equal(quality.blockers.includes("linkedin_manual_verification_required"), true)
 })
 
 test("missing affiliate link blocks platforms that allow affiliate links", () => {
@@ -60,7 +60,7 @@ test("quora adaptations remove direct affiliate links and remain manual verifica
   })
 
   assert.equal(body.includes(affiliateLink), false)
-  assert.equal(policy.status, "unclear")
+  assert.equal(policy.status, "requires_manual_verification")
 })
 
 test("quora with a direct affiliate link is prohibited", () => {

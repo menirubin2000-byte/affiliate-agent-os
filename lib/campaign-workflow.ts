@@ -93,11 +93,12 @@ export function buildPlatformBody(input: {
   platform: CampaignPlatform
   sourceBody: string
   campaignLinkUrl: string | null
+  affiliateLink?: string | null
 }) {
   const sourceBody = input.sourceBody.trim()
 
   if (input.platform === "quora") {
-    return removeAffiliateLinks(sourceBody, input.campaignLinkUrl)
+    return removeAffiliateLinks(sourceBody, [input.campaignLinkUrl, input.affiliateLink])
   }
 
   if (!input.campaignLinkUrl) return sourceBody
@@ -166,11 +167,12 @@ function isPlatformCompatible(platform: CampaignPlatform, body: string) {
   return true
 }
 
-function removeAffiliateLinks(body: string, campaignLinkUrl: string | null) {
-  if (!campaignLinkUrl) return body
+function removeAffiliateLinks(body: string, urls: Array<string | null | undefined>) {
+  const links = urls.filter((url): url is string => Boolean(url?.trim()))
+  if (!links.length) return body
   return body
     .split("\n")
-    .filter((line) => !line.includes(campaignLinkUrl))
+    .filter((line) => !links.some((link) => line.includes(link)))
     .join("\n")
     .trim()
 }

@@ -22,12 +22,12 @@ interface PolicyInput {
 }
 
 const PLATFORM_POLICY_SOURCE: Record<CampaignPlatform, string> = {
-  linkedin: "https://www.linkedin.com/legal/l/api-terms-of-use",
-  medium: "https://help.medium.com/hc/en-us/articles/214151487-Medium-API-Terms-of-Use",
-  substack: "https://support.substack.com/hc/en-us/articles/360037831771-How-do-I-publish-a-new-post-on-Substack",
-  tiktok: "https://developers.tiktok.com/doc/overview/",
+  linkedin: "https://www.linkedin.com/help/linkedin/answer/a1341387/prohibited-software-and-extensions?lang=en",
+  medium: "https://help.medium.com/hc/en-us/articles/213477928-Medium-Rules",
+  substack: "https://support.substack.com/hc/en-us/articles/360037455072-Can-I-use-affiliate-links-or-advertising-in-my-emails",
+  tiktok: "https://www.tiktok.com/legal/page/global/bc-policy/en",
   quora: "https://help.quora.com/hc/en-us/articles/9456583756180-Questions-and-Answers-Policies",
-  reddit: "https://developers.reddit.com/docs/guidelines",
+  reddit: "https://support.reddithelp.com/hc/en-us/articles/360043504051-What-constitutes-spam",
 }
 
 export function platformAllowsDirectAffiliateLinks(platform: CampaignPlatform) {
@@ -42,6 +42,16 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       publishMode: "prohibited",
       notes: "Quora adaptations must not contain direct affiliate links. Use an educational answer without the affiliate URL.",
       blocker: "quora_affiliate_links_prohibited",
+    })
+  }
+
+  if (input.platform === "quora") {
+    return buildPolicy({
+      platform: input.platform,
+      status: "requires_manual_verification",
+      publishMode: "manual",
+      notes: "Quora answers must stay educational and cannot contain direct affiliate links.",
+      blocker: "quora_manual_no_direct_affiliate_link",
     })
   }
 
@@ -78,20 +88,20 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
   if (input.platform === "substack") {
     return buildPolicy({
       platform: input.platform,
-      status: "allowed",
+      status: "requires_manual_verification",
       publishMode: "browser_helper",
-      notes: "Substack publishing defaults to dashboard/browser-helper flow unless a supported API path is configured.",
-      blocker: null,
+      notes: "Substack requires a real educational post/newsletter, not pure promotion. Use browser-helper/manual verification.",
+      blocker: "substack_manual_value_check_required",
     })
   }
 
   if (input.platform === "linkedin") {
     return buildPolicy({
       platform: input.platform,
-      status: "allowed",
+      status: "requires_manual_verification",
       publishMode: "browser_helper",
-      notes: "LinkedIn API publishing requires approved permissions. Browser helper/manual confirmation is the safe default.",
-      blocker: null,
+      notes: "LinkedIn automation requires approved permissions. Browser helper may prepare content, but MENI must verify the final action.",
+      blocker: "linkedin_manual_verification_required",
     })
   }
 
