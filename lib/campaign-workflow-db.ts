@@ -158,6 +158,25 @@ type PublishedRecordRow = {
   updated_at: string
 }
 
+export type CampaignManualPublishItem = {
+  approvalId: string
+  productId: string
+  productName: string
+  sourceContentId: string
+  sourceTitle: string
+  sourceContentHash: string
+  platformAdaptationId: string
+  platform: CampaignPlatform
+  title: string
+  body: string
+  campaignLinkUrl: string | null
+  disclosurePresent: boolean
+  policyNotes: string | null
+  policySourceUrl: string | null
+  approvedAt: string
+  publishedRecordUrl: string | null
+}
+
 type ApprovedDraftRow = {
   id: string
   title: string | null
@@ -410,6 +429,83 @@ export async function getCampaignWorkflowProducts(): Promise<CampaignWorkflowPro
       blockers,
       eligiblePlatforms,
     }
+  })
+}
+
+export async function listCampaignManualPublishItems(): Promise<CampaignManualPublishItem[]> {
+  if (!isSupabaseConfigured()) return []
+  const supabase = getServiceRoleSupabase()
+
+  const { data: approvals, error: approvalsError } = await supabase
+    .from("campaign_approvals")
+    .select("*")
+    .eq("status", "approved")
+    .order("approved_at", { ascending: false })
+
+  if (approvalsError) throw new Error(`Unable to load campaign approvals: ${approvalsError.message}`)
+
+  const approvalRows = (approvals ?? []) as CampaignApprovalRow[]
+  if (!approvalRows.length) return []
+
+  const sourceIds = [...new Set(approvalRows.map((approval) => approval.source_content_id))]
+  const approvedProductIds = [...new Set(approvalRows.map((approval) => approval.product_id))]
+
+  const [productsResult, sourcesResult, adaptationsResult, publishedResult] = await Promise.all([
+    supabase.from("products").select("id, name").in("id", approvedProductIds),
+    supabase.from("source_contents").select("*").in("id", sourceIds),
+    supabase
+      .from("platform_adaptations")
+      .select("*")
+      .in("source_content_id", sourceIds)
+      .eq("campaign_approval_status", "campaign_approved"),
+    supabase.from("published_records").select("*").in("source_content_id", sourceIds),
+  ])
+
+  for (const result of [productsResult, sourcesResult, adaptationsResult, publishedResult]) {
+    if (result.error) throw new Error(`Unable to load manual publish items: ${result.error.message}`)
+  }
+
+  const products = (productsResult.data ?? []) as Array<{ id: string; name: string }>
+  const sources = (sourcesResult.data ?? []) as SourceContentRow[]
+  const adaptations = (adaptationsResult.data ?? []) as PlatformAdaptationRow[]
+  const publishedRecords = (publishedResult.data ?? []) as PublishedRecordRow[]
+
+  return approvalRows.flatMap((approval) => {
+    const source = sources.find((row) => row.id === approval.source_content_id)
+    const product = products.find((row) => row.id === approval.product_id)
+    if (!source || !product) return []
+
+    return adaptations
+      .filter((adaptation) =>
+        adaptation.source_content_id === approval.source_content_id &&
+        approval.approved_platforms.includes(adaptation.platform),
+      )
+      .map((adaptation) => {
+        const publishedRecord = publishedRecords.find(
+          (record) =>
+            record.platform_adaptation_id === adaptation.id &&
+            record.verification_status === "verified",
+        )
+
+        return {
+          approvalId: approval.id,
+          productId: product.id,
+          productName: product.name,
+          sourceContentId: source.id,
+          sourceTitle: source.title,
+          sourceContentHash: source.content_hash,
+          platformAdaptationId: adaptation.id,
+          platform: adaptation.platform,
+          title: adaptation.title,
+          body: adaptation.body,
+          campaignLinkUrl: adaptation.campaign_link_url,
+          disclosurePresent: Boolean(adaptation.quality_checks?.disclosurePresent),
+          policyNotes: adaptation.policy_notes,
+          policySourceUrl: adaptation.policy_source_url,
+          approvedAt: approval.approved_at,
+          publishedRecordUrl: publishedRecord?.live_url ?? null,
+        }
+      })
   })
 }
 

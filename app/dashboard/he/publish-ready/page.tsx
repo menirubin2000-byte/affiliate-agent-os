@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { getPostApprovalState, listBrowserJobs, listPublishApprovalItems } from "@/lib/browser-control-db"
+import { listCampaignManualPublishItems } from "@/lib/campaign-workflow-db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import type { ApprovalItem } from "@/types/approval-item"
@@ -19,6 +20,15 @@ import {
 } from "./actions"
 
 export const dynamic = "force-dynamic"
+
+const platformLabels: Record<string, string> = {
+  linkedin: "LinkedIn",
+  medium: "Medium",
+  substack: "Substack",
+  tiktok: "TikTok",
+  quora: "Quora",
+  reddit: "Reddit",
+}
 
 function statusVariant(status: ApprovalItem["status"]) {
   if (status === "approved" || status === "published") return "default" as const
@@ -32,9 +42,9 @@ export default async function HebrewPublishReadyPage({
   searchParams?: Promise<{ error?: string; published?: string; approved?: string }>
 }) {
   const params = (await searchParams) ?? {}
-  const [items, jobs] = isSupabaseConfigured()
-    ? await Promise.all([listPublishApprovalItems(), listBrowserJobs(80)])
-    : [[], []]
+  const [items, jobs, campaignPublishItems] = isSupabaseConfigured()
+    ? await Promise.all([listPublishApprovalItems(), listBrowserJobs(80), listCampaignManualPublishItems()])
+    : [[], [], []]
 
   const jobsByApproval = new Map(jobs.map((job) => [job.approvalItemId, job]))
 
@@ -96,7 +106,100 @@ export default async function HebrewPublishReadyPage({
         </Card>
       ) : null}
 
-      {!items.length ? (
+      {campaignPublishItems.length ? (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">מוכן לפרסום ידני מאישור קמפיין</h2>
+            <p className="text-sm text-muted-foreground">
+              אלה פריטים שעברו אישור קמפיין של MENI. הם לא Published, לא נוצר להם URL, ולא נוצר Browser Job.
+            </p>
+          </div>
+
+          {campaignPublishItems.map((item) => (
+            <Card key={item.platformAdaptationId} className="border-primary/30">
+              <CardHeader>
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <CardTitle>{item.productName} · {platformLabels[item.platform] ?? item.platform}</CardTitle>
+                    <CardDescription>
+                      מוכן לפרסום ידני · אושר על ידי MENI ב-{new Date(item.approvedAt).toLocaleString("he-IL")}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="default">campaign approved</Badge>
+                    <Badge variant={item.publishedRecordUrl ? "default" : "outline"}>
+                      {item.publishedRecordUrl ? "URL מאומת קיים" : "לא פורסם"}
+                    </Badge>
+                    {item.disclosurePresent ? <Badge variant="outline">Disclosure קיים</Badge> : null}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                  <div className="font-medium">Traceability</div>
+                  <div className="mt-1 text-muted-foreground">
+                    approval: {item.approvalId} · source: {item.sourceContentId} · adaptation: {item.platformAdaptationId}
+                  </div>
+                  <div className="mt-1 text-muted-foreground">
+                    source title: {item.sourceTitle}
+                  </div>
+                  <div className="mt-1 text-muted-foreground">
+                    content hash: {item.sourceContentHash}
+                  </div>
+                </div>
+
+                {item.policyNotes ? (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                    בדיקת מדיניות: {item.policyNotes}
+                    {item.policySourceUrl ? (
+                      <>
+                        {" "}
+                        <a href={item.policySourceUrl} target="_blank" rel="noreferrer" className="underline">
+                          מקור
+                        </a>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/30 p-3 text-sm">
+                  {item.body}
+                </pre>
+
+                {item.campaignLinkUrl ? (
+                  <a
+                    href={item.campaignLinkUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary"
+                  >
+                    קישור קמפיין
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                ) : null}
+
+                <CopyPublishContent title={item.title} content={item.body} link={item.campaignLinkUrl} />
+
+                <div className="rounded-lg border bg-muted/10 p-3 text-sm">
+                  פעולה נדרשת מ-MENI: לפתוח Medium, לפרסם ידנית, ואז להדביק URL אמיתי. רק אחרי אימות URL ייווצר Published Record.
+                </div>
+
+                <div className="flex flex-col gap-2 md:flex-row md:items-end">
+                  <label className="flex-1 text-sm">
+                    <span className="mb-1 block text-muted-foreground">URL אמיתי אחרי פרסום ידני</span>
+                    <Input placeholder="https://medium.com/..." disabled />
+                  </label>
+                  <Button type="button" variant="outline" disabled>
+                    שמירת URL תופעל בשלב אימות Published Records
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      ) : null}
+
+      {!items.length && !campaignPublishItems.length ? (
         <Card>
           <CardHeader>
             <CardTitle>אין כרגע פריטי פרסום ישנים</CardTitle>
