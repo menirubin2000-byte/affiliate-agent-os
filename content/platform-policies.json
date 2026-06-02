@@ -1,0 +1,99 @@
+{
+  "medium": {
+    "format": "article",
+    "max_length": null,
+    "links_allowed": true,
+    "link_placement": "in_body",
+    "disclosure_required": true,
+    "disclosure_format": "top_of_article",
+    "markdown": true,
+    "tone": "informative",
+    "restrictions": [
+      "no_income_guarantees",
+      "no_clickbait"
+    ],
+    "ready": true
+  },
+  "linkedin": {
+    "format": "short_post",
+    "max_length": 3000,
+    "links_allowed": true,
+    "link_placement": "in_body",
+    "disclosure_required": true,
+    "disclosure_format": "top_of_post",
+    "markdown": false,
+    "tone": "professional",
+    "restrictions": [
+      "no_income_guarantees",
+      "no_spam",
+      "plain_text_only"
+    ],
+    "ready": true
+  },
+  "substack": {
+    "format": "newsletter",
+    "max_length": null,
+    "links_allowed": true,
+    "link_placement": "in_body",
+    "disclosure_required": true,
+    "disclosure_format": "top_of_article",
+    "markdown": true,
+    "tone": "informative",
+    "restrictions": [
+      "no_income_guarantees",
+      "ftc_disclosure"
+    ],
+    "ready": true
+  },
+  "quora": {
+    "format": "answer",
+    "max_length": null,
+    "links_allowed": true,
+    "link_placement": "end_of_answer",
+    "disclosure_required": true,
+    "disclosure_format": "top_of_answer",
+    "markdown": false,
+    "tone": "helpful_first",
+    "restrictions": [
+      "no_income_guarantees",
+      "must_answer_question",
+      "value_first_promo_under_20pct"
+    ],
+    "ready": true
+  },
+  "reddit": {
+    "format": "self_post",
+    "max_length": null,
+    "links_allowed": true,
+    "link_placement": "end_of_post",
+    "disclosure_required": true,
+    "disclosure_format": "top_of_post",
+    "markdown": true,
+    "tone": "community_discussion",
+    "restrictions": [
+      "no_income_guarantees",
+      "no_spam",
+      "genuine_value",
+      "post_to_own_profile"
+    ],
+    "ready": true
+  },
+  "tiktok": {
+    "format": "video_script",
+    "max_length": 500,
+    "links_allowed": false,
+    "link_placement": "bio_only",
+    "disclosure_required": true,
+    "disclosure_format": "#ad_hashtag",
+    "markdown": false,
+    "tone": "casual_hook",
+    "restrictions": [
+      "video_only",
+      "no_income_guarantees",
+      "link_in_bio_only",
+      "needs_video_production"
+    ],
+    "ready": false,
+    "not_ready_reason": "TikTok requires video production. Text scripts alone cannot be published."
+  }
+}
