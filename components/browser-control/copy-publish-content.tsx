@@ -27,7 +27,7 @@ export function CopyPublishContent({
       </Button>
       <Button type="button" variant="outline" size="sm" onClick={() => copy(content)}>
         <Copy className="size-3.5" />
-        העתק תוכן
+        העתק גוף
       </Button>
       {link ? (
         <Button type="button" variant="outline" size="sm" onClick={() => copy(link)}>

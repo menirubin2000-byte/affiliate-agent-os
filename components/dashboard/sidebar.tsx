@@ -50,6 +50,7 @@ const englishNavigation = [
 const hebrewNavigation = [
   { href: "/dashboard/he", label: "בית", icon: LayoutDashboard },
   { href: "/dashboard/he/campaigns", label: "קמפיינים", icon: FolderKanban },
+  { href: "/dashboard/he/content-review", label: "בדיקת קופי", icon: FileText },
   { href: "/dashboard/he/approve", label: "אישור טיוטות", icon: CheckSquare },
   { href: "/dashboard/he/publish-ready", label: "מוכן לפרסום", icon: Send },
   { href: "/dashboard/he/browser-control", label: "שליטה בדפדפן", icon: Bot },

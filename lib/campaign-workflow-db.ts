@@ -158,6 +158,22 @@ type PublishedRecordRow = {
   updated_at: string
 }
 
+type FinalCopyPublishRow = {
+  id: string
+  product_id: string
+  source_content_id: string
+  platform_adaptation_id: string
+  platform: CampaignPlatform
+  title: string
+  body: string
+  content_hash: string
+  version: number
+  status: string
+  validation_status: string
+  affiliate_link: string | null
+  approved_at: string | null
+}
+
 export type CampaignManualPublishItem = {
   approvalId: string
   productId: string
@@ -165,6 +181,8 @@ export type CampaignManualPublishItem = {
   sourceContentId: string
   sourceTitle: string
   sourceContentHash: string
+  finalCopyId?: string
+  finalCopyVersion?: number
   platformAdaptationId: string
   platform: CampaignPlatform
   title: string
@@ -450,24 +468,27 @@ export async function listCampaignManualPublishItems(): Promise<CampaignManualPu
   const sourceIds = [...new Set(approvalRows.map((approval) => approval.source_content_id))]
   const approvedProductIds = [...new Set(approvalRows.map((approval) => approval.product_id))]
 
-  const [productsResult, sourcesResult, adaptationsResult, publishedResult] = await Promise.all([
+  const [productsResult, sourcesResult, finalCopiesResult, publishedResult] = await Promise.all([
     supabase.from("products").select("id, name").in("id", approvedProductIds),
     supabase.from("source_contents").select("*").in("id", sourceIds),
     supabase
-      .from("platform_adaptations")
+      .from("final_copies")
       .select("*")
       .in("source_content_id", sourceIds)
-      .eq("campaign_approval_status", "campaign_approved"),
+      .eq("status", "ready_for_manual_publish")
+      .eq("validation_status", "valid"),
     supabase.from("published_records").select("*").in("source_content_id", sourceIds),
   ])
 
-  for (const result of [productsResult, sourcesResult, adaptationsResult, publishedResult]) {
+  if (finalCopiesResult.error?.message.includes("final_copies")) return []
+
+  for (const result of [productsResult, sourcesResult, finalCopiesResult, publishedResult]) {
     if (result.error) throw new Error(`Unable to load manual publish items: ${result.error.message}`)
   }
 
   const products = (productsResult.data ?? []) as Array<{ id: string; name: string }>
   const sources = (sourcesResult.data ?? []) as SourceContentRow[]
-  const adaptations = (adaptationsResult.data ?? []) as PlatformAdaptationRow[]
+  const finalCopies = (finalCopiesResult.data ?? []) as FinalCopyPublishRow[]
   const publishedRecords = (publishedResult.data ?? []) as PublishedRecordRow[]
 
   return approvalRows.flatMap((approval) => {
@@ -475,15 +496,15 @@ export async function listCampaignManualPublishItems(): Promise<CampaignManualPu
     const product = products.find((row) => row.id === approval.product_id)
     if (!source || !product) return []
 
-    return adaptations
-      .filter((adaptation) =>
-        adaptation.source_content_id === approval.source_content_id &&
-        approval.approved_platforms.includes(adaptation.platform),
+    return finalCopies
+      .filter((finalCopy) =>
+        finalCopy.source_content_id === approval.source_content_id &&
+        approval.approved_platforms.includes(finalCopy.platform),
       )
-      .map((adaptation) => {
+      .map((finalCopy) => {
         const publishedRecord = publishedRecords.find(
           (record) =>
-            record.platform_adaptation_id === adaptation.id &&
+            record.platform_adaptation_id === finalCopy.platform_adaptation_id &&
             record.verification_status === "verified",
         )
 
@@ -493,16 +514,18 @@ export async function listCampaignManualPublishItems(): Promise<CampaignManualPu
           productName: product.name,
           sourceContentId: source.id,
           sourceTitle: source.title,
-          sourceContentHash: source.content_hash,
-          platformAdaptationId: adaptation.id,
-          platform: adaptation.platform,
-          title: adaptation.title,
-          body: adaptation.body,
-          campaignLinkUrl: adaptation.campaign_link_url,
-          disclosurePresent: Boolean(adaptation.quality_checks?.disclosurePresent),
-          policyNotes: adaptation.policy_notes,
-          policySourceUrl: adaptation.policy_source_url,
-          approvedAt: approval.approved_at,
+          sourceContentHash: finalCopy.content_hash,
+          finalCopyId: finalCopy.id,
+          finalCopyVersion: finalCopy.version,
+          platformAdaptationId: finalCopy.platform_adaptation_id,
+          platform: finalCopy.platform,
+          title: finalCopy.title,
+          body: finalCopy.body,
+          campaignLinkUrl: finalCopy.affiliate_link,
+          disclosurePresent: true,
+          policyNotes: "Final copy passed deterministic validation and was approved by MENI for manual publishing.",
+          policySourceUrl: null,
+          approvedAt: finalCopy.approved_at ?? approval.approved_at,
           publishedRecordUrl: publishedRecord?.live_url ?? null,
         }
       })
