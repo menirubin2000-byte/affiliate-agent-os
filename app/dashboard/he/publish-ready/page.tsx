@@ -24,6 +24,8 @@ const statusLabels: Record<PublishJobStatus, string> = {
   approved_waiting_executor: "מאושר וממתין למנוע פרסום",
   blocked_executor_not_connected: "חסום - מנוע פרסום לא מחובר",
   blocked_policy: "חסום - מדיניות פלטפורמה",
+  requires_auth: "דרוש חיבור חשבון",
+  pending_operator_confirmation: "ממתין לאישור פעולה סופית",
   running: "בביצוע",
   waiting_url_verification: "ממתין לאימות URL",
   verified: "פורסם ואומת",
@@ -36,6 +38,7 @@ function statusVariant(status: PublishJobStatus) {
   if (
     status === "blocked_executor_not_connected" ||
     status === "blocked_policy" ||
+    status === "requires_auth" ||
     status === "needs_system_fix" ||
     status === "failed_needs_system_fix"
   ) {
@@ -122,7 +125,31 @@ export default async function HebrewPublishReadyPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
                     חסימה: {job.blockingReason === "executor_not_connected"
                       ? "מנוע פרסום לא מחובר"
+                      : job.blockingReason === "linkedin_official_api_not_configured"
+                        ? "LinkedIn דורש API/הרשאות רשמיות לפני פרסום אוטומטי"
+                      : job.blockingReason === "login_required"
+                        ? "דרוש חיבור לחשבון הפלטפורמה"
+                      : job.blockingReason === "captcha_required"
+                        ? "CAPTCHA חוסם את המנוע"
+                      : job.blockingReason === "two_factor_required"
+                        ? "דרוש 2FA"
+                      : job.blockingReason === "passkey_required"
+                        ? "דרוש Passkey"
+                      : job.blockingReason === "executor_waiting_final_confirmation"
+                        ? "המנוע מילא את התוכן וממתין לאישור פעולה סופית"
                       : job.blockingReason}
+                  </div>
+                ) : null}
+
+                {job.status === "requires_auth" ? (
+                  <Link href="/dashboard/he/browser-control" className={cn(buttonVariants({ variant: "outline" }))}>
+                    חבר חשבון
+                  </Link>
+                ) : null}
+
+                {job.status === "pending_operator_confirmation" ? (
+                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                    אשר פעולה סופית רק אם חלון הפלטפורמה פתוח והמנוע כבר מילא את התוכן. אין העתקה, אין הדבקה, ואין איסוף URL ידני.
                   </div>
                 ) : null}
 

@@ -1,8 +1,9 @@
 import "server-only"
 
-import { getPlatformPublishTarget, isValidPublishedPostUrl } from "@/lib/browser-control"
+import { detectBrowserPlatform, getPlatformPublishTarget, isValidPublishedPostUrl } from "@/lib/browser-control"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
+import type { BrowserPlatform } from "@/types/browser-control"
 import type { PublishJob, PublishJobStatus } from "@/types/publish-job"
 
 type PublishJobRow = {
@@ -20,6 +21,15 @@ type PublishJobRow = {
   updated_at: string
   products?: { name: string } | { name: string }[] | null
   final_copies?: { title: string } | { title: string }[] | null
+}
+
+type ExecutorSessionRow = {
+  id: string
+  status: string
+  active_tab_url: string | null
+  active_platform: BrowserPlatform | null
+  blocker_status: string | null
+  last_seen_at: string | null
 }
 
 type FinalCopyExecutionRow = {
@@ -62,6 +72,8 @@ export type PublishExecutorStatus =
   | "published"
   | "blocked"
   | "blocked_policy"
+  | "requires_auth"
+  | "pending_operator_confirmation"
   | "failed"
 
 const PUBLISH_JOB_SELECT =
@@ -119,46 +131,95 @@ function mapPublishExecutorJob(row: PublishExecutorJobRow): PublishExecutorJob {
   }
 }
 
-async function hasConnectedExecutor() {
+async function getActiveExecutorSession(): Promise<ExecutorSessionRow | null> {
   const supabase = getServiceRoleSupabase()
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
   const { data, error } = await supabase
     .from("browser_sessions")
-    .select("id")
-    .eq("status", "connected")
+    .select("id, status, active_tab_url, active_platform, blocker_status, last_seen_at")
     .gte("last_seen_at", tenMinutesAgo)
     .order("last_seen_at", { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  if (error) return false
-  return Boolean(data)
+  if (error || !data) return null
+  return data as ExecutorSessionRow
+}
+
+function getExecutorStateForPlatform(
+  platform: CampaignPlatform,
+  session: ExecutorSessionRow | null,
+): { status: PublishJobStatus; blockingReason: string | null } {
+  if (platform === "linkedin") {
+    return {
+      status: "blocked_executor_not_connected",
+      blockingReason: "linkedin_official_api_not_configured",
+    }
+  }
+
+  if (platform !== "medium" && platform !== "substack") {
+    return {
+      status: "blocked_policy",
+      blockingReason: `${platform}_not_enabled_for_executor`,
+    }
+  }
+
+  if (!session) {
+    return {
+      status: "blocked_executor_not_connected",
+      blockingReason: "executor_not_connected",
+    }
+  }
+
+  if (session.status === "blocked" || session.blocker_status) {
+    return {
+      status: "requires_auth",
+      blockingReason: session.blocker_status ?? "platform_auth_required",
+    }
+  }
+
+  if (session.status !== "connected") {
+    return {
+      status: "blocked_executor_not_connected",
+      blockingReason: "executor_not_connected",
+    }
+  }
+
+  const activePlatform = session.active_platform ?? detectBrowserPlatform(session.active_tab_url)
+  if (activePlatform !== "unknown" && activePlatform !== platform) {
+    return {
+      status: "approved_waiting_executor",
+      blockingReason: null,
+    }
+  }
+
+  return {
+    status: "approved_waiting_executor",
+    blockingReason: null,
+  }
 }
 
 export async function refreshPublishJobsForExecutorConnection() {
   if (!isSupabaseConfigured()) return
   const supabase = getServiceRoleSupabase()
-  const executorConnected = await hasConnectedExecutor()
+  const session = await getActiveExecutorSession()
+  const { data: jobs, error } = await supabase
+    .from("publish_jobs")
+    .select("id, platform, status")
+    .in("status", ["blocked_executor_not_connected", "approved_waiting_executor", "requires_auth"])
 
-  if (executorConnected) {
+  if (error || !jobs?.length) return
+
+  for (const job of jobs as Array<{ id: string; platform: CampaignPlatform; status: PublishJobStatus }>) {
+    const next = getExecutorStateForPlatform(job.platform, session)
     await supabase
       .from("publish_jobs")
       .update({
-        status: "approved_waiting_executor",
-        blocking_reason: null,
+        status: next.status,
+        blocking_reason: next.blockingReason,
       })
-      .eq("status", "blocked_executor_not_connected")
-      .eq("blocking_reason", "executor_not_connected")
-    return
+      .eq("id", job.id)
   }
-
-  await supabase
-    .from("publish_jobs")
-    .update({
-      status: "blocked_executor_not_connected",
-      blocking_reason: "executor_not_connected",
-    })
-    .eq("status", "approved_waiting_executor")
 }
 
 async function getCampaignApprovalId(sourceContentId: string, platform: CampaignPlatform) {
@@ -196,11 +257,7 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
     throw new Error("Publish job requires MENI approval first.")
   }
 
-  const executorConnected = await hasConnectedExecutor()
-  const nextStatus: PublishJobStatus = executorConnected
-    ? "approved_waiting_executor"
-    : "blocked_executor_not_connected"
-  const blockingReason = executorConnected ? null : "executor_not_connected"
+  const executorState = getExecutorStateForPlatform(copy.platform, await getActiveExecutorSession())
   const approvalId = await getCampaignApprovalId(copy.source_content_id, copy.platform)
 
   const { data, error } = await supabase
@@ -209,9 +266,9 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
       final_copy_id: copy.id,
       product_id: copy.product_id,
       platform: copy.platform,
-      status: nextStatus,
+      status: executorState.status,
       executor_type: "browser_helper",
-      blocking_reason: blockingReason,
+      blocking_reason: executorState.blockingReason,
       approval_id: approvalId,
       live_url: null,
       verified_at: null,
@@ -348,16 +405,20 @@ export async function updatePublishJobFromExecutor(input: {
       : input.status === "waiting_url_verification"
         ? "waiting_url_verification"
         : input.status === "waiting_user"
-          ? "needs_system_fix"
-          : input.status === "blocked_policy"
-            ? "blocked_policy"
-            : input.status === "blocked" || input.status === "failed" || input.status === "failed_needs_system_fix"
-              ? "needs_system_fix"
-            : input.status
+          ? "pending_operator_confirmation"
+          : input.status === "pending_operator_confirmation"
+            ? "pending_operator_confirmation"
+            : input.status === "requires_auth"
+              ? "requires_auth"
+              : input.status === "blocked_policy"
+                ? "blocked_policy"
+                : input.status === "blocked" || input.status === "failed" || input.status === "failed_needs_system_fix"
+                  ? "needs_system_fix"
+                  : input.status
 
   const blockingReason =
     input.status === "waiting_user"
-      ? "executor_requires_manual_publish_action"
+      ? "executor_waiting_final_confirmation"
       : input.blockerReason ?? (nextStatus === "needs_system_fix" ? "executor_failed" : null)
 
   const { data, error } = await supabase

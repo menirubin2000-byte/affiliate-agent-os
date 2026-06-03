@@ -8,9 +8,11 @@ Chrome extension for controlled publishing execution after MENI approval.
 - Reads only the active page URL, title, and basic blocker state.
 - Opens approved `publish_jobs`.
 - Sends approved content only to supported executor flows.
+- Polls for approved executor jobs after the helper is connected.
 - Stops on login, CAPTCHA, 2FA, passkey, password fields, or payment fields.
+- Fills supported Medium/Substack editor surfaces and waits for final operator confirmation when required.
 - Reports unsupported final publish automation as a system blocker.
-- Verifies a real post URL only after publication.
+- Captures and verifies a real post URL only after publication.
 
 ## What it does not do
 
@@ -35,5 +37,6 @@ Chrome extension for controlled publishing execution after MENI approval.
 1. MENI approves final copy in Affiliate Agent OS.
 2. The app creates or updates a `publish_jobs` record.
 3. The helper pulls the next approved job.
-4. If the helper cannot complete a platform safely, it marks the job as blocked.
-5. A `published_record` is created only after a real live URL is verified.
+4. If auth/CAPTCHA/2FA/passkey blocks execution, the app marks the job `requires_auth`.
+5. If the helper fills content but the platform requires final confirmation, the app marks the job `pending_operator_confirmation`.
+6. A `published_record` is created only after a real live URL is verified.

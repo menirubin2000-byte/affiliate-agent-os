@@ -1,6 +1,8 @@
 const DEFAULT_APP_ORIGIN = "https://affiliate-agent-os.vercel.app";
 const EXTENSION_INSTANCE_ID_KEY = "affiliate_agent_os_helper_instance_id";
 const APP_ORIGIN_KEY = "affiliate_agent_os_app_origin";
+const EXECUTOR_ALARM_NAME = "affiliate_agent_os_executor_poll";
+const EXECUTOR_POLL_MINUTES = 1;
 
 async function getInstanceId() {
   const stored = await chrome.storage.local.get(EXTENSION_INSTANCE_ID_KEY);
@@ -54,6 +56,50 @@ function detectBlocker(url, title) {
   return null;
 }
 
+function detectPlatform(url) {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    if (hostname.endsWith("linkedin.com")) return "linkedin";
+    if (hostname.endsWith("medium.com")) return "medium";
+    if (hostname.endsWith("substack.com")) return "substack";
+    if (hostname.endsWith("tiktok.com")) return "tiktok";
+    if (hostname.endsWith("quora.com")) return "quora";
+    if (hostname.endsWith("reddit.com")) return "reddit";
+  } catch {}
+  return "unknown";
+}
+
+function isLikelyPublishedPostUrl(url, platform) {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname.toLowerCase();
+    const segments = pathname.split("/").filter(Boolean);
+
+    if (platform === "medium") {
+      return pathname !== "/new-story" && segments.length >= 2;
+    }
+
+    if (platform === "substack") {
+      return segments[0] === "p" && segments.length >= 2;
+    }
+
+    if (platform === "linkedin") {
+      return pathname.includes("/feed/update/") || pathname.includes("/posts/");
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+async function startExecutorPolling() {
+  await chrome.alarms.create(EXECUTOR_ALARM_NAME, {
+    delayInMinutes: EXECUTOR_POLL_MINUTES,
+    periodInMinutes: EXECUTOR_POLL_MINUTES,
+  });
+}
+
 async function heartbeat() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return null;
@@ -90,15 +136,15 @@ async function openAndFillNextJob() {
     message: "Opened platform target URL.",
   });
 
-  await chrome.storage.session.set({ currentBrowserJob: job });
+  await chrome.storage.session.set({ currentBrowserJob: { ...job, tabId: tab.id } });
 
   setTimeout(async () => {
     try {
       await chrome.tabs.sendMessage(tab.id, { type: "AFFILIATE_AGENT_FILL_JOB", job });
     } catch (error) {
       await postJson(`/api/browser-helper/jobs/${job.id}`, {
-        status: "blocked",
-        blockerReason: "Could not reach page content script. Open the target page and retry.",
+        status: "failed",
+        blockerReason: "content_script_unreachable",
         errorMessage: String(error?.message || error),
       });
     }
@@ -123,9 +169,29 @@ async function captureCurrentPostUrl() {
   return { ok: true, message: "Published URL captured." };
 }
 
+async function maybeCapturePublishedUrl(tabId, url) {
+  const stored = await chrome.storage.session.get("currentBrowserJob");
+  const job = stored.currentBrowserJob;
+  if (!job?.id || job.tabId !== tabId || !url) return;
+  if (detectPlatform(url) !== job.platform) return;
+  if (!isLikelyPublishedPostUrl(url, job.platform)) return;
+
+  await postJson(`/api/browser-helper/jobs/${job.id}`, {
+    status: "published",
+    postUrl: url,
+    activeTabUrl: url,
+    message: "Browser helper detected and verified the live post URL.",
+  });
+  await chrome.storage.session.remove("currentBrowserJob");
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   (async () => {
-    if (message?.type === "AFFILIATE_AGENT_HEARTBEAT") return heartbeat();
+    if (message?.type === "AFFILIATE_AGENT_HEARTBEAT") {
+      const result = await heartbeat();
+      await startExecutorPolling();
+      return result;
+    }
     if (message?.type === "AFFILIATE_AGENT_OPEN_NEXT_JOB") return openAndFillNextJob();
     if (message?.type === "AFFILIATE_AGENT_CAPTURE_URL") return captureCurrentPostUrl();
     if (message?.type === "AFFILIATE_AGENT_SET_APP_ORIGIN") {
@@ -145,4 +211,14 @@ chrome.tabs.onActivated.addListener(() => {
 
 chrome.tabs.onUpdated.addListener((_tabId, changeInfo) => {
   if (changeInfo.status === "complete") heartbeat().catch(() => {});
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== "complete" || !tab.url) return;
+  maybeCapturePublishedUrl(tabId, tab.url).catch(() => {});
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== EXECUTOR_ALARM_NAME) return;
+  openAndFillNextJob().catch(() => {});
 });

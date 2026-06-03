@@ -14,7 +14,7 @@ function pageHasSensitiveBlocker() {
 
 async function fillLinkedIn() {
   if (pageHasSensitiveBlocker()) {
-    return { status: "blocked", blockerReason: "Login, CAPTCHA, 2FA, passkey, password, or payment field detected." };
+    return { status: "requires_auth", blockerReason: "login_required" };
   }
 
   return {
@@ -24,8 +24,63 @@ async function fillLinkedIn() {
   };
 }
 
+function setEditableText(element, text) {
+  element.focus();
+  document.execCommand("selectAll", false, null);
+  const inserted = document.execCommand("insertText", false, text);
+  if (!inserted) {
+    element.textContent = text;
+    element.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: text }));
+  }
+  element.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function getEditableFields() {
+  const fields = Array.from(document.querySelectorAll('[contenteditable="true"], textarea, input[type="text"]'))
+    .filter((element) => {
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.visibility !== "hidden" && style.display !== "none" && rect.width > 0 && rect.height > 0;
+    });
+
+  return fields;
+}
+
+async function fillEditorSurface(job) {
+  if (pageHasSensitiveBlocker()) {
+    return { status: "requires_auth", blockerReason: "login_required" };
+  }
+
+  const fields = getEditableFields();
+  if (fields.length < 1) {
+    return {
+      status: "failed",
+      blockerReason: `${job.platform}_editor_fields_not_found`,
+      message: "Executor could not find editable title/body fields.",
+    };
+  }
+
+  const title = job.title || "Approved affiliate post";
+  const body = job.content || "";
+  const [first, second] = fields;
+
+  if (second) {
+    setEditableText(first, title);
+    setEditableText(second, body);
+  } else {
+    setEditableText(first, `${title}\n\n${body}`);
+  }
+
+  return {
+    status: "pending_operator_confirmation",
+    blockerReason: "executor_waiting_final_confirmation",
+    message: `${job.platform} content filled. Waiting for final publish confirmation and live URL verification.`,
+  };
+}
+
 async function fillCurrentPage(job) {
   if (job.platform === "linkedin") return fillLinkedIn(job);
+  if (job.platform === "medium" || job.platform === "substack") return fillEditorSurface(job);
   return { status: "blocked", blockerReason: `${job.platform} filling is not implemented yet.` };
 }
 

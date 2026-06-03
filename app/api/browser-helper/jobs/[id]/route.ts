@@ -12,6 +12,8 @@ const VALID_EXECUTOR_STATUSES: PublishExecutorStatus[] = [
   "approved_waiting_executor",
   "blocked_executor_not_connected",
   "blocked_policy",
+  "requires_auth",
+  "pending_operator_confirmation",
   "running",
   "waiting_url_verification",
   "verified",

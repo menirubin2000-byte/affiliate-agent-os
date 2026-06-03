@@ -17,11 +17,3 @@ document.getElementById("saveOrigin").addEventListener("click", () => {
 document.getElementById("connect").addEventListener("click", () => {
   send("AFFILIATE_AGENT_HEARTBEAT");
 });
-
-document.getElementById("openNext").addEventListener("click", () => {
-  send("AFFILIATE_AGENT_OPEN_NEXT_JOB");
-});
-
-document.getElementById("captureUrl").addEventListener("click", () => {
-  send("AFFILIATE_AGENT_CAPTURE_URL");
-});

@@ -73,7 +73,38 @@ export function isValidPublishedPostUrl(url: string, platform?: string | null) {
 
   if (!platform) return true
   const detected = detectBrowserPlatform(url)
-  return detected === platform || detected === "unknown"
+  if (detected !== platform) return false
+
+  try {
+    const parsed = new URL(url)
+    const pathname = parsed.pathname.toLowerCase()
+
+    if (platform === "linkedin") {
+      return pathname.includes("/feed/update/") || pathname.includes("/posts/")
+    }
+
+    if (platform === "medium") {
+      const segments = pathname.split("/").filter(Boolean)
+      return pathname !== "/new-story" && segments.length >= 2
+    }
+
+    if (platform === "substack") {
+      const segments = pathname.split("/").filter(Boolean)
+      return segments[0] === "p" && segments.length >= 2
+    }
+
+    if (platform === "reddit") {
+      return pathname.includes("/comments/")
+    }
+
+    if (platform === "quora") {
+      return pathname !== "/" && pathname.length > 1
+    }
+
+    return false
+  } catch {
+    return false
+  }
 }
 
 export function buildFullPostText(input: {

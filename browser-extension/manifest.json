@@ -3,7 +3,7 @@
   "name": "Affiliate Agent OS Browser Helper",
   "version": "0.1.0",
   "description": "Controlled browser helper for approved Affiliate Agent OS publishing jobs.",
-  "permissions": ["activeTab", "scripting", "tabs", "storage"],
+  "permissions": ["activeTab", "alarms", "scripting", "tabs", "storage"],
   "host_permissions": [
     "https://affiliate-agent-os.vercel.app/*",
     "http://localhost:3000/*",
