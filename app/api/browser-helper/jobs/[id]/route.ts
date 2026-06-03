@@ -1,11 +1,31 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
-import { updateBrowserJobFromHelper } from "@/lib/browser-control-db"
 import { OPERATOR_SESSION_COOKIE, verifyOperatorSessionToken } from "@/lib/operator-auth"
-import type { BrowserJobStatus } from "@/types/browser-control"
+import { updatePublishJobFromExecutor } from "@/lib/publish-jobs-db"
+import type { PublishExecutorStatus } from "@/lib/publish-jobs-db"
 
 export const dynamic = "force-dynamic"
+
+const VALID_EXECUTOR_STATUSES: PublishExecutorStatus[] = [
+  "pending_meni_approval",
+  "approved_waiting_executor",
+  "blocked_executor_not_connected",
+  "running",
+  "waiting_url_verification",
+  "verified",
+  "failed_needs_system_fix",
+  "opened",
+  "filled",
+  "waiting_user",
+  "published",
+  "blocked",
+  "failed",
+]
+
+function isPublishExecutorStatus(value: string): value is PublishExecutorStatus {
+  return VALID_EXECUTOR_STATUSES.includes(value as PublishExecutorStatus)
+}
 
 export async function POST(
   request: Request,
@@ -19,7 +39,7 @@ export async function POST(
 
   const { id } = await params
   const body = (await request.json().catch(() => ({}))) as {
-    status?: BrowserJobStatus
+    status?: string
     browserSessionId?: string
     activeTabUrl?: string
     blockerReason?: string
@@ -31,12 +51,14 @@ export async function POST(
   if (!body.status) {
     return NextResponse.json({ error: "status is required." }, { status: 400 })
   }
+  if (!isPublishExecutorStatus(body.status)) {
+    return NextResponse.json({ error: "Invalid executor status." }, { status: 400 })
+  }
 
   try {
-    const job = await updateBrowserJobFromHelper({
+    const job = await updatePublishJobFromExecutor({
       jobId: id,
       status: body.status,
-      browserSessionId: body.browserSessionId,
       activeTabUrl: body.activeTabUrl,
       blockerReason: body.blockerReason,
       errorMessage: body.errorMessage,

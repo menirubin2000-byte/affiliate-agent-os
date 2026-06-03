@@ -12,46 +12,15 @@ function pageHasSensitiveBlocker() {
   );
 }
 
-function findLinkedInComposerButton() {
-  const candidates = Array.from(document.querySelectorAll("button, div[role='button']"));
-  return candidates.find((element) => {
-    const text = (element.textContent || "").trim().toLowerCase();
-    return (
-      text.includes("start a post") ||
-      text.includes("write a post") ||
-      text.includes("כתבו פוסט") ||
-      text.includes("כתוב פוסט")
-    );
-  });
-}
-
-async function fillLinkedIn(job) {
+async function fillLinkedIn() {
   if (pageHasSensitiveBlocker()) {
     return { status: "blocked", blockerReason: "Login, CAPTCHA, 2FA, passkey, password, or payment field detected." };
   }
 
-  const composerButton = findLinkedInComposerButton();
-  if (!composerButton) {
-    return { status: "blocked", blockerReason: "LinkedIn composer button was not found." };
-  }
-
-  composerButton.click();
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  const editor =
-    document.querySelector("[contenteditable='true'][role='textbox']") ||
-    document.querySelector("[contenteditable='true']");
-
-  if (!editor) {
-    return { status: "blocked", blockerReason: "LinkedIn composer editor was not found." };
-  }
-
-  editor.focus();
-  document.execCommand("insertText", false, job.content);
-
   return {
-    status: "waiting_user",
-    message: "LinkedIn content filled. User must review and click Publish manually.",
+    status: "failed",
+    blockerReason: "executor_publish_automation_not_implemented_for_linkedin",
+    message: "LinkedIn executor cannot safely complete publish automatically yet.",
   };
 }
 

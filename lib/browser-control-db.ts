@@ -2,6 +2,7 @@ import "server-only"
 
 import { buildFullPostText, detectBrowserPlatform, getPlatformPublishTarget, isValidPublishedPostUrl, VALID_BROWSER_JOB_STATUSES } from "@/lib/browser-control"
 import { buildPostApprovalFingerprint, isPublishApprovalType } from "@/lib/approval-identity"
+import { refreshPublishJobsForExecutorConnection } from "@/lib/publish-jobs-db"
 import { isSupabaseConfigured, getServiceRoleSupabase } from "@/lib/supabase/server"
 import type { ApprovalItem } from "@/types/approval-item"
 import type {
@@ -353,6 +354,7 @@ export async function upsertBrowserSession(input: {
   if (error) throw new Error(`Failed to update browser session: ${error.message}`)
 
   const session = mapSession(data as BrowserSessionRow)
+  await refreshPublishJobsForExecutorConnection()
   await recordBrowserEvent({
     browserSessionId: session.id,
     eventType: "heartbeat",

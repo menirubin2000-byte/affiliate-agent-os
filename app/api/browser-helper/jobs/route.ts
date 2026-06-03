@@ -1,8 +1,8 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
-import { getNextQueuedBrowserJob } from "@/lib/browser-control-db"
 import { OPERATOR_SESSION_COOKIE, verifyOperatorSessionToken } from "@/lib/operator-auth"
+import { getNextPublishJobForExecutor } from "@/lib/publish-jobs-db"
 
 export const dynamic = "force-dynamic"
 
@@ -13,6 +13,6 @@ export async function GET() {
     return NextResponse.json({ error: "Operator session required." }, { status: 401 })
   }
 
-  const job = await getNextQueuedBrowserJob()
+  const job = await getNextPublishJobForExecutor()
   return NextResponse.json({ job })
 }

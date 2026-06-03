@@ -7,29 +7,38 @@ import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getBrowserControlOverview } from "@/lib/browser-control-db"
+import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
 export default async function HebrewBrowserControlPage() {
-  const overview = isSupabaseConfigured()
-    ? await getBrowserControlOverview()
-    : {
+  const configured = isSupabaseConfigured()
+  const [overview, publishJobs] = configured
+    ? await Promise.all([getBrowserControlOverview(), listPublishJobsForHebrewDashboard()])
+    : [
+      {
         connected: false,
         latestSession: null,
         jobs: [],
         events: [],
         queuedCount: 0,
         blockerStatus: "Supabase לא מוגדר",
-      }
+      },
+      [],
+    ]
+
+  const executorQueueCount = publishJobs.filter((job) =>
+    job.status === "approved_waiting_executor" || job.status === "running"
+  ).length
 
   return (
     <div dir="rtl" className="space-y-6">
       <PageHeader
         eyebrow="Affiliate Agent OS Browser Helper"
         title="שליטה בדפדפן"
-        description="תור פרסום מבוקר דרך הרחבת Chrome. ההרחבה ממלאת תוכן מאושר בלבד, עוצרת בלוגין/CAPTCHA/2FA, ולא לוחצת Publish בלי שליטה אנושית."
+        description="תור ביצוע מבוקר דרך הרחבת Chrome. ההרחבה מקבלת רק publish_jobs שאושרו על ידי MENI, עוצרת בלוגין/CAPTCHA/2FA, ומדווחת חסימה במקום להעביר עבודה למני."
         actions={
           <Link
             href="/dashboard/he/publish-ready"
@@ -55,8 +64,8 @@ export default async function HebrewBrowserControlPage() {
         />
         <StatCard
           label="Jobs בתור"
-          value={String(overview.queuedCount)}
-          detail="ממתינים לפתיחה/מילוי בדפדפן."
+          value={String(executorQueueCount)}
+          detail="publish_jobs שממתינים למנוע פרסום."
           icon={<Clock className="size-4" />}
         />
         <StatCard
@@ -86,25 +95,25 @@ export default async function HebrewBrowserControlPage() {
           <CardDescription>לא מסמנים published עד שיש URL אמיתי של פוסט.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {!overview.jobs.length ? <p className="text-sm text-muted-foreground">אין jobs כרגע.</p> : null}
-          {overview.jobs.map((job) => (
+          {!publishJobs.length ? <p className="text-sm text-muted-foreground">אין jobs כרגע.</p> : null}
+          {publishJobs.map((job) => (
             <div key={job.id} className="rounded-lg border p-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium">{job.title ?? "ללא כותרת"}</p>
+                  <p className="font-medium">{job.finalCopyTitle ?? "ללא כותרת"}</p>
                   <p className="text-sm text-muted-foreground">
                     {job.productName ?? "לא משויך"} · {job.platform}
                   </p>
                 </div>
                 <Badge>{job.status}</Badge>
               </div>
-              {job.postUrl ? (
-                <a href={job.postUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-primary">
+              {job.liveUrl ? (
+                <a href={job.liveUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-primary">
                   URL פוסט אמיתי
                 </a>
               ) : null}
-              {job.blockerReason ? (
-                <p className="mt-2 text-sm text-destructive">חסם: {job.blockerReason}</p>
+              {job.blockingReason ? (
+                <p className="mt-2 text-sm text-destructive">חסם: {job.blockingReason}</p>
               ) : null}
             </div>
           ))}
