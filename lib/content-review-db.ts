@@ -7,6 +7,7 @@ import {
   validateFinalMediumArticle,
 } from "@/lib/content-review"
 import { createImprovementTask } from "@/lib/db"
+import { createOrUpdatePublishJobForFinalCopy } from "@/lib/publish-jobs-db"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { FinalCopy, FinalCopyStatus, FinalCopyValidationStatus } from "@/types/content-review"
@@ -190,7 +191,7 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
   const { data: updated, error: updateError } = await supabase
     .from("final_copies")
     .update({
-      status: "ready_for_manual_publish",
+      status: "operator_approved",
       validation_status: "valid",
       blocking_reasons: [],
       approved_by: "MENI",
@@ -201,6 +202,7 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
     .single()
 
   if (updateError) throw new Error(`Unable to approve final copy: ${updateError.message}`)
+  await createOrUpdatePublishJobForFinalCopy(finalCopyId)
   return mapFinalCopy(updated as FinalCopyRow)
 }
 
