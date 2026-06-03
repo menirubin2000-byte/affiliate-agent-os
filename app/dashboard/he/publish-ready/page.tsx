@@ -15,6 +15,7 @@ import type { ApprovalItem } from "@/types/approval-item"
 
 import {
   approvePublishItemAction,
+  markFinalCopyPublishedUrlAction,
   markPublishedUrlAction,
   queueBrowserPublishJobAction,
 } from "./actions"
@@ -138,7 +139,7 @@ export default async function HebrewPublishReadyPage({
                 <div className="rounded-lg border bg-muted/20 p-3 text-sm">
                   <div className="font-medium">Traceability</div>
                   <div className="mt-1 text-muted-foreground">
-                    approval: {item.approvalId} · source: {item.sourceContentId} · adaptation: {item.platformAdaptationId}
+                    approval: {item.approvalId ?? "final-copy approval"} · source: {item.sourceContentId} · adaptation: {item.platformAdaptationId}
                   </div>
                   <div className="mt-1 text-muted-foreground">
                     source title: {item.sourceTitle}
@@ -181,17 +182,29 @@ export default async function HebrewPublishReadyPage({
                 <CopyPublishContent title={item.title} content={item.body} link={item.campaignLinkUrl} />
 
                 <div className="rounded-lg border bg-muted/10 p-3 text-sm">
-                  פעולה נדרשת מ-MENI: לפתוח Medium, לפרסם ידנית, ואז להדביק URL אמיתי. רק אחרי אימות URL ייווצר Published Record.
+                  פעולה נדרשת מ-MENI: לפתוח את הפלטפורמה, לפרסם ידנית, ואז להדביק URL אמיתי. רק אחרי אימות URL ייווצר Published Record.
                 </div>
 
                 <div className="flex flex-col gap-2 md:flex-row md:items-end">
-                  <label className="flex-1 text-sm">
-                    <span className="mb-1 block text-muted-foreground">URL אמיתי אחרי פרסום ידני</span>
-                    <Input placeholder="https://medium.com/..." disabled />
-                  </label>
-                  <Button type="button" variant="outline" disabled>
-                    שמירת URL תופעל בשלב אימות Published Records
-                  </Button>
+                  <form action={markFinalCopyPublishedUrlAction} className="flex flex-1 flex-col gap-2 md:flex-row md:items-end">
+                    <input type="hidden" name="finalCopyId" value={item.finalCopyId ?? ""} />
+                    <label className="flex-1 text-sm">
+                      <span className="mb-1 block text-muted-foreground">URL אמיתי אחרי פרסום ידני</span>
+                      <Input
+                        name="postUrl"
+                        placeholder={
+                          item.platform === "linkedin"
+                            ? "https://www.linkedin.com/feed/update/..."
+                            : item.platform === "medium"
+                              ? "https://medium.com/@Rubin-Q.S/..."
+                              : "https://menirubin.substack.com/p/..."
+                        }
+                      />
+                    </label>
+                    <Button type="submit" variant="outline">
+                      שמור URL אמיתי
+                    </Button>
+                  </form>
                 </div>
               </CardContent>
             </Card>

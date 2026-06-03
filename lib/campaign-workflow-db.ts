@@ -6,6 +6,7 @@ import {
   getFirstBlockingReason,
   hashCampaignContent,
 } from "@/lib/campaign-workflow"
+import { isValidPublishedPostUrl } from "@/lib/browser-control"
 import { CAMPAIGN_PLATFORMS } from "@/lib/platform-policy"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type {
@@ -150,6 +151,8 @@ type PublishedRecordRow = {
   source_content_id: string
   platform_adaptation_id: string
   browser_job_id: string | null
+  final_copy_id: string | null
+  campaign_approval_id: string | null
   platform: CampaignPlatform
   live_url: string
   verification_status: "verified" | "failed"
@@ -175,7 +178,7 @@ type FinalCopyPublishRow = {
 }
 
 export type CampaignManualPublishItem = {
-  approvalId: string
+  approvalId: string | null
   productId: string
   productName: string
   sourceContentId: string
@@ -194,6 +197,8 @@ export type CampaignManualPublishItem = {
   approvedAt: string
   publishedRecordUrl: string | null
 }
+
+const SAFE_MANUAL_PUBLISH_PLATFORMS: CampaignPlatform[] = ["linkedin", "medium", "substack"]
 
 type ApprovedDraftRow = {
   id: string
@@ -454,82 +459,176 @@ export async function listCampaignManualPublishItems(): Promise<CampaignManualPu
   if (!isSupabaseConfigured()) return []
   const supabase = getServiceRoleSupabase()
 
-  const { data: approvals, error: approvalsError } = await supabase
-    .from("campaign_approvals")
+  const finalCopiesResult = await supabase
+    .from("final_copies")
     .select("*")
-    .eq("status", "approved")
-    .order("approved_at", { ascending: false })
+    .in("status", ["operator_approved", "ready_for_manual_publish"])
+    .eq("validation_status", "valid")
+    .in("platform", SAFE_MANUAL_PUBLISH_PLATFORMS)
+    .order("updated_at", { ascending: false })
 
-  if (approvalsError) throw new Error(`Unable to load campaign approvals: ${approvalsError.message}`)
+  if (finalCopiesResult.error?.message.includes("final_copies")) return []
+  if (finalCopiesResult.error) {
+    throw new Error(`Unable to load final copies for manual publishing: ${finalCopiesResult.error.message}`)
+  }
 
-  const approvalRows = (approvals ?? []) as CampaignApprovalRow[]
-  if (!approvalRows.length) return []
+  const finalCopies = (finalCopiesResult.data ?? []) as FinalCopyPublishRow[]
+  if (!finalCopies.length) return []
 
-  const sourceIds = [...new Set(approvalRows.map((approval) => approval.source_content_id))]
-  const approvedProductIds = [...new Set(approvalRows.map((approval) => approval.product_id))]
+  const sourceIds = [...new Set(finalCopies.map((finalCopy) => finalCopy.source_content_id))]
+  const productIds = [...new Set(finalCopies.map((finalCopy) => finalCopy.product_id))]
 
-  const [productsResult, sourcesResult, finalCopiesResult, publishedResult] = await Promise.all([
-    supabase.from("products").select("id, name").in("id", approvedProductIds),
+  const [productsResult, sourcesResult, approvalsResult, publishedResult] = await Promise.all([
+    supabase.from("products").select("id, name").in("id", productIds),
     supabase.from("source_contents").select("*").in("id", sourceIds),
     supabase
-      .from("final_copies")
+      .from("campaign_approvals")
       .select("*")
       .in("source_content_id", sourceIds)
-      .eq("status", "ready_for_manual_publish")
-      .eq("validation_status", "valid"),
+      .eq("status", "approved"),
     supabase.from("published_records").select("*").in("source_content_id", sourceIds),
   ])
 
-  if (finalCopiesResult.error?.message.includes("final_copies")) return []
-
-  for (const result of [productsResult, sourcesResult, finalCopiesResult, publishedResult]) {
+  for (const result of [productsResult, sourcesResult, approvalsResult, publishedResult]) {
     if (result.error) throw new Error(`Unable to load manual publish items: ${result.error.message}`)
   }
 
   const products = (productsResult.data ?? []) as Array<{ id: string; name: string }>
   const sources = (sourcesResult.data ?? []) as SourceContentRow[]
-  const finalCopies = (finalCopiesResult.data ?? []) as FinalCopyPublishRow[]
+  const approvals = (approvalsResult.data ?? []) as CampaignApprovalRow[]
   const publishedRecords = (publishedResult.data ?? []) as PublishedRecordRow[]
 
-  return approvalRows.flatMap((approval) => {
-    const source = sources.find((row) => row.id === approval.source_content_id)
-    const product = products.find((row) => row.id === approval.product_id)
+  return finalCopies.flatMap((finalCopy) => {
+    const source = sources.find((row) => row.id === finalCopy.source_content_id)
+    const product = products.find((row) => row.id === finalCopy.product_id)
     if (!source || !product) return []
 
-    return finalCopies
-      .filter((finalCopy) =>
-        finalCopy.source_content_id === approval.source_content_id &&
-        approval.approved_platforms.includes(finalCopy.platform),
-      )
-      .map((finalCopy) => {
-        const publishedRecord = publishedRecords.find(
-          (record) =>
-            record.platform_adaptation_id === finalCopy.platform_adaptation_id &&
-            record.verification_status === "verified",
-        )
+    const publishedRecord = publishedRecords.find(
+      (record) =>
+        record.final_copy_id === finalCopy.id ||
+        (
+          record.platform_adaptation_id === finalCopy.platform_adaptation_id &&
+          record.verification_status === "verified"
+        ),
+    )
+    if (publishedRecord?.verification_status === "verified") return []
 
-        return {
-          approvalId: approval.id,
-          productId: product.id,
-          productName: product.name,
-          sourceContentId: source.id,
-          sourceTitle: source.title,
-          sourceContentHash: finalCopy.content_hash,
-          finalCopyId: finalCopy.id,
-          finalCopyVersion: finalCopy.version,
-          platformAdaptationId: finalCopy.platform_adaptation_id,
-          platform: finalCopy.platform,
-          title: finalCopy.title,
-          body: finalCopy.body,
-          campaignLinkUrl: finalCopy.affiliate_link,
-          disclosurePresent: true,
-          policyNotes: "Final copy passed deterministic validation and was approved by MENI for manual publishing.",
-          policySourceUrl: null,
-          approvedAt: finalCopy.approved_at ?? approval.approved_at,
-          publishedRecordUrl: publishedRecord?.live_url ?? null,
-        }
-      })
+    const approval = approvals.find(
+      (row) =>
+        row.source_content_id === finalCopy.source_content_id &&
+        row.approved_platforms.includes(finalCopy.platform),
+    )
+
+    return [{
+      approvalId: approval?.id ?? null,
+      productId: product.id,
+      productName: product.name,
+      sourceContentId: source.id,
+      sourceTitle: source.title,
+      sourceContentHash: finalCopy.content_hash,
+      finalCopyId: finalCopy.id,
+      finalCopyVersion: finalCopy.version,
+      platformAdaptationId: finalCopy.platform_adaptation_id,
+      platform: finalCopy.platform,
+      title: finalCopy.title,
+      body: finalCopy.body,
+      campaignLinkUrl: finalCopy.affiliate_link,
+      disclosurePresent: true,
+      policyNotes: "Final copy passed validation and is operator-approved. Manual publishing is allowed only after MENI publishes and pastes a real platform URL.",
+      policySourceUrl: null,
+      approvedAt: finalCopy.approved_at ?? new Date(0).toISOString(),
+      publishedRecordUrl: null,
+    }]
   })
+}
+
+export async function markFinalCopyPublishedManually(input: {
+  finalCopyId: string
+  postUrl: string
+}): Promise<PublishedRecord> {
+  const supabase = getServiceRoleSupabase()
+  const postUrl = input.postUrl.trim()
+
+  const { data: finalCopy, error: finalCopyError } = await supabase
+    .from("final_copies")
+    .select("*")
+    .eq("id", input.finalCopyId)
+    .single()
+
+  if (finalCopyError || !finalCopy) throw new Error("Final copy was not found.")
+
+  const row = finalCopy as FinalCopyPublishRow
+  if (!["operator_approved", "ready_for_manual_publish"].includes(row.status)) {
+    throw new Error("Only operator-approved final copies can be marked published.")
+  }
+  if (row.validation_status !== "valid") {
+    throw new Error("Only valid final copies can be marked published.")
+  }
+  if (!SAFE_MANUAL_PUBLISH_PLATFORMS.includes(row.platform)) {
+    throw new Error("This platform requires additional manual policy review before publishing.")
+  }
+  if (!isValidPublishedPostUrl(postUrl, row.platform)) {
+    throw new Error("A real post URL on the expected platform is required.")
+  }
+
+  const { data: existingByFinalCopy, error: existingByFinalCopyError } = await supabase
+    .from("published_records")
+    .select("*")
+    .eq("final_copy_id", row.id)
+    .limit(1)
+    .maybeSingle()
+
+  if (existingByFinalCopyError) {
+    throw new Error(`Unable to check existing published record: ${existingByFinalCopyError.message}`)
+  }
+  if (existingByFinalCopy) return mapPublished(existingByFinalCopy as PublishedRecordRow)
+
+  const { data: existingByUrl, error: existingByUrlError } = await supabase
+    .from("published_records")
+    .select("*")
+    .eq("platform", row.platform)
+    .eq("live_url", postUrl)
+    .limit(1)
+    .maybeSingle()
+
+  if (existingByUrlError) throw new Error(`Unable to check existing published URL: ${existingByUrlError.message}`)
+  if (existingByUrl) return mapPublished(existingByUrl as PublishedRecordRow)
+
+  const { data: approval } = await supabase
+    .from("campaign_approvals")
+    .select("*")
+    .eq("source_content_id", row.source_content_id)
+    .eq("status", "approved")
+    .contains("approved_platforms", [row.platform])
+    .order("approved_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { data: published, error: insertError } = await supabase
+    .from("published_records")
+    .insert({
+      product_id: row.product_id,
+      source_content_id: row.source_content_id,
+      platform_adaptation_id: row.platform_adaptation_id,
+      platform: row.platform,
+      live_url: postUrl,
+      verification_status: "verified",
+      verified_at: new Date().toISOString(),
+      final_copy_id: row.id,
+      campaign_approval_id: (approval as CampaignApprovalRow | null)?.id ?? null,
+    })
+    .select("*")
+    .single()
+
+  if (insertError) throw new Error(`Unable to create published record: ${insertError.message}`)
+
+  const { error: updateError } = await supabase
+    .from("final_copies")
+    .update({ status: "published_verified", updated_at: new Date().toISOString() })
+    .eq("id", row.id)
+
+  if (updateError) throw new Error(`Unable to update final copy status: ${updateError.message}`)
+  return mapPublished(published as PublishedRecordRow)
 }
 
 export async function createSourceContentFromLatestApprovedDraft(productId: string): Promise<SourceContent> {

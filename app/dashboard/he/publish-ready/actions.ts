@@ -10,6 +10,7 @@ import {
   markApprovalItemPublishedManually,
   queueApprovedCampaignForProduct,
 } from "@/lib/browser-control-db"
+import { markFinalCopyPublishedManually } from "@/lib/campaign-workflow-db"
 import { createDraft, listDrafts, listProducts } from "@/lib/db"
 import { buildQualityChecks } from "@/lib/quality"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
@@ -90,6 +91,26 @@ export async function markPublishedUrlAction(formData: FormData) {
 
   revalidatePath("/dashboard/he/publish-ready")
   revalidatePath("/dashboard/he/browser-control")
+  redirect("/dashboard/he/publish-ready?published=1")
+}
+
+export async function markFinalCopyPublishedUrlAction(formData: FormData) {
+  const finalCopyId = String(formData.get("finalCopyId") ?? "")
+  const postUrl = String(formData.get("postUrl") ?? "")
+
+  try {
+    await markFinalCopyPublishedManually({ finalCopyId, postUrl })
+  } catch (error) {
+    redirect(
+      `/dashboard/he/publish-ready?error=${encodeURIComponent(
+        error instanceof Error ? error.message : "final_copy_publish_url_failed",
+      )}`,
+    )
+  }
+
+  revalidatePath("/dashboard/he/publish-ready")
+  revalidatePath("/dashboard/he/content-review")
+  revalidatePath("/dashboard/he/campaigns")
   redirect("/dashboard/he/publish-ready?published=1")
 }
 
