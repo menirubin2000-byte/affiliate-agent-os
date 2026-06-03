@@ -49,7 +49,7 @@ export default async function HebrewContentReviewPage({
   const canApprove =
     Boolean(finalCopy) &&
     validation?.validationStatus === "valid" &&
-    finalCopy?.status !== "ready_for_manual_publish"
+    finalCopy?.status === "ready_for_operator_approval"
 
   return (
     <div dir="rtl" className="space-y-6">
@@ -93,9 +93,9 @@ export default async function HebrewContentReviewPage({
       {params.approved ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
-            <CardTitle className="text-green-950">הקופי הסופי אושר לפרסום ידני</CardTitle>
+            <CardTitle className="text-green-950">הקופי הסופי אושר</CardTitle>
             <CardDescription className="text-green-800">
-              זה לא Published. אחרי פרסום ידני ב-Medium צריך להדביק URL אמיתי ולאמת אותו.
+              זה לא Published. המערכת יצרה או עדכנה publish job, והוא יתקדם רק דרך מנוע פרסום ו-URL אמיתי מאומת.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -106,7 +106,7 @@ export default async function HebrewContentReviewPage({
           <CardHeader>
             <CardTitle className="text-amber-950">הקופי נדחה</CardTitle>
             <CardDescription className="text-amber-800">
-              המערכת לא תשלח את הגרסה הזו לפרסום ידני. צריך להכין גרסה חדשה לפני המשך.
+              המערכת לא תשלח את הגרסה הזו לביצוע. צריך להכין גרסה חדשה לפני המשך.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -149,8 +149,8 @@ export default async function HebrewContentReviewPage({
                   <Badge variant={validation.validationStatus === "valid" ? "default" : "destructive"}>
                     {validation.validationStatus === "valid" ? "עבר בדיקות" : "חסום"}
                   </Badge>
-                  <Badge variant={finalCopy.status === "ready_for_manual_publish" ? "default" : "outline"}>
-                    {finalCopy.status === "ready_for_manual_publish" ? "אושר לפרסום ידני" : "ממתין לאישור MENI"}
+                  <Badge variant={finalCopy.status === "operator_approved" ? "default" : "outline"}>
+                    {finalCopy.status === "operator_approved" ? "אושר על ידי MENI" : "ממתין לאישור MENI"}
                   </Badge>
                 </div>
               </div>
@@ -174,7 +174,7 @@ export default async function HebrewContentReviewPage({
                 </>
               ) : (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-                  הקופי הסופי חסום. המערכת לא מציגה טקסט גולמי ל-MENI לתיקון ידני. ראה חסימות ובקש תיקון מערכת.
+                  הקופי הסופי חסום. המערכת לא מציגה טקסט גולמי ל-MENI לתיקון. ראה חסימות ובקש תיקון מערכת.
                 </div>
               )}
             </CardContent>
@@ -184,7 +184,7 @@ export default async function HebrewContentReviewPage({
             <Card>
               <CardHeader>
                 <CardTitle>בדיקות שעברו</CardTitle>
-                <CardDescription>בדיקה דטרמיניסטית לפני אישור לפרסום ידני.</CardDescription>
+                <CardDescription>בדיקה דטרמיניסטית לפני אישור MENI.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {Object.entries(validation.checks).map(([key, passed]) => (
@@ -231,13 +231,13 @@ export default async function HebrewContentReviewPage({
             <Card>
               <CardHeader>
                 <CardTitle>פעולות MENI</CardTitle>
-                <CardDescription>MENI לא עורך את האנגלית ידנית. רק מאשר או מבקש תיקון.</CardDescription>
+                <CardDescription>MENI לא עורך את האנגלית. רק מאשר, דוחה או מבקש תיקון.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
                 <form action={approveFinalCopyAction}>
                   <input type="hidden" name="finalCopyId" value={finalCopy.id} />
                   <Button type="submit" disabled={!canApprove} className="w-full">
-                    אשר לפרסום ידני
+                    אשר
                   </Button>
                 </form>
                 <form action={rejectFinalCopyAction}>

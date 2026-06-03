@@ -45,7 +45,7 @@ export default async function HebrewPublishReadyPage() {
       <PageHeader
         eyebrow="ביצוע פרסום"
         title="סטטוס פרסום"
-        description="MENI לא מעתיק, לא פותח פלטפורמות, לא מדביק URL ולא מפרסם ידנית מהמסך הזה. אחרי אישור, המערכת יוצרת publish job. אם אין מנוע פרסום מחובר, הפריט נחסם."
+        description="MENI לא מעתיק, לא פותח פלטפורמות, ולא מדביק URL מהמסך הזה. אחרי אישור, המערכת יוצרת publish job. אם אין מנוע פרסום מחובר, הפריט נחסם."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/he/content-review" className={cn(buttonVariants())}>
@@ -62,7 +62,7 @@ export default async function HebrewPublishReadyPage() {
         <CardHeader>
           <CardTitle>כלל עבודה</CardTitle>
           <CardDescription>
-            הפעולות היחידות של MENI הן אשר, דחה, או דרוש תיקון במסך אישור הפוסטים. כל ביצוע פרסום עובר דרך publish job ומנוע פרסום. בלי מנוע מחובר אין משימה ידנית למני.
+            הפעולות היחידות של MENI הן אשר, דחה, או דרוש תיקון במסך אישור הפוסטים. כל ביצוע פרסום עובר דרך publish job ומנוע פרסום. בלי מנוע מחובר אין משימה למני.
           </CardDescription>
         </CardHeader>
       </Card>
