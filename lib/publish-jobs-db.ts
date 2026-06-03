@@ -61,6 +61,7 @@ export type PublishExecutorStatus =
   | "waiting_user"
   | "published"
   | "blocked"
+  | "blocked_policy"
   | "failed"
 
 const PUBLISH_JOB_SELECT =
@@ -347,15 +348,17 @@ export async function updatePublishJobFromExecutor(input: {
       : input.status === "waiting_url_verification"
         ? "waiting_url_verification"
         : input.status === "waiting_user"
-          ? "failed_needs_system_fix"
-          : input.status === "blocked" || input.status === "failed" || input.status === "failed_needs_system_fix"
-            ? "failed_needs_system_fix"
+          ? "needs_system_fix"
+          : input.status === "blocked_policy"
+            ? "blocked_policy"
+            : input.status === "blocked" || input.status === "failed" || input.status === "failed_needs_system_fix"
+              ? "needs_system_fix"
             : input.status
 
   const blockingReason =
     input.status === "waiting_user"
       ? "executor_requires_manual_publish_action"
-      : input.blockerReason ?? (nextStatus === "failed_needs_system_fix" ? "executor_failed" : null)
+      : input.blockerReason ?? (nextStatus === "needs_system_fix" ? "executor_failed" : null)
 
   const { data, error } = await supabase
     .from("publish_jobs")

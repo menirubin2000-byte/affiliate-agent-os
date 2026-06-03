@@ -23,15 +23,22 @@ const statusLabels: Record<PublishJobStatus, string> = {
   pending_meni_approval: "ממתין לאישור מני",
   approved_waiting_executor: "מאושר וממתין למנוע פרסום",
   blocked_executor_not_connected: "חסום - מנוע פרסום לא מחובר",
+  blocked_policy: "חסום - מדיניות פלטפורמה",
   running: "בביצוע",
   waiting_url_verification: "ממתין לאימות URL",
   verified: "פורסם ואומת",
+  needs_system_fix: "דרוש תיקון מערכת",
   failed_needs_system_fix: "נכשל - דרוש תיקון מערכת",
 }
 
 function statusVariant(status: PublishJobStatus) {
   if (status === "verified") return "default" as const
-  if (status === "blocked_executor_not_connected" || status === "failed_needs_system_fix") {
+  if (
+    status === "blocked_executor_not_connected" ||
+    status === "blocked_policy" ||
+    status === "needs_system_fix" ||
+    status === "failed_needs_system_fix"
+  ) {
     return "destructive" as const
   }
   return "secondary" as const
