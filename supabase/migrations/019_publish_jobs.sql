@@ -45,3 +45,70 @@ before update on public.publish_jobs
 for each row execute function public.set_updated_at();
 
 grant select, insert, update, delete on public.publish_jobs to service_role;
+
+with executor_state as (
+  select exists (
+    select 1
+    from public.browser_sessions
+    where status = 'connected'
+      and last_seen_at >= now() - interval '10 minutes'
+  ) as is_connected
+),
+approved_final_copies as (
+  select
+    final_copies.id as final_copy_id,
+    final_copies.product_id,
+    final_copies.platform,
+    (
+      select campaign_approvals.id
+      from public.campaign_approvals
+      where campaign_approvals.product_id = final_copies.product_id
+        and campaign_approvals.status = 'approved'
+        and final_copies.platform = any(campaign_approvals.approved_platforms)
+      order by campaign_approvals.approved_at desc nulls last, campaign_approvals.updated_at desc
+      limit 1
+    ) as approval_id
+  from public.final_copies
+  where final_copies.status in ('operator_approved', 'ready_for_manual_publish')
+    and final_copies.validation_status = 'valid'
+)
+insert into public.publish_jobs (
+  final_copy_id,
+  product_id,
+  platform,
+  status,
+  executor_type,
+  blocking_reason,
+  approval_id
+)
+select
+  approved_final_copies.final_copy_id,
+  approved_final_copies.product_id,
+  approved_final_copies.platform,
+  case
+    when executor_state.is_connected then 'approved_waiting_executor'
+    else 'blocked_executor_not_connected'
+  end,
+  'browser_helper',
+  case
+    when executor_state.is_connected then null
+    else 'executor_not_connected'
+  end,
+  approved_final_copies.approval_id
+from approved_final_copies
+cross join executor_state
+on conflict (final_copy_id) do update
+set
+  product_id = excluded.product_id,
+  platform = excluded.platform,
+  status = case
+    when public.publish_jobs.status in ('verified', 'running', 'waiting_url_verification') then public.publish_jobs.status
+    else excluded.status
+  end,
+  executor_type = excluded.executor_type,
+  blocking_reason = case
+    when public.publish_jobs.status in ('verified', 'running', 'waiting_url_verification') then public.publish_jobs.blocking_reason
+    else excluded.blocking_reason
+  end,
+  approval_id = excluded.approval_id,
+  updated_at = now();
