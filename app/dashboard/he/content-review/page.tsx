@@ -1,6 +1,5 @@
 import Link from "next/link"
 
-import { CopyPublishContent } from "@/components/browser-control/copy-publish-content"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -172,7 +171,6 @@ export default async function HebrewContentReviewPage({
                     {finalCopy.body}
                   </pre>
 
-                  <CopyPublishContent title={finalCopy.title} content={finalCopy.body} link={null} />
                 </>
               ) : (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">

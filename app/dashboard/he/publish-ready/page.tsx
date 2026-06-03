@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ExternalLink, Send } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 
 import { CopyPublishContent } from "@/components/browser-control/copy-publish-content"
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -7,18 +7,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { getPostApprovalState, listBrowserJobs, listPublishApprovalItems } from "@/lib/browser-control-db"
 import { listCampaignManualPublishItems } from "@/lib/campaign-workflow-db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
-import type { ApprovalItem } from "@/types/approval-item"
 
-import {
-  approvePublishItemAction,
-  markFinalCopyPublishedUrlAction,
-  markPublishedUrlAction,
-  queueBrowserPublishJobAction,
-} from "./actions"
+import { markFinalCopyPublishedUrlAction } from "./actions"
 
 export const dynamic = "force-dynamic"
 
@@ -31,37 +24,39 @@ const platformLabels: Record<string, string> = {
   reddit: "Reddit",
 }
 
-function statusVariant(status: ApprovalItem["status"]) {
-  if (status === "approved" || status === "published") return "default" as const
-  if (status === "rejected" || status === "needs_changes") return "destructive" as const
-  return "secondary" as const
+const platformPublishUrls: Record<string, string> = {
+  linkedin: "https://www.linkedin.com/feed/",
+  medium: "https://medium.com/new-story",
+  substack: "https://substack.com/home",
+}
+
+const platformUrlPlaceholders: Record<string, string> = {
+  linkedin: "https://www.linkedin.com/feed/update/...",
+  medium: "https://medium.com/@Rubin-Q.S/...",
+  substack: "https://menirubin.substack.com/p/...",
 }
 
 export default async function HebrewPublishReadyPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string; published?: string; approved?: string }>
+  searchParams?: Promise<{ error?: string; published?: string }>
 }) {
   const params = (await searchParams) ?? {}
-  const [items, jobs, campaignPublishItems] = isSupabaseConfigured()
-    ? await Promise.all([listPublishApprovalItems(), listBrowserJobs(80), listCampaignManualPublishItems()])
-    : [[], [], []]
-
-  const jobsByApproval = new Map(jobs.map((job) => [job.approvalItemId, job]))
+  const publishItems = isSupabaseConfigured() ? await listCampaignManualPublishItems() : []
 
   return (
     <div dir="rtl" className="space-y-6">
       <PageHeader
         eyebrow="פרסום מבוקר"
-        title="מוכן לפרסום"
-        description="המסך החדש מתחיל מאישור קמפיין מרוכז. פרסום מסומן Published רק אחרי שיש URL אמיתי מהפלטפורמה."
+        title="חבילות מוכנות לפרסום"
+        description="המערכת מכינה final copy, בודקת אותו, מכניסה קישור וגילוי, ומציגה רק חבילה מוכנה או חסימה. אין כאן תיקון אנגלית, אין טיוטות גולמיות, ואין Published בלי URL אמיתי."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/he/campaigns" className={cn(buttonVariants())}>
               אישור קמפיינים
             </Link>
-            <Link href="/dashboard/he/browser-control" className={cn(buttonVariants({ variant: "outline" }))}>
-              שליטה בדפדפן
+            <Link href="/dashboard/he/content-review" className={cn(buttonVariants({ variant: "outline" }))}>
+              בדיקת קופי סופי
             </Link>
           </div>
         }
@@ -69,9 +64,9 @@ export default async function HebrewPublishReadyPage({
 
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
-          <CardTitle>הכלל החדש</CardTitle>
+          <CardTitle>חלוקת עבודה נכונה</CardTitle>
           <CardDescription>
-            מוצר עם affiliate link אמיתי ותוכן שעבר בדיקות נכנס לאישור קמפיין אחד. לא מאשרים אותו פוסט שוב, ולא מפרסמים בלי URL אמיתי.
+            המערכת מסדרת כותרת, גוף, CTA, disclosure וקישורים. MENI לא מסדר פוסטים. אם פרסום ידני נדרש בגלל פלטפורמה, החבילה כבר מוכנה במלואה, והמערכת תשמור Published Record רק אחרי URL חי ומאומת.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -85,226 +80,140 @@ export default async function HebrewPublishReadyPage({
         </Card>
       ) : null}
 
-      {params.approved ? (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-green-950">הפוסט אושר</CardTitle>
-            <CardDescription className="text-green-800">
-              אותו פוסט לא יבקש אישור חוזר כל עוד התוכן והקישור לא השתנו.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
-
       {params.published ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
-            <CardTitle className="text-green-950">URL נשמר</CardTitle>
+            <CardTitle className="text-green-950">URL אמיתי נשמר</CardTitle>
             <CardDescription className="text-green-800">
-              הפריט סומן published רק אחרי שנשמר קישור פוסט אמיתי.
+              נוצר Published Record רק אחרי שהמערכת קיבלה URL שמתאים לפלטפורמה.
             </CardDescription>
           </CardHeader>
         </Card>
       ) : null}
 
-      {campaignPublishItems.length ? (
+      {!publishItems.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>אין כרגע חבילות מוכנות לפרסום</CardTitle>
+            <CardDescription>
+              אם מוצר חסום, הוא צריך להופיע במסך הקמפיינים עם סיבה ברורה. אם יש final copy תקין ומאושר, הוא יופיע כאן כחבילת פרסום אחת.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
+
+      {publishItems.length ? (
         <section className="space-y-4">
           <div>
-            <h2 className="text-lg font-semibold">מוכן לפרסום ידני מאישור קמפיין</h2>
+            <h2 className="text-lg font-semibold">מוכן לפרסום ידני</h2>
             <p className="text-sm text-muted-foreground">
-              אלה פריטים שעברו אישור קמפיין של MENI. הם לא Published, לא נוצר להם URL, ולא נוצר Browser Job.
+              כל פריט כאן הוא חבילת פרסום מלאה. אין אישור חוזר, אין עריכה ידנית, ואין סימון פורסם בלי URL אמיתי.
             </p>
           </div>
 
-          {campaignPublishItems.map((item) => (
-            <Card key={item.platformAdaptationId} className="border-primary/30">
+          {publishItems.map((item) => (
+            <Card key={item.finalCopyId ?? item.platformAdaptationId} className="border-primary/30">
               <CardHeader>
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <CardTitle>{item.productName} · {platformLabels[item.platform] ?? item.platform}</CardTitle>
+                    <CardTitle>
+                      {item.productName} · {platformLabels[item.platform] ?? item.platform}
+                    </CardTitle>
                     <CardDescription>
-                      מוכן לפרסום ידני · אושר על ידי MENI ב-{new Date(item.approvedAt).toLocaleString("he-IL")}
+                      final copy v{item.finalCopyVersion ?? 1} · אושר לפרסום ידני · עדיין לא Published
                     </CardDescription>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="default">campaign approved</Badge>
-                    <Badge variant={item.publishedRecordUrl ? "default" : "outline"}>
-                      {item.publishedRecordUrl ? "URL מאומת קיים" : "לא פורסם"}
-                    </Badge>
-                    {item.disclosurePresent ? <Badge variant="outline">Disclosure קיים</Badge> : null}
+                    <Badge variant="default">final copy תקין</Badge>
+                    <Badge variant="outline">campaign approved</Badge>
+                    <Badge variant="outline">URL חסר</Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                    <div className="text-muted-foreground">כותרת</div>
+                    <div className="mt-1 font-medium" dir="ltr">{item.title}</div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                    <div className="text-muted-foreground">מקור</div>
+                    <div className="mt-1 font-medium">source + adaptation קיימים</div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                    <div className="text-muted-foreground">סטטוס</div>
+                    <div className="mt-1 font-medium">מוכן, לא פורסם</div>
+                  </div>
+                </div>
+
                 <div className="rounded-lg border bg-muted/20 p-3 text-sm">
-                  <div className="font-medium">Traceability</div>
+                  <div className="font-medium">מה המערכת כבר עשתה</div>
                   <div className="mt-1 text-muted-foreground">
-                    approval: {item.approvalId ?? "final-copy approval"} · source: {item.sourceContentId} · adaptation: {item.platformAdaptationId}
-                  </div>
-                  <div className="mt-1 text-muted-foreground">
-                    source title: {item.sourceTitle}
-                  </div>
-                  <div className="mt-1 text-muted-foreground">
-                    content hash: {item.sourceContentHash}
+                    ניקתה את הטקסט, שמרה גרסה יציבה, בדקה disclosure/CTA/link, ושמרה traceability ל-source content ול-platform adaptation.
                   </div>
                 </div>
 
                 {item.policyNotes ? (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
                     בדיקת מדיניות: {item.policyNotes}
-                    {item.policySourceUrl ? (
-                      <>
-                        {" "}
-                        <a href={item.policySourceUrl} target="_blank" rel="noreferrer" className="underline">
-                          מקור
-                        </a>
-                      </>
-                    ) : null}
                   </div>
                 ) : null}
 
-                <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/30 p-3 text-sm">
-                  {item.body}
-                </pre>
+                <details className="rounded-lg border bg-muted/10 p-3">
+                  <summary className="cursor-pointer text-sm font-medium">הצג חבילת פרסום מוכנה</summary>
+                  <pre dir="ltr" className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border bg-background p-3 text-sm">
+                    {[item.title, item.body, item.campaignLinkUrl].filter(Boolean).join("\n\n")}
+                  </pre>
+                </details>
 
-                {item.campaignLinkUrl ? (
-                  <a
-                    href={item.campaignLinkUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-primary"
-                  >
-                    קישור קמפיין
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                ) : null}
-
-                <CopyPublishContent title={item.title} content={item.body} link={item.campaignLinkUrl} />
+                <div className="flex flex-wrap gap-2">
+                  <CopyPublishContent title={item.title} content={item.body} link={item.campaignLinkUrl} />
+                  {platformPublishUrls[item.platform] ? (
+                    <a
+                      href={platformPublishUrls[item.platform]}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                      פתח פלטפורמה
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  ) : null}
+                  {item.campaignLinkUrl ? (
+                    <a
+                      href={item.campaignLinkUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                      בדוק קישור קמפיין
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  ) : null}
+                </div>
 
                 <div className="rounded-lg border bg-muted/10 p-3 text-sm">
-                  פעולה נדרשת מ-MENI: לפתוח את הפלטפורמה, לפרסם ידנית, ואז להדביק URL אמיתי. רק אחרי אימות URL ייווצר Published Record.
+                  Published Record לא נוצר כאן מראש. אחרי שקיים URL חי מהפלטפורמה, המערכת מאמתת אותו ושומרת אותו.
                 </div>
 
-                <div className="flex flex-col gap-2 md:flex-row md:items-end">
-                  <form action={markFinalCopyPublishedUrlAction} className="flex flex-1 flex-col gap-2 md:flex-row md:items-end">
-                    <input type="hidden" name="finalCopyId" value={item.finalCopyId ?? ""} />
-                    <label className="flex-1 text-sm">
-                      <span className="mb-1 block text-muted-foreground">URL אמיתי אחרי פרסום ידני</span>
-                      <Input
-                        name="postUrl"
-                        placeholder={
-                          item.platform === "linkedin"
-                            ? "https://www.linkedin.com/feed/update/..."
-                            : item.platform === "medium"
-                              ? "https://medium.com/@Rubin-Q.S/..."
-                              : "https://menirubin.substack.com/p/..."
-                        }
-                      />
-                    </label>
-                    <Button type="submit" variant="outline">
-                      שמור URL אמיתי
-                    </Button>
-                  </form>
-                </div>
+                <form action={markFinalCopyPublishedUrlAction} className="flex flex-col gap-2 md:flex-row md:items-end">
+                  <input type="hidden" name="finalCopyId" value={item.finalCopyId ?? ""} />
+                  <label className="flex-1 text-sm">
+                    <span className="mb-1 block text-muted-foreground">URL חי מהפלטפורמה</span>
+                    <Input
+                      name="postUrl"
+                      placeholder={platformUrlPlaceholders[item.platform] ?? "https://..."}
+                    />
+                  </label>
+                  <Button type="submit" variant="outline">
+                    שמור URL ואמת פרסום
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           ))}
         </section>
       ) : null}
-
-      {!items.length && !campaignPublishItems.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>אין כרגע פריטי פרסום ישנים</CardTitle>
-            <CardDescription>
-              עבור ל&quot;קמפיינים&quot; כדי ליצור מקור תוכן, התאמות לפלטפורמות ואישור קמפיין מרוכז.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
-
-      <div className="space-y-4">
-        {items.map((item) => {
-          const job = jobsByApproval.get(item.id)
-          const canApprove = item.status === "waiting_approval"
-          const canQueue = item.status === "approved"
-          const canSaveUrl = item.status === "approved"
-
-          return (
-            <Card key={item.id} className="border-border/70">
-              <CardHeader>
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <CardTitle>{item.title}</CardTitle>
-                    <CardDescription>
-                      מוצר: {item.productName ?? "לא משויך"} · פלטפורמה: {item.platform ?? "לא ידוע"} · {getPostApprovalState(item)}
-                    </CardDescription>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant={statusVariant(item.status)}>{getPostApprovalState(item)}</Badge>
-                    {job ? <Badge variant="outline">job: {job.status}</Badge> : null}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/30 p-3 text-sm">
-                  {item.contentPreview ?? "אין תוכן"}
-                </pre>
-
-                {item.campaignLinkUrl ? (
-                  <a
-                    href={item.campaignLinkUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-primary"
-                  >
-                    קישור קמפיין
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                ) : null}
-
-                <CopyPublishContent
-                  title={item.title}
-                  content={item.contentPreview ?? ""}
-                  link={item.campaignLinkUrl}
-                />
-
-                <div className="flex flex-col gap-3 border-t pt-4 md:flex-row md:items-end">
-                  {canApprove ? (
-                    <form action={approvePublishItemAction}>
-                      <input type="hidden" name="approvalItemId" value={item.id} />
-                      <Button type="submit" variant="outline">אשר פעם אחת</Button>
-                    </form>
-                  ) : null}
-
-                  {canQueue ? (
-                    <form action={queueBrowserPublishJobAction}>
-                      <input type="hidden" name="approvalItemId" value={item.id} />
-                      <Button type="submit">
-                        <Send className="size-4" />
-                        שלח ל-Browser Helper
-                      </Button>
-                    </form>
-                  ) : null}
-
-                  {canSaveUrl ? (
-                    <form action={markPublishedUrlAction} className="flex flex-1 flex-col gap-2 md:flex-row md:items-end">
-                      <input type="hidden" name="approvalItemId" value={item.id} />
-                      <label className="flex-1 text-sm">
-                        <span className="mb-1 block text-muted-foreground">URL אמיתי אחרי פרסום</span>
-                        <Input name="postUrl" placeholder="https://www.linkedin.com/feed/update/..." />
-                      </label>
-                      <Button type="submit" variant="outline">
-                        שמור URL וסמן published
-                      </Button>
-                    </form>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
     </div>
   )
 }

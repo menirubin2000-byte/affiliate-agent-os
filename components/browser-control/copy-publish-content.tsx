@@ -21,23 +21,9 @@ export function CopyPublishContent({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button type="button" variant="outline" size="sm" onClick={() => copy(title)}>
-        <Copy className="size-3.5" />
-        העתק כותרת
-      </Button>
-      <Button type="button" variant="outline" size="sm" onClick={() => copy(content)}>
-        <Copy className="size-3.5" />
-        העתק גוף
-      </Button>
-      {link ? (
-        <Button type="button" variant="outline" size="sm" onClick={() => copy(link)}>
-          <Copy className="size-3.5" />
-          העתק קישור
-        </Button>
-      ) : null}
       <Button type="button" variant="outline" size="sm" onClick={() => copy(fullPost)}>
         <Copy className="size-3.5" />
-        העתק פוסט מלא
+        העתק חבילת פרסום מלאה
       </Button>
     </div>
   )
