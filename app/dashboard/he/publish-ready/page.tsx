@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
+import { getLinkedInOfficialApiCapability } from "@/lib/linkedin-official-api"
 import { cn } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
-import { confirmPreparedPublishJobAction } from "./actions"
+import { confirmLinkedInOfficialPublishAction, confirmPreparedPublishJobAction } from "./actions"
 
 export const dynamic = "force-dynamic"
 
@@ -51,6 +52,8 @@ function statusVariant(status: PublishJobStatus) {
 
 export default async function HebrewPublishReadyPage() {
   const jobs = await listPublishJobsForHebrewDashboard()
+  const linkedinCapability = getLinkedInOfficialApiCapability()
+  const hasLinkedInJobs = jobs.some((job) => job.platform === "linkedin" && job.status !== "verified")
 
   return (
     <div dir="rtl" className="space-y-6">
@@ -78,6 +81,31 @@ export default async function HebrewPublishReadyPage() {
           </CardDescription>
         </CardHeader>
       </Card>
+
+      {hasLinkedInJobs ? (
+        <Card className={linkedinCapability.configured ? "border-primary/30" : "border-amber-300"}>
+          <CardHeader>
+            <CardTitle>
+              {linkedinCapability.configured
+                ? "LinkedIn API רשמי מוכן"
+                : "חסום - נדרש חיבור LinkedIn רשמי"}
+            </CardTitle>
+            <CardDescription>
+              הפרסום מותר רק דרך LinkedIn Developer App עם Share on LinkedIn והרשאת w_member_social.
+              אין שימוש באוטומציית דפדפן לא רשמית.
+            </CardDescription>
+          </CardHeader>
+          {!linkedinCapability.configured ? (
+            <CardContent className="space-y-2 text-sm">
+              <p>סיבה: linkedin_official_api_not_configured</p>
+              <p dir="ltr">
+                Missing: {[...linkedinCapability.missingKeys, ...linkedinCapability.invalidReasons].join(", ")}
+              </p>
+              <p>Token storage: server environment only. לא נשמר token בדפדפן או במסד נתונים.</p>
+            </CardContent>
+          ) : null}
+        </Card>
+      ) : null}
 
       {!jobs.length ? (
         <Card>
@@ -128,7 +156,7 @@ export default async function HebrewPublishReadyPage() {
                     חסימה: {job.blockingReason === "executor_not_connected"
                       ? "מנוע פרסום לא מחובר"
                       : job.blockingReason === "linkedin_official_api_not_configured"
-                        ? "LinkedIn דורש API/הרשאות רשמיות לפני פרסום אוטומטי"
+                        ? "חסום - נדרש חיבור LinkedIn רשמי"
                       : job.blockingReason === "login_required"
                         ? "דרוש חיבור לחשבון הפלטפורמה"
                       : job.blockingReason === "captcha_required"
@@ -156,6 +184,12 @@ export default async function HebrewPublishReadyPage() {
                     </p>
                     {job.platform === "medium" || job.platform === "substack" ? (
                       <form action={confirmPreparedPublishJobAction}>
+                        <input type="hidden" name="jobId" value={job.id} />
+                        <Button type="submit">אשר פעולה סופית</Button>
+                      </form>
+                    ) : null}
+                    {job.platform === "linkedin" && linkedinCapability.configured ? (
+                      <form action={confirmLinkedInOfficialPublishAction}>
                         <input type="hidden" name="jobId" value={job.id} />
                         <Button type="submit">אשר פעולה סופית</Button>
                       </form>

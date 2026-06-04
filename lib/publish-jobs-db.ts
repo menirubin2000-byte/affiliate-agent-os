@@ -1,6 +1,7 @@
 import "server-only"
 
 import { detectBrowserPlatform, getPlatformPublishTarget, isValidPublishedPostUrl } from "@/lib/browser-control"
+import { getLinkedInOfficialApiCapability } from "@/lib/linkedin-official-api"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { BrowserPlatform } from "@/types/browser-control"
@@ -158,6 +159,12 @@ function getExecutorStateForPlatform(
   session: ExecutorSessionRow | null,
 ): { status: PublishJobStatus; blockingReason: string | null } {
   if (platform === "linkedin") {
+    if (getLinkedInOfficialApiCapability().configured) {
+      return {
+        status: "pending_operator_confirmation",
+        blockingReason: null,
+      }
+    }
     return {
       status: "blocked_executor_not_connected",
       blockingReason: "linkedin_official_api_not_configured",
@@ -223,6 +230,7 @@ export async function refreshPublishJobsForExecutorConnection() {
       .from("publish_jobs")
       .update({
         status: next.status,
+        executor_type: job.platform === "linkedin" ? "linkedin_official_api" : "browser_helper",
         blocking_reason: next.blockingReason,
       })
       .eq("id", job.id)
@@ -274,7 +282,7 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
       product_id: copy.product_id,
       platform: copy.platform,
       status: executorState.status,
-      executor_type: "browser_helper",
+      executor_type: copy.platform === "linkedin" ? "linkedin_official_api" : "browser_helper",
       blocking_reason: executorState.blockingReason,
       approval_id: approvalId,
       live_url: null,
@@ -289,6 +297,7 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
 
 export async function listPublishJobsForHebrewDashboard(): Promise<PublishJob[]> {
   if (!isSupabaseConfigured()) return []
+  await refreshPublishJobsForExecutorConnection()
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("publish_jobs")
