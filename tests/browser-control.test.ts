@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { isValidPublishedPostUrl } from "../lib/browser-control"
+import { getPlatformPublishTarget, isValidPublishedPostUrl } from "../lib/browser-control"
 
 test("rejects Medium editor URL as a published post URL", () => {
   assert.equal(isValidPublishedPostUrl("https://medium.com/new-story", "medium"), false)
@@ -32,4 +32,8 @@ test("accepts LinkedIn feed update as a published post URL", () => {
 
 test("rejects LinkedIn feed page as a published post URL", () => {
   assert.equal(isValidPublishedPostUrl("https://www.linkedin.com/feed/", "linkedin"), false)
+})
+
+test("does not expose a generic Reddit submit target", () => {
+  assert.equal(getPlatformPublishTarget("reddit"), null)
 })

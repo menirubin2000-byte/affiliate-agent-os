@@ -93,6 +93,22 @@ test("tiktok without video asset is not publish-ready", () => {
   assert.equal(quality.blockers.includes("missing_video_asset"), true)
 })
 
+test("reddit stays blocked until community rules are verified", () => {
+  const { quality, policy } = buildCampaignQualityChecks({
+    platform: "reddit",
+    title: "Useful discussion",
+    body: baseBody(),
+    targetKeyword: "systeme.io review",
+    affiliateLink,
+    campaignLinkUrl: affiliateLink,
+    redditRulesVerified: false,
+  })
+
+  assert.equal(policy.status, "requires_manual_verification")
+  assert.equal(policy.blocker, "reddit_community_rules_not_verified")
+  assert.equal(quality.passed, false)
+})
+
 test("content hash is stable for unchanged source/adaptation content", () => {
   const first = hashCampaignContent(["product-1", "linkedin", "Title", "Body"])
   const second = hashCampaignContent([" product-1 ", "linkedin", "Title", "Body"])

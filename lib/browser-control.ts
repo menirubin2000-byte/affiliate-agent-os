@@ -28,7 +28,6 @@ const platformTargets: Record<string, string> = {
   substack: "https://substack.com/home",
   tiktok: "https://www.tiktok.com/upload",
   quora: "https://www.quora.com/",
-  reddit: "https://www.reddit.com/submit",
 }
 
 export function isApprovedBrowserDomain(url: string) {

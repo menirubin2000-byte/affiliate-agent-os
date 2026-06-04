@@ -70,8 +70,8 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       platform: input.platform,
       status: "requires_manual_verification",
       publishMode: "manual",
-      notes: "Reddit requires subreddit rules review and explicit user authorization before any publish job.",
-      blocker: "reddit_rules_not_verified",
+      notes: "Reddit requires a verified subreddit-specific rules match before any publish job. Generic Reddit submit or home-feed publishing is disabled.",
+      blocker: "reddit_community_rules_not_verified",
     })
   }
 
