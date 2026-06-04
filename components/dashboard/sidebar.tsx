@@ -21,6 +21,7 @@ import {
   LogOut,
   Package2,
   Send,
+  Share2,
   Shield,
 } from "lucide-react"
 
@@ -48,6 +49,7 @@ const englishNavigation = [
 ]
 
 const hebrewNavigation = [
+  { href: "/dashboard/he/platform-capabilities", label: "יכולות פלטפורמה", icon: Share2 },
   { href: "/dashboard/he", label: "בית", icon: LayoutDashboard },
   { href: "/dashboard/he/campaigns", label: "קמפיינים", icon: FolderKanban },
   { href: "/dashboard/he/content-review", label: "בדיקת קופי", icon: FileText },
