@@ -19,7 +19,7 @@ function baseBody(link = affiliateLink) {
   ].join("\n\n")
 }
 
-test("linkedin content requires manual verification before publish readiness", () => {
+test("linkedin content remains blocked until the official developer app is available", () => {
   const { quality, policy } = buildCampaignQualityChecks({
     platform: "linkedin",
     title: "Systeme.io Review",
@@ -30,8 +30,12 @@ test("linkedin content requires manual verification before publish readiness", (
   })
 
   assert.equal(policy.status, "requires_manual_verification")
+  assert.equal(policy.publishMode, "api")
   assert.equal(quality.passed, false)
-  assert.equal(quality.blockers.includes("linkedin_manual_verification_required"), true)
+  assert.equal(
+    quality.blockers.includes("linkedin_developer_app_blocked_not_enough_connections"),
+    true,
+  )
 })
 
 test("missing affiliate link blocks platforms that allow affiliate links", () => {

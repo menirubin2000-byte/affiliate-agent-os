@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
-import { getLinkedInOfficialApiCapability } from "@/lib/linkedin-official-api"
+import {
+  getLinkedInOfficialApiCapability,
+  LINKEDIN_CURRENT_BLOCKING_REASON,
+} from "@/lib/linkedin-official-api"
 import { cn } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
@@ -53,7 +56,7 @@ function statusVariant(status: PublishJobStatus) {
 function jobStatusLabel(job: { status: PublishJobStatus; blockingReason: string | null }) {
   if (
     job.status === "blocked_executor_not_connected" &&
-    job.blockingReason === "linkedin_official_api_not_configured"
+    job.blockingReason === LINKEDIN_CURRENT_BLOCKING_REASON
   ) {
     return "חסום - נדרש חיבור LinkedIn רשמי"
   }
@@ -108,7 +111,11 @@ export default async function HebrewPublishReadyPage() {
           </CardHeader>
           {!linkedinCapability.configured ? (
             <CardContent className="space-y-2 text-sm">
-              <p>סיבה: linkedin_official_api_not_configured</p>
+              <p>סיבה: {LINKEDIN_CURRENT_BLOCKING_REASON}</p>
+              <p>
+                LinkedIn לא מאפשר כרגע ליצור Developer App לחשבון בגלל שאין מספיק חיבורים. המסלול הישן
+                השתמש באוטומציית דפדפן לא רשמית ולכן אינו זמין לשימוש חוזר.
+              </p>
               <p dir="ltr">
                 Missing: {[...linkedinCapability.missingKeys, ...linkedinCapability.invalidReasons].join(", ")}
               </p>
@@ -166,7 +173,7 @@ export default async function HebrewPublishReadyPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
                     חסימה: {job.blockingReason === "executor_not_connected"
                       ? "מנוע פרסום לא מחובר"
-                      : job.blockingReason === "linkedin_official_api_not_configured"
+                      : job.blockingReason === LINKEDIN_CURRENT_BLOCKING_REASON
                         ? "חסום - נדרש חיבור LinkedIn רשמי"
                       : job.blockingReason === "login_required"
                         ? "דרוש חיבור לחשבון הפלטפורמה"

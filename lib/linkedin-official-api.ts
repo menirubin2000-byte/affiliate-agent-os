@@ -1,5 +1,7 @@
 export const LINKEDIN_REQUIRED_SCOPE = "w_member_social"
 export const LINKEDIN_POSTS_ENDPOINT = "https://api.linkedin.com/rest/posts"
+export const LINKEDIN_CURRENT_BLOCKING_REASON =
+  "linkedin_developer_app_blocked_not_enough_connections"
 
 const REQUIRED_ENV_KEYS = [
   "LINKEDIN_CLIENT_ID",

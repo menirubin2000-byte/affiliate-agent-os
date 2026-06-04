@@ -99,9 +99,9 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
     return buildPolicy({
       platform: input.platform,
       status: "requires_manual_verification",
-      publishMode: "browser_helper",
-      notes: "LinkedIn automation requires approved permissions. Browser helper may prepare content, but MENI must verify the final action.",
-      blocker: "linkedin_manual_verification_required",
+      publishMode: "api",
+      notes: "LinkedIn publishing is allowed only through an approved official API application. No browser-helper or manual publishing fallback is assigned to MENI.",
+      blocker: "linkedin_developer_app_blocked_not_enough_connections",
     })
   }
 

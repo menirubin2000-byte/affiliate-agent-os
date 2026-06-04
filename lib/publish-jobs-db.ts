@@ -1,7 +1,10 @@
 import "server-only"
 
 import { detectBrowserPlatform, getPlatformPublishTarget, isValidPublishedPostUrl } from "@/lib/browser-control"
-import { getLinkedInOfficialApiCapability } from "@/lib/linkedin-official-api"
+import {
+  getLinkedInOfficialApiCapability,
+  LINKEDIN_CURRENT_BLOCKING_REASON,
+} from "@/lib/linkedin-official-api"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { BrowserPlatform } from "@/types/browser-control"
@@ -167,7 +170,7 @@ function getExecutorStateForPlatform(
     }
     return {
       status: "blocked_executor_not_connected",
-      blockingReason: "linkedin_official_api_not_configured",
+      blockingReason: LINKEDIN_CURRENT_BLOCKING_REASON,
     }
   }
 
