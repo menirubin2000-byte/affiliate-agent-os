@@ -50,6 +50,17 @@ function statusVariant(status: PublishJobStatus) {
   return "secondary" as const
 }
 
+function jobStatusLabel(job: { status: PublishJobStatus; blockingReason: string | null }) {
+  if (
+    job.status === "blocked_executor_not_connected" &&
+    job.blockingReason === "linkedin_official_api_not_configured"
+  ) {
+    return "חסום - נדרש חיבור LinkedIn רשמי"
+  }
+
+  return statusLabels[job.status]
+}
+
 export default async function HebrewPublishReadyPage() {
   const jobs = await listPublishJobsForHebrewDashboard()
   const linkedinCapability = getLinkedInOfficialApiCapability()
@@ -132,14 +143,14 @@ export default async function HebrewPublishReadyPage() {
                       {job.finalCopyTitle ?? "Final copy"} · executor: {job.executorType}
                     </CardDescription>
                   </div>
-                  <Badge variant={statusVariant(job.status)}>{statusLabels[job.status]}</Badge>
+                  <Badge variant={statusVariant(job.status)}>{jobStatusLabel(job)}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border bg-muted/20 p-3 text-sm">
                     <div className="text-muted-foreground">סטטוס</div>
-                    <div className="mt-1 font-medium">{statusLabels[job.status]}</div>
+                    <div className="mt-1 font-medium">{jobStatusLabel(job)}</div>
                   </div>
                   <div className="rounded-lg border bg-muted/20 p-3 text-sm">
                     <div className="text-muted-foreground">מנוע פרסום</div>
