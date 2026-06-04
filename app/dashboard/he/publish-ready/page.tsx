@@ -2,11 +2,13 @@ import Link from "next/link"
 
 import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { cn } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
+
+import { confirmMediumPublishJobAction } from "./actions"
 
 export const dynamic = "force-dynamic"
 
@@ -148,8 +150,16 @@ export default async function HebrewPublishReadyPage() {
                 ) : null}
 
                 {job.status === "pending_operator_confirmation" ? (
-                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
-                    אשר פעולה סופית רק אם חלון הפלטפורמה פתוח והמנוע כבר מילא את התוכן. אין העתקה, אין הדבקה, ואין איסוף URL ידני.
+                  <div className="space-y-3 rounded-lg border bg-muted/20 p-3 text-sm">
+                    <p>
+                      התוכן כבר מולא על ידי מנוע הפרסום. אישור הפעולה הסופית מתיר למנוע ללחוץ Publish ולאמת URL חי.
+                    </p>
+                    {job.platform === "medium" ? (
+                      <form action={confirmMediumPublishJobAction}>
+                        <input type="hidden" name="jobId" value={job.id} />
+                        <Button type="submit">אשר פעולה סופית</Button>
+                      </form>
+                    ) : null}
                   </div>
                 ) : null}
 

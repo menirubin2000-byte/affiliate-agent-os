@@ -15,6 +15,8 @@ type PublishJobRow = {
   executor_type: string
   blocking_reason: string | null
   approval_id: string | null
+  executor_url: string | null
+  final_confirmed_at: string | null
   live_url: string | null
   verified_at: string | null
   created_at: string
@@ -58,6 +60,7 @@ type PublishExecutorJobRow = Omit<PublishJobRow, "final_copies"> & {
 }
 
 export type PublishExecutorJob = PublishJob & {
+  executorCommand: "fill" | "publish_confirmed"
   targetUrl: string | null
   title: string
   content: string
@@ -77,10 +80,10 @@ export type PublishExecutorStatus =
   | "failed"
 
 const PUBLISH_JOB_SELECT =
-  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, live_url, verified_at, created_at, updated_at, products(name), final_copies(title)"
+  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, live_url, verified_at, created_at, updated_at, products(name), final_copies(title)"
 
 const PUBLISH_EXECUTOR_JOB_SELECT =
-  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, live_url, verified_at, created_at, updated_at, products(name), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link)"
+  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, live_url, verified_at, created_at, updated_at, products(name), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link)"
 
 function relatedName<T extends { name?: string }>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) return value[0]?.name ?? null
@@ -110,6 +113,8 @@ function mapPublishJob(row: PublishJobRow): PublishJob {
     executorType: row.executor_type,
     blockingReason: row.blocking_reason,
     approvalId: row.approval_id,
+    executorUrl: row.executor_url,
+    finalConfirmedAt: row.final_confirmed_at,
     liveUrl: row.live_url,
     verifiedAt: row.verified_at,
     finalCopyTitle: relatedTitle(row.final_copies),
@@ -121,10 +126,12 @@ function mapPublishJob(row: PublishJobRow): PublishJob {
 function mapPublishExecutorJob(row: PublishExecutorJobRow): PublishExecutorJob {
   const job = mapPublishJob(row)
   const finalCopy = relatedFinalCopy(row.final_copies as PublishExecutorJobRow["final_copies"])
+  const publishConfirmed = row.status === "running" && row.blocking_reason === "operator_final_confirmation_granted"
 
   return {
     ...job,
-    targetUrl: getPlatformPublishTarget(row.platform),
+    executorCommand: publishConfirmed ? "publish_confirmed" : "fill",
+    targetUrl: publishConfirmed ? row.executor_url : getPlatformPublishTarget(row.platform),
     title: finalCopy?.title ?? job.finalCopyTitle ?? "Approved post",
     content: finalCopy?.body ?? "",
     affiliateLink: finalCopy?.affiliate_link ?? null,
@@ -298,6 +305,20 @@ export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob
   await refreshPublishJobsForExecutorConnection()
 
   const supabase = getServiceRoleSupabase()
+  const { data: confirmed, error: confirmedError } = await supabase
+    .from("publish_jobs")
+    .select(PUBLISH_EXECUTOR_JOB_SELECT)
+    .eq("status", "running")
+    .eq("blocking_reason", "operator_final_confirmation_granted")
+    .not("executor_url", "is", null)
+    .order("final_confirmed_at", { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (!confirmedError && confirmed) {
+    return mapPublishExecutorJob(confirmed as PublishExecutorJobRow)
+  }
+
   const { data, error } = await supabase
     .from("publish_jobs")
     .select(PUBLISH_EXECUTOR_JOB_SELECT)
@@ -330,6 +351,47 @@ export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob
   }
 
   return job
+}
+
+export async function confirmMediumPublishJobForExecution(jobId: string): Promise<PublishJob> {
+  if (!isSupabaseConfigured()) throw new Error("Supabase is not configured.")
+  const supabase = getServiceRoleSupabase()
+
+  const { data: current, error: currentError } = await supabase
+    .from("publish_jobs")
+    .select(PUBLISH_JOB_SELECT)
+    .eq("id", jobId)
+    .single()
+
+  if (currentError || !current) throw new Error("Publish job was not found.")
+  const job = mapPublishJob(current as PublishJobRow)
+
+  if (job.platform !== "medium") {
+    throw new Error("Final confirmation is enabled only for Medium in this flow.")
+  }
+  if (job.status !== "pending_operator_confirmation") {
+    throw new Error("Only a job waiting for final confirmation can be confirmed.")
+  }
+  if (!job.executorUrl || detectBrowserPlatform(job.executorUrl) !== "medium") {
+    throw new Error("Prepared Medium executor draft URL is missing.")
+  }
+
+  const { data, error } = await supabase
+    .from("publish_jobs")
+    .update({
+      status: "running",
+      blocking_reason: "operator_final_confirmation_granted",
+      final_confirmed_at: new Date().toISOString(),
+      live_url: null,
+      verified_at: null,
+    })
+    .eq("id", job.id)
+    .eq("status", "pending_operator_confirmation")
+    .select(PUBLISH_JOB_SELECT)
+    .single()
+
+  if (error) throw new Error(`Unable to confirm Medium publish job: ${error.message}`)
+  return mapPublishJob(data as PublishJobRow)
 }
 
 export async function updatePublishJobFromExecutor(input: {

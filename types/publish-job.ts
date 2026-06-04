@@ -23,6 +23,8 @@ export interface PublishJob {
   executorType: string
   blockingReason: string | null
   approvalId: string | null
+  executorUrl: string | null
+  finalConfirmedAt: string | null
   liveUrl: string | null
   verifiedAt: string | null
   finalCopyTitle: string | null

@@ -5,6 +5,7 @@ import { isValidPublishedPostUrl } from "../lib/browser-control"
 
 test("rejects Medium editor URL as a published post URL", () => {
   assert.equal(isValidPublishedPostUrl("https://medium.com/new-story", "medium"), false)
+  assert.equal(isValidPublishedPostUrl("https://medium.com/p/22595ae67b06/edit", "medium"), false)
 })
 
 test("accepts Medium article URL as a published post URL", () => {

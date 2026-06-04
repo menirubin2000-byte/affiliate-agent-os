@@ -85,7 +85,12 @@ export function isValidPublishedPostUrl(url: string, platform?: string | null) {
 
     if (platform === "medium") {
       const segments = pathname.split("/").filter(Boolean)
-      return pathname !== "/new-story" && segments.length >= 2
+      return (
+        pathname !== "/new-story" &&
+        !pathname.endsWith("/edit") &&
+        !pathname.includes("/edit/") &&
+        segments.length >= 2
+      )
     }
 
     if (platform === "substack") {

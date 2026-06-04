@@ -12,6 +12,16 @@ function pageHasSensitiveBlocker() {
   );
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function isVisible(element) {
+  const style = window.getComputedStyle(element);
+  const rect = element.getBoundingClientRect();
+  return style.visibility !== "hidden" && style.display !== "none" && rect.width > 0 && rect.height > 0;
+}
+
 async function fillLinkedIn() {
   if (pageHasSensitiveBlocker()) {
     return { status: "requires_auth", blockerReason: "login_required" };
@@ -84,15 +94,80 @@ async function fillCurrentPage(job) {
   return { status: "blocked", blockerReason: `${job.platform} filling is not implemented yet.` };
 }
 
+async function publishConfirmedMedium(job) {
+  if (job.platform !== "medium" || !location.hostname.endsWith("medium.com")) {
+    return {
+      status: "failed",
+      blockerReason: "confirmed_medium_editor_not_open",
+      message: "Prepared Medium editor is not open.",
+    };
+  }
+
+  if (pageHasSensitiveBlocker()) {
+    return { status: "requires_auth", blockerReason: "login_required" };
+  }
+
+  const editorText = Array.from(document.querySelectorAll('[contenteditable="true"]'))
+    .map((element) => element.innerText || "")
+    .join("\n")
+    .trim();
+  if (editorText.length < 100) {
+    return {
+      status: "failed",
+      blockerReason: "prepared_medium_content_missing",
+      message: "Prepared Medium content is missing.",
+    };
+  }
+
+  const publishButtons = () => Array.from(document.querySelectorAll("button"))
+    .filter((button) => /^publish(?: now)?$/i.test((button.innerText || button.textContent || "").trim()))
+    .filter(isVisible);
+
+  const firstPublish = publishButtons()[0];
+  if (!firstPublish) {
+    return {
+      status: "failed",
+      blockerReason: "medium_publish_button_not_found",
+      message: "Medium Publish button was not found.",
+    };
+  }
+
+  firstPublish.click();
+  await wait(1200);
+
+  const finalPublishButtons = publishButtons();
+  const finalPublish = finalPublishButtons[finalPublishButtons.length - 1];
+  if (!finalPublish || finalPublish === firstPublish) {
+    return {
+      status: "failed",
+      blockerReason: "medium_final_publish_button_not_found",
+      message: "Medium final Publish confirmation was not found.",
+    };
+  }
+
+  finalPublish.click();
+  return {
+    status: "waiting_url_verification",
+    blockerReason: null,
+    message: "Medium Publish clicked after MENI final confirmation. Waiting for verified live URL.",
+  };
+}
+
 async function getAppOrigin() {
   const stored = await chrome.storage.local.get("affiliate_agent_os_app_origin");
   return stored.affiliate_agent_os_app_origin || "https://affiliate-agent-os.vercel.app";
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "AFFILIATE_AGENT_FILL_JOB") return false;
+  if (message?.type !== "AFFILIATE_AGENT_FILL_JOB" && message?.type !== "AFFILIATE_AGENT_PUBLISH_CONFIRMED") {
+    return false;
+  }
 
-  fillCurrentPage(message.job)
+  const operation = message.type === "AFFILIATE_AGENT_PUBLISH_CONFIRMED"
+    ? publishConfirmedMedium(message.job)
+    : fillCurrentPage(message.job);
+
+  operation
     .then(async (result) => {
       const appOrigin = await getAppOrigin();
       await fetch(`${appOrigin}/api/browser-helper/jobs/${message.job.id}`, {

@@ -76,7 +76,12 @@ function isLikelyPublishedPostUrl(url, platform) {
     const segments = pathname.split("/").filter(Boolean);
 
     if (platform === "medium") {
-      return pathname !== "/new-story" && segments.length >= 2;
+      return (
+        pathname !== "/new-story" &&
+        !pathname.endsWith("/edit") &&
+        !pathname.includes("/edit/") &&
+        segments.length >= 2
+      );
     }
 
     if (platform === "substack") {
@@ -100,6 +105,41 @@ async function startExecutorPolling() {
   });
 }
 
+async function openConfirmedPublishJob(job) {
+  if (job.platform !== "medium") {
+    await postJson(`/api/browser-helper/jobs/${job.id}`, {
+      status: "failed",
+      blockerReason: "confirmed_publish_platform_not_enabled",
+      message: "Confirmed publish execution is enabled only for Medium.",
+    });
+    return { ok: false, message: "Confirmed publish is not enabled for this platform." };
+  }
+
+  const matchingTabs = await chrome.tabs.query({ url: job.targetUrl });
+  const tab = matchingTabs[0] || await chrome.tabs.create({ url: job.targetUrl, active: true });
+  if (!tab.id) return { ok: false, message: "Unable to open prepared Medium draft." };
+
+  await chrome.tabs.update(tab.id, { active: true });
+  await chrome.storage.session.set({ currentBrowserJob: { ...job, tabId: tab.id } });
+
+  setTimeout(async () => {
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        type: "AFFILIATE_AGENT_PUBLISH_CONFIRMED",
+        job,
+      });
+    } catch (error) {
+      await postJson(`/api/browser-helper/jobs/${job.id}`, {
+        status: "failed",
+        blockerReason: "confirmed_publish_content_script_unreachable",
+        errorMessage: String(error?.message || error),
+      });
+    }
+  }, 2500);
+
+  return { ok: true, message: "Opened confirmed Medium publish job." };
+}
+
 async function heartbeat() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return null;
@@ -119,6 +159,10 @@ async function openAndFillNextJob() {
   await heartbeat();
   const { job } = await getJson("/api/browser-helper/jobs");
   if (!job) return { ok: true, message: "No queued jobs." };
+
+  if (job.executorCommand === "publish_confirmed") {
+    return openConfirmedPublishJob(job);
+  }
 
   if (!job.targetUrl) {
     await postJson(`/api/browser-helper/jobs/${job.id}`, {
