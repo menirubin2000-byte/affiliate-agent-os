@@ -106,18 +106,18 @@ async function startExecutorPolling() {
 }
 
 async function openConfirmedPublishJob(job) {
-  if (job.platform !== "medium") {
+  if (job.platform !== "medium" && job.platform !== "substack") {
     await postJson(`/api/browser-helper/jobs/${job.id}`, {
       status: "failed",
       blockerReason: "confirmed_publish_platform_not_enabled",
-      message: "Confirmed publish execution is enabled only for Medium.",
+      message: "Confirmed publish execution is enabled only for Medium and Substack.",
     });
     return { ok: false, message: "Confirmed publish is not enabled for this platform." };
   }
 
   const matchingTabs = await chrome.tabs.query({ url: job.targetUrl });
   const tab = matchingTabs[0] || await chrome.tabs.create({ url: job.targetUrl, active: true });
-  if (!tab.id) return { ok: false, message: "Unable to open prepared Medium draft." };
+  if (!tab.id) return { ok: false, message: `Unable to open prepared ${job.platform} draft.` };
 
   await chrome.tabs.update(tab.id, { active: true });
   await chrome.storage.session.set({ currentBrowserJob: { ...job, tabId: tab.id } });
@@ -137,7 +137,7 @@ async function openConfirmedPublishJob(job) {
     }
   }, 2500);
 
-  return { ok: true, message: "Opened confirmed Medium publish job." };
+  return { ok: true, message: `Opened confirmed ${job.platform} publish job.` };
 }
 
 async function heartbeat() {

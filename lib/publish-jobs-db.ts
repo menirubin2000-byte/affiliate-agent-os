@@ -353,7 +353,7 @@ export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob
   return job
 }
 
-export async function confirmMediumPublishJobForExecution(jobId: string): Promise<PublishJob> {
+export async function confirmPreparedPublishJobForExecution(jobId: string): Promise<PublishJob> {
   if (!isSupabaseConfigured()) throw new Error("Supabase is not configured.")
   const supabase = getServiceRoleSupabase()
 
@@ -366,14 +366,14 @@ export async function confirmMediumPublishJobForExecution(jobId: string): Promis
   if (currentError || !current) throw new Error("Publish job was not found.")
   const job = mapPublishJob(current as PublishJobRow)
 
-  if (job.platform !== "medium") {
-    throw new Error("Final confirmation is enabled only for Medium in this flow.")
+  if (job.platform !== "medium" && job.platform !== "substack") {
+    throw new Error("Final confirmation is enabled only for prepared Medium and Substack jobs.")
   }
   if (job.status !== "pending_operator_confirmation") {
     throw new Error("Only a job waiting for final confirmation can be confirmed.")
   }
-  if (!job.executorUrl || detectBrowserPlatform(job.executorUrl) !== "medium") {
-    throw new Error("Prepared Medium executor draft URL is missing.")
+  if (!job.executorUrl || detectBrowserPlatform(job.executorUrl) !== job.platform) {
+    throw new Error(`Prepared ${job.platform} executor draft URL is missing.`)
   }
 
   const { data, error } = await supabase
@@ -390,7 +390,7 @@ export async function confirmMediumPublishJobForExecution(jobId: string): Promis
     .select(PUBLISH_JOB_SELECT)
     .single()
 
-  if (error) throw new Error(`Unable to confirm Medium publish job: ${error.message}`)
+  if (error) throw new Error(`Unable to confirm prepared publish job: ${error.message}`)
   return mapPublishJob(data as PublishJobRow)
 }
 
@@ -488,6 +488,12 @@ export async function updatePublishJobFromExecutor(input: {
     .update({
       status: nextStatus,
       blocking_reason: blockingReason,
+      executor_url:
+        nextStatus === "pending_operator_confirmation" &&
+        input.activeTabUrl &&
+        detectBrowserPlatform(input.activeTabUrl) === job.platform
+          ? input.activeTabUrl
+          : job.executorUrl,
     })
     .eq("id", job.id)
     .select(PUBLISH_JOB_SELECT)

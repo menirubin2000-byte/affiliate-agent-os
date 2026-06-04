@@ -5,9 +5,9 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { OPERATOR_SESSION_COOKIE, verifyOperatorSessionToken } from "@/lib/operator-auth"
-import { confirmMediumPublishJobForExecution } from "@/lib/publish-jobs-db"
+import { confirmPreparedPublishJobForExecution } from "@/lib/publish-jobs-db"
 
-export async function confirmMediumPublishJobAction(formData: FormData) {
+export async function confirmPreparedPublishJobAction(formData: FormData) {
   const cookieStore = await cookies()
   const token = cookieStore.get(OPERATOR_SESSION_COOKIE)?.value
   if (!(await verifyOperatorSessionToken(token))) {
@@ -18,7 +18,7 @@ export async function confirmMediumPublishJobAction(formData: FormData) {
   if (!jobId) redirect("/dashboard/he/publish-ready?error=missing_job")
 
   try {
-    await confirmMediumPublishJobForExecution(jobId)
+    await confirmPreparedPublishJobForExecution(jobId)
   } catch (error) {
     redirect(
       `/dashboard/he/publish-ready?error=${encodeURIComponent(

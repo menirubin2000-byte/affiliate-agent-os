@@ -8,7 +8,7 @@ import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { cn } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
-import { confirmMediumPublishJobAction } from "./actions"
+import { confirmPreparedPublishJobAction } from "./actions"
 
 export const dynamic = "force-dynamic"
 
@@ -154,8 +154,8 @@ export default async function HebrewPublishReadyPage() {
                     <p>
                       התוכן כבר מולא על ידי מנוע הפרסום. אישור הפעולה הסופית מתיר למנוע ללחוץ Publish ולאמת URL חי.
                     </p>
-                    {job.platform === "medium" ? (
-                      <form action={confirmMediumPublishJobAction}>
+                    {job.platform === "medium" || job.platform === "substack" ? (
+                      <form action={confirmPreparedPublishJobAction}>
                         <input type="hidden" name="jobId" value={job.id} />
                         <Button type="submit">אשר פעולה סופית</Button>
                       </form>

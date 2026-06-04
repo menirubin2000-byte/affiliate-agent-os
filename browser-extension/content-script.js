@@ -88,9 +88,46 @@ async function fillEditorSurface(job) {
   };
 }
 
+async function fillSubstack(job) {
+  if (pageHasSensitiveBlocker()) {
+    return { status: "requires_auth", blockerReason: "login_required" };
+  }
+
+  const titleField = document.querySelector('textarea[aria-label="title"], textarea[placeholder="Title"]');
+  const bodyField = document.querySelector('[data-testid="editor"][contenteditable="true"]');
+  if (!titleField || !bodyField) {
+    return {
+      status: "failed",
+      blockerReason: "substack_editor_fields_not_found",
+      message: "Executor could not find the stable Substack title and body fields.",
+    };
+  }
+
+  setEditableText(titleField, job.title || "Approved affiliate post");
+  setEditableText(bodyField, job.content || "");
+  await wait(1500);
+
+  const saved = Array.from(document.querySelectorAll("button"))
+    .some((button) => /^saved$/i.test((button.innerText || button.textContent || "").trim()));
+  if (!saved) {
+    return {
+      status: "failed",
+      blockerReason: "substack_draft_not_saved",
+      message: "Substack did not confirm that the prepared draft was saved.",
+    };
+  }
+
+  return {
+    status: "pending_operator_confirmation",
+    blockerReason: "executor_filled_waiting_final_confirmation",
+    message: "Substack content filled and saved. Waiting for MENI final confirmation.",
+  };
+}
+
 async function fillCurrentPage(job) {
   if (job.platform === "linkedin") return fillLinkedIn(job);
-  if (job.platform === "medium" || job.platform === "substack") return fillEditorSurface(job);
+  if (job.platform === "medium") return fillEditorSurface(job);
+  if (job.platform === "substack") return fillSubstack(job);
   return { status: "blocked", blockerReason: `${job.platform} filling is not implemented yet.` };
 }
 
@@ -153,6 +190,70 @@ async function publishConfirmedMedium(job) {
   };
 }
 
+async function publishConfirmedSubstack(job) {
+  if (job.platform !== "substack" || !location.hostname.endsWith("substack.com")) {
+    return {
+      status: "failed",
+      blockerReason: "confirmed_substack_editor_not_open",
+      message: "Prepared Substack editor is not open.",
+    };
+  }
+
+  if (pageHasSensitiveBlocker()) {
+    return { status: "requires_auth", blockerReason: "login_required" };
+  }
+
+  const titleField = document.querySelector('textarea[aria-label="title"], textarea[placeholder="Title"]');
+  const bodyField = document.querySelector('[data-testid="editor"][contenteditable="true"]');
+  if (!titleField?.value?.trim() || (bodyField?.innerText || "").trim().length < 100) {
+    return {
+      status: "failed",
+      blockerReason: "prepared_substack_content_missing",
+      message: "Prepared Substack content is missing.",
+    };
+  }
+
+  const continueButton = Array.from(document.querySelectorAll("button"))
+    .find((button) => /^continue$/i.test((button.innerText || button.textContent || "").trim()) && isVisible(button));
+  if (!continueButton) {
+    return {
+      status: "failed",
+      blockerReason: "substack_continue_button_not_found",
+      message: "Substack Continue button was not found.",
+    };
+  }
+
+  continueButton.click();
+  await wait(1500);
+
+  const finalPublish = Array.from(document.querySelectorAll("button"))
+    .find((button) => /^send to everyone now$/i.test((button.innerText || button.textContent || "").trim()) && isVisible(button));
+  if (!finalPublish) {
+    return {
+      status: "failed",
+      blockerReason: "substack_final_publish_button_not_found",
+      message: "Substack final publish confirmation was not found.",
+    };
+  }
+
+  finalPublish.click();
+  return {
+    status: "waiting_url_verification",
+    blockerReason: null,
+    message: "Substack publish clicked after MENI final confirmation. Waiting for verified live URL.",
+  };
+}
+
+async function publishConfirmedJob(job) {
+  if (job.platform === "medium") return publishConfirmedMedium(job);
+  if (job.platform === "substack") return publishConfirmedSubstack(job);
+  return {
+    status: "failed",
+    blockerReason: "confirmed_publish_platform_not_enabled",
+    message: "Confirmed publishing is not enabled for this platform.",
+  };
+}
+
 async function getAppOrigin() {
   const stored = await chrome.storage.local.get("affiliate_agent_os_app_origin");
   return stored.affiliate_agent_os_app_origin || "https://affiliate-agent-os.vercel.app";
@@ -164,7 +265,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   const operation = message.type === "AFFILIATE_AGENT_PUBLISH_CONFIRMED"
-    ? publishConfirmedMedium(message.job)
+    ? publishConfirmedJob(message.job)
     : fillCurrentPage(message.job);
 
   operation
