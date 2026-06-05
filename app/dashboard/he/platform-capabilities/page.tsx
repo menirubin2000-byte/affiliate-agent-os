@@ -87,6 +87,15 @@ export default function PlatformCapabilitiesPage() {
                 {capability.nextOperatorAction}
               </div>
 
+              {capability.platform === "x_twitter" ? (
+                <a
+                  href="/api/auth/x/connect"
+                  className="inline-flex rounded-md border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  חבר X רשמי
+                </a>
+              ) : null}
+
               <div className="flex flex-wrap gap-3">
                 {capability.sourceUrls.map((url) => (
                   <a
