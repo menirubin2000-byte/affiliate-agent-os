@@ -1,0 +1,16 @@
+{
+  "product": "Audiorista",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.audiorista.com/?red=rubinq",
+  "source_content_id": "97ca5e66-4e1a-4799-b123-5f7a24f5b580",
+  "platform_adaptation_id": "82d38cf3-ae28-4c6b-b220-f70b1e95d7df",
+  "campaign_approval_id": null,
+  "content_hash": "6ad1ce18f2256525",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,16 @@
+{
+  "product": "Guideflow",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://guideflow.com/?red=rubinq",
+  "source_content_id": "a0ee2427-dace-455f-bb38-86f3acacefa6",
+  "platform_adaptation_id": "216b4725-bc20-4d6e-ae7f-17692fe4fda0",
+  "campaign_approval_id": null,
+  "content_hash": "d4cfbe45856b0c0f",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,16 @@
+{
+  "product": "Warmup Inbox",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.warmupinbox.com/?red=rubinq",
+  "source_content_id": "d849134e-c71e-4fdc-acae-e12aed364fa2",
+  "platform_adaptation_id": "652ded42-72e5-45cd-b700-45caca1273db",
+  "campaign_approval_id": null,
+  "content_hash": "464a9f5736b2e9b9",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,14 @@
+{
+  "product": "Search Atlas",
+  "platform": "medium",
+  "status": "ready_for_operator_approval",
+  "affiliate_link": "https://searchatlas.com/?red=rubinq",
+  "source_content_id": "6de8537d-4505-4a40-b9c3-fc97aa43729a",
+  "platform_adaptation_id": "54fa2a01-f7b5-41aa-885c-937cb8db80bb",
+  "campaign_approval_id": null,
+  "content_hash": "363227c80e828964",
+  "validation_status": "valid",
+  "blocking_reasons": [],
+  "reviewer_status": "ready_for_review",
+  "reviewer_notes": "ready for MENI approval — affiliate link enabled"
+}

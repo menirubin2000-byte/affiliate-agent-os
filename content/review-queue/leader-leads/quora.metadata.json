@@ -1,0 +1,16 @@
+{
+  "product": "Leader Leads",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://leader.net/?red=rubinq",
+  "source_content_id": "f01adb97-d51a-4653-b160-cbe8781866e1",
+  "platform_adaptation_id": "5e738c2f-a688-45dc-b22b-0651501bd6a3",
+  "campaign_approval_id": null,
+  "content_hash": "b1023b215feb33a9",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

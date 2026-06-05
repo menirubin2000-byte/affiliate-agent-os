@@ -1,0 +1,16 @@
+{
+  "product": "Woodpecker",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://woodpecker.co/?red=rubinq",
+  "source_content_id": "4f3e6e24-f311-46f4-8c7b-68cb62f4967d",
+  "platform_adaptation_id": "e12b9f69-b561-4dc3-85cc-864bf048c348",
+  "campaign_approval_id": null,
+  "content_hash": "f28cfc03bb0c89e2",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

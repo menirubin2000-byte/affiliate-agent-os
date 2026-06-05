@@ -1,0 +1,16 @@
+{
+  "product": "iCompass",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://icompass.io/?red=rubinq",
+  "source_content_id": "8fcb8385-8bd3-4bd3-8e3f-05d72acafdd8",
+  "platform_adaptation_id": "2ce24b8c-e119-44ed-8402-396e9d94ed33",
+  "campaign_approval_id": null,
+  "content_hash": "c0dd70e59c6404a9",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

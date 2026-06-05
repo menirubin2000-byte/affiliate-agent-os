@@ -1,0 +1,14 @@
+{
+  "product": "EmailListVerify",
+  "platform": "linkedin",
+  "status": "ready_for_operator_approval",
+  "affiliate_link": "https://www.emaillistverify.com/?red=rubinq",
+  "source_content_id": "b3d99c5a-833b-4195-8060-f266ee2c75b3",
+  "platform_adaptation_id": "f5a4f828-5fcd-4cb7-aebd-14b2109cdc05",
+  "campaign_approval_id": null,
+  "content_hash": "03cd9e2abdd17b3f",
+  "validation_status": "valid",
+  "blocking_reasons": [],
+  "reviewer_status": "ready_for_review",
+  "reviewer_notes": "ready for MENI approval — affiliate link enabled"
+}

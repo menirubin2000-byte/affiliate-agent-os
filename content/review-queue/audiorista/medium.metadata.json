@@ -1,0 +1,14 @@
+{
+  "product": "Audiorista",
+  "platform": "medium",
+  "status": "ready_for_operator_approval",
+  "affiliate_link": "https://www.audiorista.com/?red=rubinq",
+  "source_content_id": "97ca5e66-4e1a-4799-b123-5f7a24f5b580",
+  "platform_adaptation_id": "f9bc3b64-9a92-4682-a19f-252af2c4ee1a",
+  "campaign_approval_id": null,
+  "content_hash": "824b601044b1d867",
+  "validation_status": "valid",
+  "blocking_reasons": [],
+  "reviewer_status": "ready_for_review",
+  "reviewer_notes": "ready for MENI approval — affiliate link enabled"
+}

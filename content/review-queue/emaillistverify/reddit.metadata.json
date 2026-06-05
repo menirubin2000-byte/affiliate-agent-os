@@ -1,0 +1,16 @@
+{
+  "product": "EmailListVerify",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.emaillistverify.com/?red=rubinq",
+  "source_content_id": "b3d99c5a-833b-4195-8060-f266ee2c75b3",
+  "platform_adaptation_id": "bd3895b7-d9bf-405e-a3be-ec32b2e72d4a",
+  "campaign_approval_id": null,
+  "content_hash": "e3499cc17e7fb4bd",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

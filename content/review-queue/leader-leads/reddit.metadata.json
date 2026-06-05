@@ -1,0 +1,16 @@
+{
+  "product": "Leader Leads",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://leader.net/?red=rubinq",
+  "source_content_id": "f01adb97-d51a-4653-b160-cbe8781866e1",
+  "platform_adaptation_id": "0f79fdca-4c49-4b11-8478-43a02e8b1e04",
+  "campaign_approval_id": null,
+  "content_hash": "2dc13baeaa2c957c",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,16 @@
+{
+  "product": "Synthesia",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.synthesia.io/?via=meni",
+  "source_content_id": "53537a6d-eb81-40e1-8871-275dc832f45b",
+  "platform_adaptation_id": "8981ac82-aa5a-46cc-9510-c6b25907a2b8",
+  "campaign_approval_id": null,
+  "content_hash": "c0930dea2a345a37",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

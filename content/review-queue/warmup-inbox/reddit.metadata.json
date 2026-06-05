@@ -1,0 +1,16 @@
+{
+  "product": "Warmup Inbox",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.warmupinbox.com/?red=rubinq",
+  "source_content_id": "d849134e-c71e-4fdc-acae-e12aed364fa2",
+  "platform_adaptation_id": "b162a918-78d9-4429-bccc-4437261ff264",
+  "campaign_approval_id": null,
+  "content_hash": "fdd85f38e9fdef5b",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

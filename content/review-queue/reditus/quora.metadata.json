@@ -1,0 +1,16 @@
+{
+  "product": "Reditus",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.getreditus.com/?red=rubinq",
+  "source_content_id": "39ccd9b2-c304-460f-a369-dd20b849021b",
+  "platform_adaptation_id": "2f29a86f-a829-4370-8ebf-df4ae261f68d",
+  "campaign_approval_id": null,
+  "content_hash": "155e97fcfdbdf38d",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

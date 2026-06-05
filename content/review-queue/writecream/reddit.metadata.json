@@ -1,0 +1,16 @@
+{
+  "product": "Writecream",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.writecream.com/?gr_pk=Qg8m",
+  "source_content_id": "10ab3a33-d41a-4857-b8e1-ffcd76b69602",
+  "platform_adaptation_id": "d7da465f-adc1-40c7-935a-61cd086cb100",
+  "campaign_approval_id": null,
+  "content_hash": "6eb809fcaefaebb5",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

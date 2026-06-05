@@ -1,0 +1,16 @@
+{
+  "product": "Guideflow",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://guideflow.com/?red=rubinq",
+  "source_content_id": "a0ee2427-dace-455f-bb38-86f3acacefa6",
+  "platform_adaptation_id": "3b150828-caa3-4b50-bf4c-1a9be17d59fe",
+  "campaign_approval_id": null,
+  "content_hash": "0167ffdf372f6833",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

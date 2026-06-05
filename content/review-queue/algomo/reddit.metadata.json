@@ -1,0 +1,16 @@
+{
+  "product": "Algomo",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.algomo.com/?red=rubinq",
+  "source_content_id": "94be4b12-b2e7-4732-9225-959aca788793",
+  "platform_adaptation_id": "d3ea3511-7ff4-491c-a62d-25cb8627f9a9",
+  "campaign_approval_id": null,
+  "content_hash": "11fb5d11545e6cec",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

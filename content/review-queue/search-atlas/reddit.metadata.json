@@ -1,0 +1,16 @@
+{
+  "product": "Search Atlas",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://searchatlas.com/?red=rubinq",
+  "source_content_id": "6de8537d-4505-4a40-b9c3-fc97aa43729a",
+  "platform_adaptation_id": "10ee180b-5f01-4d9e-b41f-479eca1f5746",
+  "campaign_approval_id": null,
+  "content_hash": "334768855e801cc7",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

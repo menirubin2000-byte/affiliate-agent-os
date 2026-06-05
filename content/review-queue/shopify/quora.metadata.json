@@ -1,14 +1,16 @@
 {
   "product": "Shopify",
   "platform": "quora",
-  "status": "operator_approved",
-  "affiliate_link": "https://shopify.pxf.io/QY49QA",
+  "status": "needs_system_fix",
+  "affiliate_link": null,
   "source_content_id": "eb6683db-3158-4ad6-aa01-ec5e5831845f",
   "platform_adaptation_id": "b4949a53-6b8d-4fdf-96d5-81a609f75afa",
   "campaign_approval_id": null,
   "content_hash": "02061719bb1da34f",
-  "validation_status": "valid",
-  "blocking_reasons": [],
-  "reviewer_status": "approved",
-  "reviewer_notes": "auto-generated and auto-approved"
+  "validation_status": "blocked",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "blocked",
+  "reviewer_notes": "Blocked by platform policy. MENI should not receive this as an approval-ready item."
 }

@@ -1,0 +1,16 @@
+{
+  "product": "Ad Turbo",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://adturbo.ai/?red=rubinq",
+  "source_content_id": "7d26343f-f084-42f8-a406-e362502ab575",
+  "platform_adaptation_id": "9a290df4-0952-4331-865b-0587a4476d16",
+  "campaign_approval_id": null,
+  "content_hash": "3397f6744b00d8e6",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,14 @@
+{
+  "product": "iCompass",
+  "platform": "medium",
+  "status": "ready_for_operator_approval",
+  "affiliate_link": "https://icompass.io/?red=rubinq",
+  "source_content_id": "8fcb8385-8bd3-4bd3-8e3f-05d72acafdd8",
+  "platform_adaptation_id": "86568df3-b53b-4266-a3d2-be1a22263cf3",
+  "campaign_approval_id": null,
+  "content_hash": "cc4d2af6c7fde1f5",
+  "validation_status": "valid",
+  "blocking_reasons": [],
+  "reviewer_status": "ready_for_review",
+  "reviewer_notes": "ready for MENI approval — affiliate link enabled"
+}

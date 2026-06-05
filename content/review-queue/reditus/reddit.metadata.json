@@ -1,0 +1,16 @@
+{
+  "product": "Reditus",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.getreditus.com/?red=rubinq",
+  "source_content_id": "39ccd9b2-c304-460f-a369-dd20b849021b",
+  "platform_adaptation_id": "0370c6e7-b89d-47a3-945f-420a11c8572a",
+  "campaign_approval_id": null,
+  "content_hash": "c31077ca724a62d1",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

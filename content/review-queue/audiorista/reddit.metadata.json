@@ -1,0 +1,16 @@
+{
+  "product": "Audiorista",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.audiorista.com/?red=rubinq",
+  "source_content_id": "97ca5e66-4e1a-4799-b123-5f7a24f5b580",
+  "platform_adaptation_id": "6e1a30c2-c6fe-4ef6-a090-d68d193fb2e3",
+  "campaign_approval_id": null,
+  "content_hash": "d19ad85ba887cde8",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

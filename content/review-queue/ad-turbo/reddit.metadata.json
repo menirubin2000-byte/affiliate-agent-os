@@ -1,0 +1,16 @@
+{
+  "product": "Ad Turbo",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://adturbo.ai/?red=rubinq",
+  "source_content_id": "7d26343f-f084-42f8-a406-e362502ab575",
+  "platform_adaptation_id": "8df42673-30a7-42f4-9288-3e50f3111d02",
+  "campaign_approval_id": null,
+  "content_hash": "5ef1ece7a6fed2b7",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

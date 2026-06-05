@@ -1,0 +1,16 @@
+{
+  "product": "GrapeLeads",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://grapeleads.com/?gr_pk=mKQ0",
+  "source_content_id": "c007f554-7f75-42eb-927e-68196662fe79",
+  "platform_adaptation_id": "707c7019-9649-4428-afb2-6a8df372664f",
+  "campaign_approval_id": null,
+  "content_hash": "0ff0d5409b6ff680",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,16 @@
+{
+  "product": "Search Atlas",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://searchatlas.com/?red=rubinq",
+  "source_content_id": "6de8537d-4505-4a40-b9c3-fc97aa43729a",
+  "platform_adaptation_id": "dffd1126-4e0b-4129-bcf9-c2873950537c",
+  "campaign_approval_id": null,
+  "content_hash": "56e37d7179105749",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

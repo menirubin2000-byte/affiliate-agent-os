@@ -1,0 +1,16 @@
+{
+  "product": "Woodpecker",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://woodpecker.co/?red=rubinq",
+  "source_content_id": "4f3e6e24-f311-46f4-8c7b-68cb62f4967d",
+  "platform_adaptation_id": "7438d1c4-b9a6-414d-9957-ada87054d725",
+  "campaign_approval_id": null,
+  "content_hash": "8437866c26e240ce",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

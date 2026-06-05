@@ -1,23 +1,21 @@
-*Disclosure: affiliate link included below.*
+Disclosure: I write about digital tools. This Reddit draft does not include a direct affiliate link.
 
-Been looking at the current state of e-commerce platforms for a new project. Spent real time with Shopify. Sharing what I found.
+Been looking at the current state of e-commerce platforms for a new project. Sharing practical notes I would check before choosing Shopify or any similar platform.
 
-**Good:**
-- Genuinely fast to set up — working store in a few hours
+Good:
+- Fast setup compared with building a custom store stack
 - Hosting, security, and scaling are not your problem
-- Multi-channel selling actually works (Instagram, TikTok, Amazon from one dashboard)
-- App marketplace covers almost every edge case
-- Free trial lets you test without paying
+- Multi-channel selling can be useful if you sell across multiple channels
+- App marketplace covers many common store use cases
 
-**Not great:**
-- Monthly cost starts around $39, not the cheapest option
-- Transaction fees apply if you skip Shopify Payments
-- Customization beyond the theme editor takes time (Liquid templates)
+Tradeoffs:
+- Monthly plan cost is not the cheapest path
+- Transaction fees can apply depending on payment setup
+- Customization beyond the theme editor may require Liquid templates
+- App costs can add up
 
-**Who it fits:** Solo entrepreneurs, drop-shippers, small brands, digital product sellers who want to ship and focus on marketing.
+Who it fits: solo entrepreneurs, small brands, and digital product sellers who want to focus on products and marketing.
 
-**Who it does not fit:** Teams that need very deep custom backend logic or want zero monthly cost.
+Who it may not fit: teams that need deep custom backend logic or want a zero-monthly-cost setup.
 
-Worth testing on the free trial before paying.
-
-[Shopify](https://shopify.pxf.io/QY49QA)
+Before posting this anywhere on Reddit, verify the target subreddit rules for self-promotion, external links, and commercial content.

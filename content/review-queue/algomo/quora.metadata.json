@@ -1,0 +1,16 @@
+{
+  "product": "Algomo",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.algomo.com/?red=rubinq",
+  "source_content_id": "94be4b12-b2e7-4732-9225-959aca788793",
+  "platform_adaptation_id": "1e70be1d-3945-494d-a49f-5554da3c8232",
+  "campaign_approval_id": null,
+  "content_hash": "f95172e821aac055",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

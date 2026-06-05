@@ -1,0 +1,16 @@
+{
+  "product": "SignEasy",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://signeasy.com/?red=rubinq",
+  "source_content_id": "2c98a839-1456-413c-9f5d-a48ebc82b763",
+  "platform_adaptation_id": "a89aaf12-72b0-48dc-b5e4-7cd06d30deb1",
+  "campaign_approval_id": null,
+  "content_hash": "0c6d0d23b51a93f3",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

@@ -1,0 +1,16 @@
+{
+  "product": "GrapeLeads",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://grapeleads.com/?gr_pk=mKQ0",
+  "source_content_id": "c007f554-7f75-42eb-927e-68196662fe79",
+  "platform_adaptation_id": "1968ed24-1f9c-439c-ba05-0a5caf18e200",
+  "campaign_approval_id": null,
+  "content_hash": "afd8d92dffcbbba2",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

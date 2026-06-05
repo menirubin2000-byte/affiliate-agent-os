@@ -1,0 +1,16 @@
+{
+  "product": "AhaSlides",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://ahaslides.com/?red=rubinq&utm_source=rubinq&utm_medium=revshare&utm_affiliate_network=reditus",
+  "source_content_id": "c7db4ddd-b0e9-4f44-ab35-6911cbf04f1a",
+  "platform_adaptation_id": "b70c002f-9bf8-432e-9d44-7b7f35bb3c5d",
+  "campaign_approval_id": null,
+  "content_hash": "ae8d4f3c452f1cb8",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

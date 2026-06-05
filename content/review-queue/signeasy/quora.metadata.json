@@ -1,0 +1,16 @@
+{
+  "product": "SignEasy",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://signeasy.com/?red=rubinq",
+  "source_content_id": "2c98a839-1456-413c-9f5d-a48ebc82b763",
+  "platform_adaptation_id": "8d073ac3-1de4-4351-95cf-32229f95e009",
+  "campaign_approval_id": null,
+  "content_hash": "6ff806c5816f1213",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

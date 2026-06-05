@@ -1,0 +1,16 @@
+{
+  "product": "EmailListVerify",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.emaillistverify.com/?red=rubinq",
+  "source_content_id": "b3d99c5a-833b-4195-8060-f266ee2c75b3",
+  "platform_adaptation_id": "3d088d49-a800-4a68-bd55-3c4986a36ffb",
+  "campaign_approval_id": null,
+  "content_hash": "dcb3d78194b1f926",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

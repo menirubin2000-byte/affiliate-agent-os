@@ -1,0 +1,16 @@
+{
+  "product": "iCompass",
+  "platform": "quora",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://icompass.io/?red=rubinq",
+  "source_content_id": "8fcb8385-8bd3-4bd3-8e3f-05d72acafdd8",
+  "platform_adaptation_id": "9c96dfb5-bc98-4141-96d2-731b155724be",
+  "campaign_approval_id": null,
+  "content_hash": "01c727eddfd4d4b8",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "quora_direct_affiliate_links_prohibited"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

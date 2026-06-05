@@ -1,0 +1,16 @@
+{
+  "product": "Synthesia",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://www.synthesia.io/?via=meni",
+  "source_content_id": "53537a6d-eb81-40e1-8871-275dc832f45b",
+  "platform_adaptation_id": "d85a3859-9046-47cd-b92b-ddc66cf79fd7",
+  "campaign_approval_id": null,
+  "content_hash": "6367e69818963660",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}

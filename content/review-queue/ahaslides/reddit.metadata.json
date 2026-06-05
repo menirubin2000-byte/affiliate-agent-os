@@ -1,0 +1,16 @@
+{
+  "product": "AhaSlides",
+  "platform": "reddit",
+  "status": "needs_system_fix",
+  "affiliate_link": "https://ahaslides.com/?red=rubinq&utm_source=rubinq&utm_medium=revshare&utm_affiliate_network=reditus",
+  "source_content_id": "c7db4ddd-b0e9-4f44-ab35-6911cbf04f1a",
+  "platform_adaptation_id": "db9b7a52-f049-40de-8d41-936810aab4e7",
+  "campaign_approval_id": null,
+  "content_hash": "4f56b0701916dfa6",
+  "validation_status": "fix_requested",
+  "blocking_reasons": [
+    "reddit_community_rules_not_verified"
+  ],
+  "reviewer_status": "needs_fix",
+  "reviewer_notes": "platform policy block prevents direct affiliate link in body"
+}
