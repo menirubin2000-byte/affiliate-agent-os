@@ -45,3 +45,34 @@ This refreshes `docs/OPERATOR_SOURCE_OF_TRUTH.md` from Supabase. It includes:
 - the actual list of verified published records.
 
 Trust that file over chat memory.
+
+## Traffic Engine bridge (Robin Marketing Automation)
+
+The "ready for MENI approval" queue on `/dashboard/he/approve` is ordered by
+Traffic Engine score when one exists. The score is NOT produced inside this
+repo. It comes from **Robin Marketing Automation** at
+`C:\Users\USER\Documents\תוכנת פירסום רובין`, which owns the SEO / GSC /
+keyword tracking signal.
+
+Two scripts in that repo do the bridge:
+
+- `scripts/bridge/bridge_pull.py` — Affiliate Agent OS -> Robin. Syncs
+  products into Robin `projects`, target_keywords into `keyword_targets`,
+  verified `published_records` URLs into `monitored_pages`. Robin learns
+  what to track. Nothing is published.
+- `scripts/bridge/bridge_push.py` — Robin -> Affiliate Agent OS. Aggregates
+  Robin's `keyword_observations` into `(product_id, platform, score)` rows
+  and UPSERTs them into Supabase `traffic_engine_rankings`. Only writes
+  rows for products that actually have GSC signal; everything else stays
+  on fallback.
+
+Run both:
+
+```
+cd C:\Users\USER\Documents\תוכנת פירסום רובין
+python -m scripts.bridge.bridge_run
+```
+
+Honesty rule: if `traffic_engine_rankings` is empty, the dashboard banner
+says "Traffic Engine לא מחובר עדיין - fallback זמני". We never invent a
+score on the Affiliate Agent OS side.
