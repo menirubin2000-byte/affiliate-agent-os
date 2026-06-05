@@ -4,113 +4,153 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { listDrafts, listProducts } from "@/lib/db"
-import { isSupabaseConfigured } from "@/lib/supabase/server"
-import { cn, formatDateTime, truncate } from "@/lib/utils"
-import type { Draft } from "@/types/draft"
-import type { Product } from "@/types/product"
+import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
+import type { PlatformRoute } from "@/lib/platform-routing"
+import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
+import { cn, truncate } from "@/lib/utils"
 
-import { approveDraftAction, rejectDraftAction } from "./actions"
+import {
+  approveFinalCopyAction,
+  rejectFinalCopyAction,
+  requestFinalCopyFixAction,
+} from "./actions"
 
 export const dynamic = "force-dynamic"
 
-const PLATFORM_LABEL: Record<string, string> = {
-  review: "Review (Medium / Substack)",
-  comparison: "Comparison",
-  buying_guide: "Buying Guide",
-  social_post: "LinkedIn / Social",
-  tiktok_script: "TikTok",
-  quora_answer: "Quora",
-  reddit_post: "Reddit",
+const TOP_LIMIT = 6
+
+type ReadyRouteWithBody = PlatformRoute & {
+  body: string
+  validationStatus: string
+  blockingReasons: string[]
+}
+
+type SectionCounts = {
+  ready: number
+  needsFix: number
+  published: number
+  platformBlocked: number
+  legacyDrafts: number
 }
 
 export default async function HebrewApprovePage(props: {
-  searchParams: Promise<{ approved?: string; rejected?: string; error?: string }>
+  searchParams: Promise<{ approved?: string; rejected?: string; fix?: string; error?: string }>
 }) {
   const params = (await props.searchParams) ?? {}
 
   if (!isSupabaseConfigured()) {
     return (
-      <div dir="rtl" className="space-y-6">
-        <PageHeader eyebrow="אישור תוכן" title="ממתין לאישור" description="Supabase לא מוגדר." />
+      <div dir="rtl" className="space-y-6 text-right">
+        <PageHeader
+          eyebrow="אישור תוכן"
+          title="ממתין לאישור"
+          description="Supabase לא מוגדר. אי-אפשר לבדוק את התור."
+        />
       </div>
     )
   }
 
-  let drafts: Draft[] = []
-  let products: Product[] = []
-  let pageError: string | null = null
+  let overviewError: string | null = null
+  let counts: SectionCounts = { ready: 0, needsFix: 0, published: 0, platformBlocked: 0, legacyDrafts: 0 }
+  let readyRoutes: PlatformRoute[] = []
+  let needsFixRoutes: PlatformRoute[] = []
+  let platformBlockedRoutes: PlatformRoute[] = []
+  let publishedRoutes: PlatformRoute[] = []
+  let topReady: ReadyRouteWithBody[] = []
 
   try {
-    ;[drafts, products] = await Promise.all([
-      listDrafts({ status: "draft" }),
-      listProducts(),
-    ])
-  } catch (error) {
-    pageError = error instanceof Error ? error.message : "טעינה נכשלה."
-  }
+    const overview = await getPlatformRoutingOverview()
+    const allRoutes = overview.products.flatMap((p) => p.routes)
 
-  const productMap = new Map(products.map((p) => [p.id, p]))
+    readyRoutes = allRoutes.filter((r) => r.state === "pending_meni_approval" && r.finalCopyId)
+    needsFixRoutes = allRoutes.filter((r) =>
+      ["needs_system_fix", "missing_final_copy", "missing_affiliate_link"].includes(r.state),
+    )
+    publishedRoutes = allRoutes.filter((r) => r.state === "published_verified")
+    platformBlockedRoutes = allRoutes.filter((r) =>
+      ["platform_pending_setup", "platform_disabled", "policy_blocked", "executor_blocked", "requires_auth"].includes(
+        r.state,
+      ),
+    )
 
-  // Group drafts by product, only show products with real affiliate links first
-  // ONLY show products with REAL active affiliate links
-  const REAL_AFFILIATE_DOMAINS = ["systeme.io", "try.elevenlabs.io"]
+    const legacyDraftsCount = await countLegacyDrafts()
 
-  const activeProductIds = new Set(
-    products
-      .filter((p) => REAL_AFFILIATE_DOMAINS.some((d) => p.affiliateUrl.includes(d)))
-      .map((p) => p.id),
-  )
+    counts = {
+      ready: readyRoutes.length,
+      needsFix: needsFixRoutes.length,
+      published: publishedRoutes.length,
+      platformBlocked: platformBlockedRoutes.length,
+      legacyDrafts: legacyDraftsCount,
+    }
 
-  const relevantDrafts = drafts.filter((d) => activeProductIds.has(d.productId))
-
-  const grouped = new Map<string, { product: Product | null; drafts: Draft[] }>()
-  for (const draft of relevantDrafts) {
-    const existing = grouped.get(draft.productId)
-    if (existing) {
-      existing.drafts.push(draft)
-    } else {
-      grouped.set(draft.productId, {
-        product: productMap.get(draft.productId) ?? null,
-        drafts: [draft],
+    const topRouteIds = readyRoutes.slice(0, TOP_LIMIT).map((r) => r.finalCopyId!).filter(Boolean)
+    if (topRouteIds.length > 0) {
+      const bodies = await loadFinalCopyBodies(topRouteIds)
+      topReady = readyRoutes.slice(0, TOP_LIMIT).map((route) => {
+        const detail = bodies.get(route.finalCopyId ?? "")
+        return {
+          ...route,
+          body: detail?.body ?? "",
+          validationStatus: detail?.validation_status ?? "unknown",
+          blockingReasons: Array.isArray(detail?.blocking_reasons) ? (detail!.blocking_reasons as string[]) : [],
+        }
       })
     }
+  } catch (error) {
+    overviewError = error instanceof Error ? error.message : "טעינת תור האישור נכשלה."
   }
 
-  const sortedGroups = [...grouped.values()]
-  const totalPending = relevantDrafts.length
-
   return (
-    <div dir="rtl" className="space-y-6">
+    <div dir="rtl" className="space-y-6 text-right">
       <PageHeader
         eyebrow="אישור תוכן"
-        title={`${totalPending} טיוטות ממתינות לאישור`}
-        description="כל טיוטה כאן בסטטוס draft. אשר כדי להתקדם לפרסום, או דחה אם צריך תיקון. אין פרסום אוטומטי."
+        title="תור אישור MENI - מסונן"
+        description={`${counts.ready} פוסטים מסוננים ובאמת מוכנים לאישור MENI. המערכת לא מציגה כפילויות, חסומים או פוסטים שכבר פורסמו. למניעת עומס מוצגים ${TOP_LIMIT} הראשונים לפי דחיפות.`}
         actions={
-          <Link href="/dashboard/he" className={cn(buttonVariants({ variant: "outline" }))}>
-            חזרה לדשבורד
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/dashboard/he" className={cn(buttonVariants({ variant: "outline" }))}>
+              חזרה לדשבורד
+            </Link>
+            <Link href="/dashboard/he/content-review" className={cn(buttonVariants({ variant: "outline" }))}>
+              בדיקת קופי
+            </Link>
+            <Link href="/dashboard/he/publish-ready" className={cn(buttonVariants({ variant: "outline" }))}>
+              מצב פרסום
+            </Link>
+          </div>
         }
       />
 
       {params.approved ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
-            <CardTitle className="text-green-950">טיוטה אושרה</CardTitle>
-            <CardDescription className="text-green-800">הטיוטה עברה לסטטוס approved. ניתן להתקדם לפרסום.</CardDescription>
+            <CardTitle className="text-green-950">Final copy אושר</CardTitle>
+            <CardDescription className="text-green-800">
+              סטטוס שונה ל-operator_approved ונוצר/עודכן publish_job. ממתין למנוע פרסום.
+            </CardDescription>
           </CardHeader>
         </Card>
       ) : null}
-
       {params.rejected ? (
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
-            <CardTitle className="text-amber-950">טיוטה נדחתה</CardTitle>
-            <CardDescription className="text-amber-800">הטיוטה סומנה rejected. ניתן לערוך ולהגיש מחדש.</CardDescription>
+            <CardTitle className="text-amber-950">Final copy נדחה</CardTitle>
+            <CardDescription className="text-amber-800">
+              סטטוס שונה ל-operator_rejected. צריך גרסה חדשה לפני אישור חוזר.
+            </CardDescription>
           </CardHeader>
         </Card>
       ) : null}
-
+      {params.fix ? (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="text-amber-950">נדרש תיקון מערכת</CardTitle>
+            <CardDescription className="text-amber-800">
+              סומן needs_system_fix ונוצרה משימת improvement. זה לא משימה למני - תיקון קוד/דטה.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
       {params.error ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
@@ -119,114 +159,272 @@ export default async function HebrewApprovePage(props: {
           </CardHeader>
         </Card>
       ) : null}
-
-      {pageError ? (
+      {overviewError ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
             <CardTitle>שגיאה בטעינה</CardTitle>
-            <CardDescription className="text-destructive">{pageError}</CardDescription>
+            <CardDescription className="text-destructive">{overviewError}</CardDescription>
           </CardHeader>
         </Card>
       ) : null}
 
-      {totalPending === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>אין טיוטות ממתינות</CardTitle>
-            <CardDescription>כל הטיוטות אושרו או נדחו. חזור לדשבורד.</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
+      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <CountBadge title="מוכן לאישור MENI" value={counts.ready} tone="primary" />
+        <CountBadge title="צריך תיקון מערכת" value={counts.needsFix} tone="amber" />
+        <CountBadge title="חסום פלטפורמה" value={counts.platformBlocked} tone="muted" />
+        <CountBadge title="כבר פורסם ואומת" value={counts.published} tone="green" />
+        <CountBadge title="טיוטות ישנות (legacy)" value={counts.legacyDrafts} tone="muted" />
+      </section>
 
-      {sortedGroups.map((group) => {
-        const hasRealLink = group.product?.affiliateUrl?.startsWith("http") ?? false
+      <Card>
+        <CardHeader>
+          <CardTitle>1. מוכן לאישור MENI</CardTitle>
+          <CardDescription>
+            פוסטים שעברו את כל הסינונים: יש קישור שותף אמיתי + link_ready, יש Final Copy תקין, אין כפילות עם
+            published_records, הפלטפורמה פעילה. מציג עד {TOP_LIMIT} ראשונים לפי דחיפות.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {topReady.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              אין פריטים מוכנים לאישור כרגע. אם קיימות טיוטות במערכת - הן בסטטוס אחר (תיקון, חסום, או כבר פורסם).
+            </p>
+          ) : (
+            topReady.map((route) => <ReadyRouteCard key={route.finalCopyId ?? `${route.productId}-${route.platform.key}`} route={route} />)
+          )}
+          {counts.ready > TOP_LIMIT ? (
+            <p className="text-sm text-muted-foreground">
+              עוד {counts.ready - TOP_LIMIT} פוסטים בהמתנה. אחרי שתסיים את ה-{TOP_LIMIT} שלמעלה - רענן את הדף.
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
 
-        return (
-          <Card key={group.product?.id ?? "unknown"} className="border-border/70 bg-card/90 shadow-sm">
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle>{group.product?.name ?? "מוצר לא ידוע"}</CardTitle>
-                  <CardDescription>
-                    {group.drafts.length} טיוטות ממתינות · {hasRealLink ? "יש קישור שותף" : "אין קישור שותף פעיל"}
-                  </CardDescription>
-                </div>
-                {hasRealLink ? (
-                  <Badge variant="default">קישור פעיל</Badge>
-                ) : (
-                  <Badge variant="outline">אין קישור</Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {group.drafts.map((draft) => (
-                <div key={draft.id} className="rounded-lg border p-4 space-y-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold">
-                        {draft.title ?? `${draft.productName} ${draft.templateType.replace("_", " ")}`}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        פלטפורמה: {PLATFORM_LABEL[draft.templateType] ?? draft.templateType} · {formatDateTime(draft.createdAt)}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">draft</Badge>
-                      <Badge variant="outline">{draft.templateType.replace("_", " ")}</Badge>
-                    </div>
-                  </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>2. צריך תיקון מערכת</CardTitle>
+          <CardDescription>
+            פוסטים שלא מגיעים למני - דורשים שינוי קוד / Final Copy חדש / השלמת affiliate link. לא משימה למני.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {needsFixRoutes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">אין פריטים בקבוצה זו.</p>
+          ) : (
+            <RouteList routes={needsFixRoutes.slice(0, 12)} more={needsFixRoutes.length - 12} cta="/dashboard/he/content-review" />
+          )}
+        </CardContent>
+      </Card>
 
-                  {/* Quality checks summary */}
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <Badge variant={draft.qualityChecks.has_disclosure ? "default" : "destructive"}>
-                      {draft.qualityChecks.has_disclosure ? "✓ disclosure" : "✗ disclosure"}
-                    </Badge>
-                    <Badge variant={draft.qualityChecks.has_clear_cta ? "default" : "destructive"}>
-                      {draft.qualityChecks.has_clear_cta ? "✓ CTA" : "✗ CTA"}
-                    </Badge>
-                    <Badge variant={draft.qualityChecks.avoids_fake_claims ? "default" : "destructive"}>
-                      {draft.qualityChecks.avoids_fake_claims ? "✓ no fake claims" : "✗ fake claims"}
-                    </Badge>
-                  </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>3. כבר פורסם ואומת</CardTitle>
+          <CardDescription>רשומות עם URL חי. לא מציגים שוב לאישור. רק למעקב ביצועים.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {publishedRoutes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">אין רשומות מאומתות כרגע.</p>
+          ) : (
+            <RouteList routes={publishedRoutes.slice(0, 20)} more={publishedRoutes.length - 20} cta="/dashboard/he/operator" />
+          )}
+        </CardContent>
+      </Card>
 
-                  {/* Draft body preview */}
-                  <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/30 p-3 text-sm">
-                    {truncate(draft.body, 600)}
-                  </pre>
+      <Card>
+        <CardHeader>
+          <CardTitle>4. חסום פלטפורמה</CardTitle>
+          <CardDescription>
+            הפלטפורמה לא מחוברת או המדיניות שלה לא תומכת באישור עכשיו. דרוש קישור OAuth / חוקי קהילה / תיקון מדיניות -
+            לא משימה למני.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {platformBlockedRoutes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">אין פריטים בקבוצה זו.</p>
+          ) : (
+            <RouteList routes={platformBlockedRoutes.slice(0, 20)} more={platformBlockedRoutes.length - 20} cta="/dashboard/he/publish-ready" />
+          )}
+        </CardContent>
+      </Card>
 
-                  {/* Action buttons */}
-                  <div className="flex flex-wrap gap-3 border-t pt-3">
-                    <form action={approveDraftAction}>
-                      <input type="hidden" name="draftId" value={draft.id} />
-                      <Button type="submit" variant="default" size="sm">
-                        ✓ אשר לפרסום
-                      </Button>
-                    </form>
-                    <form action={rejectDraftAction}>
-                      <input type="hidden" name="draftId" value={draft.id} />
-                      <Button type="submit" variant="outline" size="sm">
-                        ✗ דחה
-                      </Button>
-                    </form>
-                    <Link
-                      href={`/dashboard/drafts/${draft.id}/edit`}
-                      className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-                    >
-                      ערוך
-                    </Link>
-                    <Link
-                      href={`/dashboard/drafts/${draft.id}/review`}
-                      className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-                    >
-                      צפה בפירוט
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )
-      })}
+      <Card>
+        <CardHeader>
+          <CardTitle>5. טיוטות ישנות / ארכיון</CardTitle>
+          <CardDescription>
+            רשומות בטבלת content_drafts הישנה (לפני מעבר ל-final_copies). לא בלולאת האישור החדשה. נשמרות רק להיסטוריה.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p>
+            סה״כ טיוטות ישנות: <strong>{counts.legacyDrafts}</strong>
+          </p>
+          <p className="text-muted-foreground">
+            ניתן לצפות בהן ב-/dashboard/drafts אך אין צורך לאשר אותן ידנית. הזרימה החדשה היא final_copies בלבד.
+          </p>
+          <Link href="/dashboard/drafts" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            פתח רשימת drafts ישנה
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle>כלל פעולה</CardTitle>
+          <CardDescription>
+            רק פריטים בקבוצה 1 ממתינים למני. כל השאר זה עבודה של המערכת/מנוע פרסום ולא נדרש קליק של מני. אחרי אישור -
+            נוצר publish_job ו-MENI לא מפרסם ידנית.
+          </CardDescription>
+        </CardHeader>
+      </Card>
     </div>
   )
+}
+
+function CountBadge({
+  title,
+  value,
+  tone,
+}: {
+  title: string
+  value: number
+  tone: "primary" | "amber" | "green" | "muted"
+}) {
+  const toneClass =
+    tone === "primary"
+      ? "border-primary/40 bg-primary/5"
+      : tone === "amber"
+        ? "border-amber-300 bg-amber-50"
+        : tone === "green"
+          ? "border-green-300 bg-green-50"
+          : "border-border bg-muted/30"
+  return (
+    <Card className={toneClass}>
+      <CardHeader className="space-y-1">
+        <CardDescription>{title}</CardDescription>
+        <CardTitle className="text-3xl">{value}</CardTitle>
+      </CardHeader>
+    </Card>
+  )
+}
+
+function ReadyRouteCard({ route }: { route: ReadyRouteWithBody }) {
+  return (
+    <div className="space-y-3 rounded-lg border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">
+            {route.finalCopyTitle ?? `${route.productName} · ${route.platform.hebrewName}`}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            מוצר: {route.productName} · פלטפורמה: {route.platform.hebrewName} ({route.platform.englishName})
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="default">מוכן לאישור</Badge>
+          <Badge variant="outline">{route.platform.contentType}</Badge>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 text-xs">
+        <Badge variant={route.validationStatus === "valid" ? "default" : "destructive"}>
+          validation: {route.validationStatus}
+        </Badge>
+        {route.blockingReasons.length === 0 ? (
+          <Badge variant="default">אין blocking reasons</Badge>
+        ) : (
+          route.blockingReasons.map((reason) => (
+            <Badge variant="destructive" key={reason}>
+              {reason}
+            </Badge>
+          ))
+        )}
+      </div>
+
+      <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded border bg-muted/30 p-3 text-sm">
+        {truncate(route.body || "אין תוכן זמין.", 800)}
+      </pre>
+
+      <div className="flex flex-wrap gap-2 border-t pt-3">
+        <form action={approveFinalCopyAction}>
+          <input type="hidden" name="finalCopyId" value={route.finalCopyId ?? ""} />
+          <Button type="submit" size="sm">
+            ✓ אשר לפרסום
+          </Button>
+        </form>
+        <form action={rejectFinalCopyAction}>
+          <input type="hidden" name="finalCopyId" value={route.finalCopyId ?? ""} />
+          <Button type="submit" variant="outline" size="sm">
+            ✗ דחה
+          </Button>
+        </form>
+        <form action={requestFinalCopyFixAction}>
+          <input type="hidden" name="finalCopyId" value={route.finalCopyId ?? ""} />
+          <Button type="submit" variant="ghost" size="sm">
+            דרוש תיקון מערכת
+          </Button>
+        </form>
+        <Link
+          href="/dashboard/he/content-review"
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+        >
+          צפה בקופי מלא
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function RouteList({ routes, more, cta }: { routes: PlatformRoute[]; more: number; cta: string }) {
+  return (
+    <div className="space-y-2 text-sm">
+      <ul className="space-y-1">
+        {routes.map((route) => (
+          <li
+            key={route.finalCopyId ?? `${route.productId}-${route.platform.key}`}
+            className="flex flex-wrap items-center justify-between gap-2 rounded border px-3 py-2"
+          >
+            <span>
+              {route.productName} · <span className="text-muted-foreground">{route.platform.hebrewName}</span>
+            </span>
+            <span className="text-xs text-muted-foreground">{route.blocker ?? route.labelHe}</span>
+          </li>
+        ))}
+      </ul>
+      {more > 0 ? <p className="text-xs text-muted-foreground">+ עוד {more} פריטים נוספים.</p> : null}
+      <Link href={cta} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+        פתח מסך מתאים
+      </Link>
+    </div>
+  )
+}
+
+async function countLegacyDrafts(): Promise<number> {
+  const supabase = getServiceRoleSupabase()
+  const { count, error } = await supabase
+    .from("content_drafts")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "draft")
+  if (error) return 0
+  return count ?? 0
+}
+
+async function loadFinalCopyBodies(
+  ids: string[],
+): Promise<Map<string, { body: string; validation_status: string; blocking_reasons: unknown }>> {
+  const map = new Map<string, { body: string; validation_status: string; blocking_reasons: unknown }>()
+  if (ids.length === 0) return map
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("final_copies")
+    .select("id, body, validation_status, blocking_reasons")
+    .in("id", ids)
+  if (error || !data) return map
+  for (const row of data as Array<{ id: string; body: string; validation_status: string; blocking_reasons: unknown }>) {
+    map.set(row.id, {
+      body: row.body ?? "",
+      validation_status: row.validation_status ?? "unknown",
+      blocking_reasons: row.blocking_reasons ?? [],
+    })
+  }
+  return map
 }
