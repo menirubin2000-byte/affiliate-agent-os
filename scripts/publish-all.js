@@ -19,6 +19,7 @@
 
 const { execSync } = require('child_process');
 const path = require('path');
+const { requireDirectPublishOverride } = require('./safety-guard');
 
 // Load .env.local
 const fs = require('fs');
@@ -32,6 +33,8 @@ if (fs.existsSync(envPath)) {
 }
 
 async function main() {
+  requireDirectPublishOverride('scripts/publish-all.js');
+
   console.log('=== Affiliate Agent OS — Publish All ===\n');
 
   // Medium
@@ -64,10 +67,10 @@ async function main() {
     console.log('⏭️  Reddit: skipped (no REDDIT_CLIENT_ID)');
   }
 
-  // Substack - no API
-  console.log('\n⏭️  Substack: no public API — manual publish needed');
-  console.log('⏭️  TikTok: video platform — manual publish needed');
-  console.log('⏭️  Quora: no public API — manual publish needed');
+  // Blocked/excluded platforms.
+  console.log('\nSubstack: blocked until a safe executor exists');
+  console.log('TikTok: excluded unless a real video/script executor exists');
+  console.log('Quora: blocked unless a no-direct-affiliate-link safe flow exists');
 
   console.log('\n=== Done ===');
 }

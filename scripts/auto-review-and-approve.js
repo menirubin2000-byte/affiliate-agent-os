@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
+const { requireApprovalOverride } = require('./safety-guard');
 
 const c = new Client({
   host: 'db.gbkwydsodondarccqyet.supabase.co',
@@ -85,6 +86,8 @@ function reviewPost(title, body, affiliateLink, platform) {
 }
 
 async function main() {
+  requireApprovalOverride('scripts/auto-review-and-approve.js');
+
   await c.connect();
 
   const copies = await c.query(`

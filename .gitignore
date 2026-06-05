@@ -47,6 +47,14 @@ Xapi.txt
 *.tsbuildinfo
 next-env.d.ts
 
+# Hebrew private key files (UTF-8 patterns)
+*מפתח*.txt
+*סיסמה*.txt
+*טיקטוק*.txt
+*פייסבוק*.txt
+*אינסטגרם*.txt
+תמונות מוצרים/
+
 .vercel
 facebook-pages.private.json
 .env.local

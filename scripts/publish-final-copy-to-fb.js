@@ -4,6 +4,7 @@
 require("dotenv").config({ path: ".env.local" })
 const { Client } = require("pg")
 const { publishTextPost } = require("./publish-to-facebook")
+const { requireDirectPublishOverride } = require("./safety-guard")
 
 const c = new Client({
   host: "db.gbkwydsodondarccqyet.supabase.co",
@@ -13,6 +14,8 @@ const c = new Client({
 })
 
 async function main() {
+  requireDirectPublishOverride("scripts/publish-final-copy-to-fb.js")
+
   const product = process.argv[2]
   const sourcePlatform = process.argv[3]
   if (!product || !sourcePlatform) {

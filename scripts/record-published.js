@@ -1,5 +1,6 @@
 const { Client } = require("pg")
 require("dotenv").config({ path: ".env.local" })
+const { requireDirectPublishOverride } = require("./safety-guard")
 
 if (!process.env.SUPABASE_DB_PASSWORD) {
   throw new Error("SUPABASE_DB_PASSWORD is required in .env.local")
@@ -49,6 +50,8 @@ const PUBLISHED = [
 ]
 
 async function main() {
+  requireDirectPublishOverride("scripts/record-published.js")
+
   await c.connect()
 
   for (const pub of PUBLISHED) {

@@ -2,6 +2,7 @@
 // Requires a public https URL to the video.
 
 require("dotenv").config({ path: ".env.local" })
+const { requireDirectPublishOverride } = require("./safety-guard")
 
 const TOKEN = process.env.IG_ACCESS_TOKEN
 const IG_USER_ID = process.env.IG_BUSINESS_ACCOUNT_ID
@@ -75,6 +76,8 @@ async function publishReel({ videoUrl, caption, coverUrl, shareToFeed = true }) 
 }
 
 async function main() {
+  requireDirectPublishOverride("scripts/publish-reel-to-instagram.js")
+
   const videoUrl = process.argv[2]
   const captionPath = process.argv[3]
   if (!videoUrl || !captionPath) {

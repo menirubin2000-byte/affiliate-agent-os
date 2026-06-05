@@ -13,6 +13,11 @@ const c = new Client({
 
 const LINK = "https://shopify.pxf.io/QY49QA"
 
+const PLATFORM_POLICY_BLOCKS = {
+  quora: ["quora_direct_affiliate_links_prohibited"],
+  reddit: ["reddit_community_rules_not_verified"],
+}
+
 const POSTS = {
   medium: {
     title: "Shopify Review: Is It Still the Right E-commerce Platform in 2026?",
@@ -158,6 +163,47 @@ Worth testing on the free trial before paying.
   },
 }
 
+POSTS.quora.body = `Disclosure: I write about digital tools. Some of my longer external articles may include affiliate links, but this Quora answer does not include a direct affiliate link.
+
+For most solo sellers and small brands, Shopify is still a common default to evaluate in 2026.
+
+What makes it work:
+1. You can have a working store live quickly without managing hosting infrastructure
+2. Payments, security, and scaling are handled inside the platform
+3. Multi-channel selling can connect storefront operations with channels like Instagram, TikTok, Amazon, and Google
+4. The app marketplace covers many common store needs
+5. A trial period lets sellers test the workflow before committing
+
+Tradeoffs to know:
+- Monthly subscription cost and possible transaction fees matter
+- Advanced customization may require Shopify's Liquid template language
+- App costs can add up depending on the store setup
+
+Before choosing any platform, compare pricing, payment fees, app costs, and the integrations you actually need.`
+
+POSTS.reddit.title = "Notes from evaluating Shopify for a new store"
+POSTS.reddit.body = `Disclosure: I write about digital tools. This Reddit draft does not include a direct affiliate link.
+
+Been looking at the current state of e-commerce platforms for a new project. Sharing practical notes I would check before choosing Shopify or any similar platform.
+
+Good:
+- Fast setup compared with building a custom store stack
+- Hosting, security, and scaling are not your problem
+- Multi-channel selling can be useful if you sell across multiple channels
+- App marketplace covers many common store use cases
+
+Tradeoffs:
+- Monthly plan cost is not the cheapest path
+- Transaction fees can apply depending on payment setup
+- Customization beyond the theme editor may require Liquid templates
+- App costs can add up
+
+Who it fits: solo entrepreneurs, small brands, and digital product sellers who want to focus on products and marketing.
+
+Who it may not fit: teams that need deep custom backend logic or want a zero-monthly-cost setup.
+
+Before posting this anywhere on Reddit, verify the target subreddit rules for self-promotion, external links, and commercial content.`
+
 async function main() {
   await c.connect()
 
@@ -244,12 +290,31 @@ async function main() {
     }
 
     const hash = crypto.createHash("sha256").update(post.body).digest("hex").substring(0, 16)
+    const blockingReasons = PLATFORM_POLICY_BLOCKS[platform] || []
+    const isBlocked = blockingReasons.length > 0
+    const finalCopyStatus = isBlocked ? "needs_system_fix" : "ready_for_operator_approval"
+    const validationStatus = isBlocked ? "blocked" : "valid"
+    const finalCopyAffiliateLink = isBlocked ? null : LINK
+
     await c.query(
       `INSERT INTO final_copies
          (product_id, affiliate_program_id, affiliate_link, source_content_id, platform_adaptation_id,
           platform, title, body, content_hash, version, status, validation_status, blocking_reasons)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1,'operator_approved','valid','{}')`,
-      [productId, apId, LINK, sourceId, paId, platform, post.title, post.body, hash],
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1,$10,$11,$12)`,
+      [
+        productId,
+        apId,
+        finalCopyAffiliateLink,
+        sourceId,
+        paId,
+        platform,
+        post.title,
+        post.body,
+        hash,
+        finalCopyStatus,
+        validationStatus,
+        blockingReasons,
+      ],
     )
     fs.writeFileSync(path.join(reviewDir, `${platform}.md`), post.body, "utf8")
 
@@ -257,20 +322,22 @@ async function main() {
     const meta = {
       product: "Shopify",
       platform,
-      status: "operator_approved",
-      affiliate_link: LINK,
+      status: finalCopyStatus,
+      affiliate_link: finalCopyAffiliateLink,
       source_content_id: sourceId,
       platform_adaptation_id: paId,
       campaign_approval_id: null,
       content_hash: hash,
-      validation_status: "valid",
-      blocking_reasons: [],
-      reviewer_status: "approved",
-      reviewer_notes: "auto-generated and auto-approved",
+      validation_status: validationStatus,
+      blocking_reasons: blockingReasons,
+      reviewer_status: isBlocked ? "blocked" : "pending_meni_approval",
+      reviewer_notes: isBlocked
+        ? "Blocked by platform policy. MENI should not receive this as an approval-ready item."
+        : "Generated and validated. Waiting for MENI approval.",
     }
     fs.writeFileSync(path.join(reviewDir, `${platform}.metadata.json`), JSON.stringify(meta, null, 2), "utf8")
 
-    console.log(`CREATED + APPROVED: ${platform} (${post.body.length} chars)`)
+    console.log(`CREATED: ${platform} | ${finalCopyStatus} (${post.body.length} chars)`)
   }
 
   // 5. Summary

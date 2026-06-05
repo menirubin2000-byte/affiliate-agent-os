@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
+const { requireApprovalOverride } = require('./safety-guard');
 const c = new Client({
   host: 'db.gbkwydsodondarccqyet.supabase.co',
   port: 5432, database: 'postgres', user: 'postgres',
@@ -7,6 +8,8 @@ const c = new Client({
 });
 
 async function main() {
+  requireApprovalOverride('scripts/approve-all.js');
+
   await c.connect();
 
   const result = await c.query(`

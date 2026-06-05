@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
+const { requireDirectPublishOverride } = require('./safety-guard');
 
 const MEDIUM_TOKEN = process.env.MEDIUM_INTEGRATION_TOKEN;
 
@@ -33,6 +34,8 @@ async function publishToMedium(token, userId, title, body, canonicalUrl) {
 }
 
 async function main() {
+  requireDirectPublishOverride('scripts/publish-to-medium.js');
+
   if (!MEDIUM_TOKEN) {
     console.error('Missing MEDIUM_INTEGRATION_TOKEN in environment');
     console.error('Get it from: https://medium.com/me/settings/security');

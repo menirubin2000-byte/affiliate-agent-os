@@ -3,6 +3,7 @@
 // IG does not support clickable links in captions — the affiliate URL stays in the bio.
 
 require("dotenv").config({ path: ".env.local" })
+const { requireDirectPublishOverride } = require("./safety-guard")
 
 const TOKEN = process.env.IG_ACCESS_TOKEN
 const IG_USER_ID = process.env.IG_BUSINESS_ACCOUNT_ID
@@ -92,6 +93,7 @@ async function main() {
   }
 
   if (cmd === "post") {
+    requireDirectPublishOverride("scripts/publish-to-instagram.js post")
     const imageUrl = process.argv[3]
     const captionPath = process.argv[4]
     if (!imageUrl || !captionPath) {

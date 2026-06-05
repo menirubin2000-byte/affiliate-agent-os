@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Privacy Policy — Affiliate Agent OS",
+  title: "Privacy Policy - Affiliate Agent OS",
   description: "Privacy Policy for Affiliate Agent OS content publishing platform.",
 }
 
@@ -11,24 +11,23 @@ export default function PrivacyPage() {
 
       <section className="space-y-4">
         <p>
-          Affiliate Agent OS ("we", "us", "the platform") is operated by Rubin Quantum Systems as a
-          single-operator content publishing tool. This Privacy Policy explains what data we collect
-          and how we use it.
+          Affiliate Agent OS (&quot;we&quot;, &quot;us&quot;, &quot;the platform&quot;) is
+          operated by Rubin Quantum Systems as a single-operator content publishing tool. This
+          Privacy Policy explains what data we collect and how we use it.
         </p>
 
         <h2 className="mt-6 text-xl font-semibold">1. Data we collect</h2>
         <ul className="list-disc space-y-1 pl-6">
           <li>
             <strong>Operator account data:</strong> credentials needed to publish to connected
-            platforms (Meta, LinkedIn, X, TikTok). Stored in server environment only.
+            platforms. Stored in server environment only.
           </li>
           <li>
-            <strong>Affiliate program data:</strong> product names, affiliate links, commission
+            <strong>Affiliate program data:</strong> product names, affiliate links, and commission
             terms.
           </li>
           <li>
-            <strong>Generated content:</strong> drafts, reviews, social posts, and their approval
-            status.
+            <strong>Generated content:</strong> drafts, reviews, social posts, and approval status.
           </li>
           <li>
             <strong>Published records:</strong> URLs and metadata of published posts, for tracking.
@@ -48,16 +47,15 @@ export default function PrivacyPage() {
 
         <h2 className="mt-6 text-xl font-semibold">3. Third-party platforms</h2>
         <p>
-          When you connect a third-party platform (Meta, LinkedIn, X, TikTok), we receive only the
-          tokens and identifiers required to publish on your behalf. We do not read your private
-          messages or access data unrelated to the publishing function.
+          When you connect a third-party platform, we receive only the tokens and identifiers
+          required to publish on your behalf. We do not read private messages or access data
+          unrelated to the publishing function.
         </p>
 
         <h2 className="mt-6 text-xl font-semibold">4. Data storage</h2>
         <p>
-          Data is stored in Supabase (PostgreSQL) hosted on AWS, and the application is deployed on
-          Vercel. Credentials and tokens are kept in server-side environment variables and never
-          shipped to client browsers.
+          Data is stored in Supabase, and the application is deployed on Vercel. Credentials and
+          tokens are kept in server-side environment variables and never shipped to client browsers.
         </p>
 
         <h2 className="mt-6 text-xl font-semibold">5. Data retention</h2>
@@ -68,9 +66,9 @@ export default function PrivacyPage() {
 
         <h2 className="mt-6 text-xl font-semibold">6. User rights</h2>
         <p>
-          The platform is operated by a single operator (Meni Rubin). Visitors who follow published
-          links are subject to the privacy policy of the destination platform. To request deletion
-          of any data we hold, contact{" "}
+          The platform is operated by a single operator. Visitors who follow published links are
+          subject to the privacy policy of the destination platform. To request deletion of data we
+          hold, contact{" "}
           <a href="mailto:Rubin-Q.S@rsqs.net" className="underline">
             Rubin-Q.S@rsqs.net
           </a>

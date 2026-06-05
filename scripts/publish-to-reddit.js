@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
+const { requireDirectPublishOverride } = require('./safety-guard');
 
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
 const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
@@ -37,6 +38,8 @@ async function publishToReddit(token, subreddit, title, body) {
 }
 
 async function main() {
+  requireDirectPublishOverride('scripts/publish-to-reddit.js');
+
   if (!REDDIT_CLIENT_ID) {
     console.error('Missing Reddit credentials in environment');
     console.error('Need: REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD');

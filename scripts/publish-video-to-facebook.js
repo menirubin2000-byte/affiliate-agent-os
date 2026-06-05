@@ -5,6 +5,7 @@
 require("dotenv").config({ path: ".env.local" })
 const fs = require("fs")
 const path = require("path")
+const { requireDirectPublishOverride } = require("./safety-guard")
 
 const TOKEN = process.env.FB_PAGE_ACCESS_TOKEN
 const PAGE_ID = process.env.FB_PAGE_ID
@@ -45,6 +46,8 @@ async function publishVideo({ filePath, description, title }) {
 }
 
 async function main() {
+  requireDirectPublishOverride("scripts/publish-video-to-facebook.js")
+
   const videoPath = process.argv[2]
   const captionPath = process.argv[3]
   const title = process.argv[4] || "Launch your store with Shopify"

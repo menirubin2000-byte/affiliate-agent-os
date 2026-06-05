@@ -1,6 +1,7 @@
 require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
 const crypto = require('crypto');
+const { requireApprovalOverride } = require('./safety-guard');
 
 const c = new Client({
   host: 'db.gbkwydsodondarccqyet.supabase.co',
@@ -47,6 +48,8 @@ function fixPost(body, affiliateLink, platform) {
 }
 
 async function main() {
+  requireApprovalOverride('scripts/fix-and-approve.js');
+
   await c.connect();
 
   // Get all posts that need fixing

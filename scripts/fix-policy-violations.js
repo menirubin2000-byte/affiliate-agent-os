@@ -3,6 +3,7 @@ const { Client } = require('pg');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { requireApprovalOverride } = require('./safety-guard');
 
 const c = new Client({
   host: 'db.gbkwydsodondarccqyet.supabase.co',
@@ -13,6 +14,8 @@ const c = new Client({
 const SYSTEME_LINK = 'https://systeme.io/?sa=sa0272930337c3024fcafe085f6b63e73bbc0e3365';
 
 async function main() {
+  requireApprovalOverride('scripts/fix-policy-violations.js');
+
   await c.connect();
 
   // 1. Remove all TikTok (video platform, not text)

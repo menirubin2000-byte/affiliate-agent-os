@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
+const { requireDirectPublishOverride } = require('./safety-guard');
 
 // LinkedIn requires OAuth2 - need access token
 const LINKEDIN_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
@@ -46,6 +47,8 @@ async function publishToLinkedIn(token, personId, title, body) {
 }
 
 async function main() {
+  requireDirectPublishOverride('scripts/publish-to-linkedin.js');
+
   if (!LINKEDIN_TOKEN) {
     console.error('Missing LINKEDIN_ACCESS_TOKEN in environment');
     console.error('LinkedIn requires OAuth2 app setup');

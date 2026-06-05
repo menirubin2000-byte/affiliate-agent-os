@@ -7,53 +7,60 @@ import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getBrowserControlOverview } from "@/lib/browser-control-db"
+import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
+
+import { PlatformRegistryTable, PlatformRoutingStats } from "../platform-routing-view"
 
 export const dynamic = "force-dynamic"
 
 export default async function HebrewBrowserControlPage() {
   const configured = isSupabaseConfigured()
-  const [overview, publishJobs] = configured
-    ? await Promise.all([getBrowserControlOverview(), listPublishJobsForHebrewDashboard()])
+  const [overview, publishJobs, routingOverview] = configured
+    ? await Promise.all([
+        getBrowserControlOverview(),
+        listPublishJobsForHebrewDashboard(),
+        getPlatformRoutingOverview(),
+      ])
     : [
-      {
-        connected: false,
-        latestSession: null,
-        jobs: [],
-        events: [],
-        queuedCount: 0,
-        blockerStatus: "Supabase לא מוגדר",
-      },
-      [],
-    ]
+        {
+          connected: false,
+          latestSession: null,
+          jobs: [],
+          events: [],
+          queuedCount: 0,
+          blockerStatus: "Supabase לא מוגדר",
+        },
+        [],
+        await getPlatformRoutingOverview(),
+      ]
 
   const executorQueueCount = publishJobs.filter((job) =>
-    job.status === "approved_waiting_executor" || job.status === "running"
+    ["approved_waiting_executor", "running", "pending_operator_confirmation", "requires_auth"].includes(job.status),
   ).length
 
   return (
-    <div dir="rtl" className="space-y-6">
+    <div dir="rtl" className="space-y-6 text-right">
       <PageHeader
         eyebrow="Affiliate Agent OS Browser Helper"
-        title="שליטה בדפדפן"
-        description="תור ביצוע מבוקר דרך הרחבת Chrome. ההרחבה מקבלת רק publish_jobs שאושרו על ידי MENI, עוצרת בלוגין/CAPTCHA/2FA, ומדווחת חסימה במקום להעביר עבודה למני."
+        title="מנוע פרסום ודפדפן"
+        description="המסך מציג האם executor/browser helper מחובר, מה הוא רואה, ומה חסום. הוא לא מבקש מ-MENI להעתיק, להדביק, לפרסם ידנית או לאסוף URL."
         actions={
-          <Link
-            href="/dashboard/he/publish-ready"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            פריטים מוכנים לפרסום
+          <Link href="/dashboard/he/publish-ready" className={cn(buttonVariants({ variant: "outline" }))}>
+            מצב פרסום
           </Link>
         }
       />
+
+      <PlatformRoutingStats overview={routingOverview} />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="חיבור דפדפן"
           value={overview.connected ? "מחובר" : "לא מחובר"}
-          detail="מבוסס על heartbeat מההרחבה."
+          detail="מבוסס על heartbeat מההרחבה או executor."
           icon={overview.connected ? <CheckCircle2 className="size-4" /> : <MonitorCog className="size-4" />}
         />
         <StatCard
@@ -65,11 +72,11 @@ export default async function HebrewBrowserControlPage() {
         <StatCard
           label="Jobs בתור"
           value={String(executorQueueCount)}
-          detail="publish_jobs שממתינים למנוע פרסום."
+          detail="publish_jobs שממתינים לחיבור, אישור סופי או ביצוע."
           icon={<Clock className="size-4" />}
         />
         <StatCard
-          label="Blocker"
+          label="חסם"
           value={overview.blockerStatus ? "קיים" : "אין"}
           detail={overview.blockerStatus ?? "לא דווח חסם כרגע."}
           icon={<AlertTriangle className="size-4" />}
@@ -84,15 +91,17 @@ export default async function HebrewBrowserControlPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p>URL: {overview.latestSession?.activeTabUrl ?? "אין דיווח"}</p>
+          <p dir="ltr">URL: {overview.latestSession?.activeTabUrl ?? "אין דיווח"}</p>
           <p>נראה לאחרונה: {overview.latestSession?.lastSeenAt ?? "אין"}</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>תור פרסום</CardTitle>
-          <CardDescription>לא מסמנים published עד שיש URL אמיתי של פוסט.</CardDescription>
+          <CardTitle>תור executor</CardTitle>
+          <CardDescription>
+            published_records נוצרים רק אחרי URL חי מאומת. Job חסום נשאר חסום עם סיבה במקום לעבור למני כעבודה ידנית.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {!publishJobs.length ? <p className="text-sm text-muted-foreground">אין jobs כרגע.</p> : null}
@@ -108,8 +117,14 @@ export default async function HebrewBrowserControlPage() {
                 <Badge>{job.status}</Badge>
               </div>
               {job.liveUrl ? (
-                <a href={job.liveUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-primary">
-                  URL פוסט אמיתי
+                <a
+                  href={job.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block text-sm text-primary hover:underline"
+                  dir="ltr"
+                >
+                  {job.liveUrl}
                 </a>
               ) : null}
               {job.blockingReason ? (
@@ -119,6 +134,8 @@ export default async function HebrewBrowserControlPage() {
           ))}
         </CardContent>
       </Card>
+
+      <PlatformRegistryTable overview={routingOverview} />
 
       <Card>
         <CardHeader>

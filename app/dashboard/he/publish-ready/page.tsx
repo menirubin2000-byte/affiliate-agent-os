@@ -4,14 +4,16 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import {
   getLinkedInOfficialApiCapability,
   LINKEDIN_CURRENT_BLOCKING_REASON,
 } from "@/lib/linkedin-official-api"
+import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
+import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { cn } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
+import { PlatformRoutingStats, RoutingNavActions } from "../platform-routing-view"
 import { confirmLinkedInOfficialPublishAction, confirmPreparedPublishJobAction } from "./actions"
 
 export const dynamic = "force-dynamic"
@@ -26,7 +28,7 @@ const platformLabels: Record<string, string> = {
 }
 
 const statusLabels: Record<PublishJobStatus, string> = {
-  pending_meni_approval: "ממתין לאישור מני",
+  pending_meni_approval: "ממתין לאישור MENI",
   approved_waiting_executor: "מאושר וממתין למנוע פרסום",
   blocked_executor_not_connected: "חסום - מנוע פרסום לא מחובר",
   blocked_policy: "חסום - מדיניות פלטפורמה",
@@ -64,34 +66,46 @@ function jobStatusLabel(job: { status: PublishJobStatus; blockingReason: string 
   return statusLabels[job.status]
 }
 
+function blockerLabel(reason: string) {
+  const labels: Record<string, string> = {
+    executor_not_connected: "מנוע פרסום לא מחובר",
+    login_required: "דרוש חיבור לחשבון הפלטפורמה",
+    captcha_required: "CAPTCHA חוסם את מנוע הפרסום",
+    two_factor_required: "דרוש 2FA",
+    passkey_required: "דרוש Passkey",
+    executor_waiting_final_confirmation: "המנוע מילא תוכן וממתין לאישור פעולה סופית",
+    substack_editor_automation_timeout: "Substack חסום בגלל timeout בעורך",
+    reddit_community_rules_not_verified: "Reddit חסום עד אימות חוקי קהילה",
+    quora_no_direct_affiliate_links: "Quora לא מאפשר קישור אפיליאייט ישיר",
+  }
+
+  return labels[reason] ?? reason
+}
+
 export default async function HebrewPublishReadyPage() {
-  const jobs = await listPublishJobsForHebrewDashboard()
+  const [jobs, overview] = await Promise.all([
+    listPublishJobsForHebrewDashboard(),
+    getPlatformRoutingOverview(),
+  ])
   const linkedinCapability = getLinkedInOfficialApiCapability()
   const hasLinkedInJobs = jobs.some((job) => job.platform === "linkedin" && job.status !== "verified")
 
   return (
-    <div dir="rtl" className="space-y-6">
+    <div dir="rtl" className="space-y-6 text-right">
       <PageHeader
         eyebrow="ביצוע פרסום"
-        title="סטטוס פרסום"
-        description="MENI לא מעתיק, לא פותח פלטפורמות, ולא מדביק URL מהמסך הזה. אחרי אישור, המערכת יוצרת publish job. אם אין מנוע פרסום מחובר, הפריט נחסם."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Link href="/dashboard/he/content-review" className={cn(buttonVariants())}>
-              אישור פוסטים
-            </Link>
-            <Link href="/dashboard/he/campaigns" className={cn(buttonVariants({ variant: "outline" }))}>
-              קמפיינים
-            </Link>
-          </div>
-        }
+        title="מצב פרסום"
+        description="המסך הזה לא נותן למני משימות העתקה, הדבקה, פתיחת פלטפורמה או הכנסת URL. הוא מציג רק מצב ביצוע, חסימות וכפתור אישור פעולה סופית כשמנוע הפרסום מוכן."
+        actions={<RoutingNavActions />}
       />
+
+      <PlatformRoutingStats overview={overview} />
 
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
           <CardTitle>כלל עבודה</CardTitle>
           <CardDescription>
-            הפעולות היחידות של MENI הן אשר, דחה, או דרוש תיקון במסך אישור הפוסטים. כל ביצוע פרסום עובר דרך publish job ומנוע פרסום. בלי מנוע מחובר אין משימה למני.
+            MENI מאשר בלבד. אם אין executor או API בטוח, הפריט נשאר חסום ומוצג עם סיבה. Published Record נוצר רק אחרי URL חי מאומת.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -105,21 +119,15 @@ export default async function HebrewPublishReadyPage() {
                 : "חסום - נדרש חיבור LinkedIn רשמי"}
             </CardTitle>
             <CardDescription>
-              הפרסום מותר רק דרך LinkedIn Developer App עם Share on LinkedIn והרשאת w_member_social.
-              אין שימוש באוטומציית דפדפן לא רשמית.
+              LinkedIn נשאר official API only. אין שימוש באוטומציית דפדפן לא רשמית ואין משימת פרסום ידנית ל-MENI.
             </CardDescription>
           </CardHeader>
           {!linkedinCapability.configured ? (
             <CardContent className="space-y-2 text-sm">
               <p>סיבה: {LINKEDIN_CURRENT_BLOCKING_REASON}</p>
-              <p>
-                LinkedIn לא מאפשר כרגע ליצור Developer App לחשבון בגלל שאין מספיק חיבורים. המסלול הישן
-                השתמש באוטומציית דפדפן לא רשמית ולכן אינו זמין לשימוש חוזר.
-              </p>
               <p dir="ltr">
                 Missing: {[...linkedinCapability.missingKeys, ...linkedinCapability.invalidReasons].join(", ")}
               </p>
-              <p>Token storage: server environment only. לא נשמר token בדפדפן או במסד נתונים.</p>
             </CardContent>
           ) : null}
         </Card>
@@ -128,9 +136,9 @@ export default async function HebrewPublishReadyPage() {
       {!jobs.length ? (
         <Card>
           <CardHeader>
-            <CardTitle>אין jobs לפרסום כרגע</CardTitle>
+            <CardTitle>אין publish jobs כרגע</CardTitle>
             <CardDescription>
-              אחרי ש-MENI יאשר final copy, המערכת תיצור publish job ותציג כאן אם הוא ממתין למנוע פרסום, חסום, בביצוע או פורסם ואומת.
+              אחרי אישור MENI וקמפיין תקין, המערכת תיצור publish_job ותציג אם הוא מוכן, חסום, בביצוע או מאומת.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -165,40 +173,26 @@ export default async function HebrewPublishReadyPage() {
                   </div>
                   <div className="rounded-lg border bg-muted/20 p-3 text-sm">
                     <div className="text-muted-foreground">URL חי</div>
-                    <div className="mt-1 font-medium">{job.liveUrl ? "קיים" : "עדיין אין"}</div>
+                    <div className="mt-1 font-medium">{job.liveUrl ? "קיים" : "אין עדיין"}</div>
                   </div>
                 </div>
 
                 {job.blockingReason ? (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-                    חסימה: {job.blockingReason === "executor_not_connected"
-                      ? "מנוע פרסום לא מחובר"
-                      : job.blockingReason === LINKEDIN_CURRENT_BLOCKING_REASON
-                        ? "חסום - נדרש חיבור LinkedIn רשמי"
-                      : job.blockingReason === "login_required"
-                        ? "דרוש חיבור לחשבון הפלטפורמה"
-                      : job.blockingReason === "captcha_required"
-                        ? "CAPTCHA חוסם את המנוע"
-                      : job.blockingReason === "two_factor_required"
-                        ? "דרוש 2FA"
-                      : job.blockingReason === "passkey_required"
-                        ? "דרוש Passkey"
-                      : job.blockingReason === "executor_waiting_final_confirmation"
-                        ? "המנוע מילא את התוכן וממתין לאישור פעולה סופית"
-                      : job.blockingReason}
+                    חסימה: {blockerLabel(job.blockingReason)}
                   </div>
                 ) : null}
 
                 {job.status === "requires_auth" ? (
                   <Link href="/dashboard/he/browser-control" className={cn(buttonVariants({ variant: "outline" }))}>
-                    חבר חשבון
+                    חבר מנוע פרסום
                   </Link>
                 ) : null}
 
                 {job.status === "pending_operator_confirmation" ? (
                   <div className="space-y-3 rounded-lg border bg-muted/20 p-3 text-sm">
                     <p>
-                      התוכן כבר מולא על ידי מנוע הפרסום. אישור הפעולה הסופית מתיר למנוע ללחוץ Publish ולאמת URL חי.
+                      מנוע הפרסום מוכן לפעולה סופית. MENI מאשר פעולה בלבד; אין העתקה, אין הדבקה ואין טיפול URL.
                     </p>
                     {job.platform === "medium" || job.platform === "substack" ? (
                       <form action={confirmPreparedPublishJobAction}>

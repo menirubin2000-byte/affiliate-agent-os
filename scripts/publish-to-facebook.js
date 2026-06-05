@@ -3,6 +3,7 @@
 // Supports text posts (with optional link) and photo posts.
 
 require("dotenv").config({ path: ".env.local" })
+const { requireDirectPublishOverride } = require("./safety-guard")
 
 const TOKEN = process.env.FB_PAGE_ACCESS_TOKEN
 const PAGE_ID = process.env.FB_PAGE_ID
@@ -78,6 +79,7 @@ async function main() {
   }
 
   if (cmd === "text") {
+    requireDirectPublishOverride("scripts/publish-to-facebook.js text")
     const messagePath = process.argv[3]
     const link = process.argv[4]
     if (!messagePath) {
@@ -91,6 +93,7 @@ async function main() {
   }
 
   if (cmd === "photo") {
+    requireDirectPublishOverride("scripts/publish-to-facebook.js photo")
     const imageUrl = process.argv[3]
     const captionPath = process.argv[4]
     if (!imageUrl || !captionPath) {
