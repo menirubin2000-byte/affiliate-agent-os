@@ -1,7 +1,8 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
-import { exchangeXAuthorizationCode } from "@/lib/x-official-api"
+import { upsertXPlatformConnection } from "@/lib/platform-connections-db"
+import { exchangeXAuthorizationCode, validateXOAuthCallbackState } from "@/lib/x-official-api"
 
 export const dynamic = "force-dynamic"
 
@@ -39,35 +40,28 @@ export async function GET(request: Request) {
   const expectedState = cookieStore.get(X_OAUTH_STATE_COOKIE)?.value
   const codeVerifier = cookieStore.get(X_OAUTH_VERIFIER_COOKIE)?.value
 
-  if (error) {
-    const response = redirectToPlatformCapabilities(request, "x_oauth_error")
-    clearOAuthCookies(response)
-    return response
-  }
-
-  if (!code || !state) {
-    const response = redirectToPlatformCapabilities(request, "x_oauth_invalid_callback")
-    clearOAuthCookies(response)
-    return response
-  }
-
-  if (!expectedState || !codeVerifier) {
-    const response = redirectToPlatformCapabilities(request, "x_oauth_session_missing")
-    clearOAuthCookies(response)
-    return response
-  }
-
-  if (state !== expectedState) {
-    const response = redirectToPlatformCapabilities(request, "x_oauth_state_invalid")
+  const validation = validateXOAuthCallbackState({
+    error,
+    code,
+    state,
+    expectedState,
+    codeVerifier,
+  })
+  if (!validation.valid) {
+    const response = redirectToPlatformCapabilities(request, validation.status)
     clearOAuthCookies(response)
     return response
   }
 
   try {
-    const token = await exchangeXAuthorizationCode({ code, codeVerifier })
+    const token = await exchangeXAuthorizationCode({
+      code: validation.code,
+      codeVerifier: validation.codeVerifier,
+    })
     if (!token.access_token) {
       throw new Error("X OAuth callback did not return an access token.")
     }
+    await upsertXPlatformConnection({ token, connectedBy: "MENI" })
 
     const response = redirectToPlatformCapabilities(request, "x_oauth_connected")
     clearOAuthCookies(response)

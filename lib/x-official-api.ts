@@ -45,6 +45,21 @@ export type XOAuthTokenResponse = {
   error_description?: string
 }
 
+export type XOAuthCallbackValidation =
+  | {
+      valid: true
+      code: string
+      codeVerifier: string
+    }
+  | {
+      valid: false
+      status:
+        | "x_oauth_error"
+        | "x_oauth_invalid_callback"
+        | "x_oauth_session_missing"
+        | "x_oauth_state_invalid"
+    }
+
 function value(env: NodeJS.ProcessEnv, key: XRequiredEnvKey) {
   return env[key]?.trim() ?? ""
 }
@@ -149,6 +164,32 @@ export async function createXAuthorizeUrl(
     authorizeUrl: `${X_AUTHORIZE_ENDPOINT}?${params.toString()}`,
     state,
     codeVerifier,
+  }
+}
+
+export function validateXOAuthCallbackState(input: {
+  error?: string | null
+  code?: string | null
+  state?: string | null
+  expectedState?: string | null
+  codeVerifier?: string | null
+}): XOAuthCallbackValidation {
+  if (input.error) {
+    return { valid: false, status: "x_oauth_error" }
+  }
+  if (!input.code || !input.state) {
+    return { valid: false, status: "x_oauth_invalid_callback" }
+  }
+  if (!input.expectedState || !input.codeVerifier) {
+    return { valid: false, status: "x_oauth_session_missing" }
+  }
+  if (input.state !== input.expectedState) {
+    return { valid: false, status: "x_oauth_state_invalid" }
+  }
+  return {
+    valid: true,
+    code: input.code,
+    codeVerifier: input.codeVerifier,
   }
 }
 

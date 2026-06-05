@@ -5,6 +5,7 @@ import {
   createXAuthorizeUrl,
   exchangeXAuthorizationCode,
   getXOfficialApiCapability,
+  validateXOAuthCallbackState,
   X_DEFAULT_REDIRECT_URI,
   X_POSTS_ENDPOINT,
   xPostIdToLiveUrl,
@@ -134,4 +135,47 @@ test("exchangeXAuthorizationCode calls the token endpoint without creating posts
   assert.equal(calledUrl === X_POSTS_ENDPOINT, false)
   assert.equal(calledBody.includes("grant_type=authorization_code"), true)
   assert.equal(token.access_token, "token")
+})
+
+test("X OAuth callback validation rejects missing callback state", () => {
+  const validation = validateXOAuthCallbackState({
+    code: "code",
+    state: "state",
+    expectedState: undefined,
+    codeVerifier: "verifier",
+  })
+
+  assert.equal(validation.valid, false)
+  if (!validation.valid) {
+    assert.equal(validation.status, "x_oauth_session_missing")
+  }
+})
+
+test("X OAuth callback validation rejects invalid callback state", () => {
+  const validation = validateXOAuthCallbackState({
+    code: "code",
+    state: "attacker-state",
+    expectedState: "expected-state",
+    codeVerifier: "verifier",
+  })
+
+  assert.equal(validation.valid, false)
+  if (!validation.valid) {
+    assert.equal(validation.status, "x_oauth_state_invalid")
+  }
+})
+
+test("X OAuth callback validation accepts matching state and verifier", () => {
+  const validation = validateXOAuthCallbackState({
+    code: "code",
+    state: "state",
+    expectedState: "state",
+    codeVerifier: "verifier",
+  })
+
+  assert.equal(validation.valid, true)
+  if (validation.valid) {
+    assert.equal(validation.code, "code")
+    assert.equal(validation.codeVerifier, "verifier")
+  }
 })
