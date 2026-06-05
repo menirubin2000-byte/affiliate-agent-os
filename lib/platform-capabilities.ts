@@ -1,6 +1,6 @@
 import type { PlatformCapability } from "@/types/platform-capability"
 
-const CHECKED_AT = "2026-06-04"
+const CHECKED_AT = "2026-06-05"
 
 export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
   {
@@ -104,6 +104,44 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
       "https://developer.pinterest.com/docs/getting-started/introduction/",
       "https://developer.pinterest.com/docs/getting-started/set-up-authentication-and-authorization/",
       "https://policy.pinterest.com/en-gb/commercial-and-branded-content-guidelines",
+    ],
+    checkedAt: CHECKED_AT,
+  },
+  {
+    platform: "x_twitter",
+    label: "X / Twitter",
+    apiAvailability: "official_api_available",
+    connectionStatus: "requires_official_connection",
+    requiredAccountType:
+      "Regular X account connected to an X Developer app through OAuth user context. Pay-per-use API access must be active.",
+    requiredPermissions: [
+      "X Developer Project and App",
+      "OAuth 2.0 Authorization Code Flow with PKCE",
+      "tweet.write",
+      "tweet.read",
+      "users.read",
+      "Active API access or credits for paid usage",
+    ],
+    affiliateContentPolicy: "allowed_with_disclosure",
+    affiliatePolicyNotes:
+      "Affiliate links and discount-code content are treated as paid partnership content on X. Organic posts must use the Paid Partnership disclosure, and the API supports the paid_partnership field.",
+    safeExecutorPath: "official_api_only",
+    browserHelperAllowed: false,
+    browserHelperNotes:
+      "Use X API v2 POST /2/tweets with OAuth user access. Do not automate the X composer through the browser.",
+    blockers: [
+      "x_oauth_not_configured",
+      "x_access_token_missing",
+      "x_tweet_write_scope_missing",
+      "x_api_credits_or_access_not_ready",
+      "x_paid_partnership_disclosure_required",
+    ],
+    nextOperatorAction: "Connect the X account through official OAuth and keep affiliate posts disclosure-gated.",
+    sourceUrls: [
+      "https://docs.x.com/x-api/posts/create-post",
+      "https://docs.x.com/x-api/posts/manage-tweets/introduction",
+      "https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code",
+      "https://help.x.com/en/rules-and-policies/paid-partnerships-policy.html",
     ],
     checkedAt: CHECKED_AT,
   },

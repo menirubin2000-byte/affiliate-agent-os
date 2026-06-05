@@ -2,6 +2,7 @@ export type ResearchedPlatform =
   | "facebook_page"
   | "instagram_professional"
   | "pinterest"
+  | "x_twitter"
   | "youtube"
 
 export type PlatformApiAvailability = "official_api_available" | "no_official_publish_api"
