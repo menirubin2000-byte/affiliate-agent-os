@@ -1,0 +1,267 @@
+// scripts/export-truth.js
+// Single source-of-truth dump: reads ONLY from Supabase (no memory, no scraping)
+// and writes docs/OPERATOR_SOURCE_OF_TRUTH.md.
+//
+// Run:
+//   node scripts/export-truth.js
+
+require("dotenv").config({ path: ".env.local" })
+const { Client } = require("pg")
+const fs = require("fs")
+const path = require("path")
+
+const c = new Client({
+  host: "db.gbkwydsodondarccqyet.supabase.co",
+  port: 5432,
+  database: "postgres",
+  user: "postgres",
+  password: process.env.SUPABASE_DB_PASSWORD,
+  ssl: { rejectUnauthorized: false },
+})
+
+async function query(sql, params = []) {
+  const r = await c.query(sql, params)
+  return r.rows
+}
+
+function he(n) {
+  return n.toLocaleString("en-US")
+}
+
+async function main() {
+  await c.connect()
+
+  // 1. table inventory
+  const tables = await query(`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+    ORDER BY table_name
+  `)
+
+  // 2. row counts per relevant table
+  const TABLES_OF_INTEREST = [
+    "products",
+    "affiliate_programs",
+    "campaign_links",
+    "campaigns",
+    "campaign_approvals",
+    "source_contents",
+    "platform_adaptations",
+    "content_drafts",
+    "draft_versions",
+    "approval_items",
+    "final_copies",
+    "publish_jobs",
+    "published_records",
+    "platform_connections",
+    "performance_metrics",
+    "improvement_tasks",
+    "browser_sessions",
+    "browser_jobs",
+    "browser_events",
+    "saved_views",
+  ]
+  const counts = {}
+  for (const t of TABLES_OF_INTEREST) {
+    try {
+      const r = await query(`SELECT count(*)::int AS n FROM ${t}`)
+      counts[t] = r[0].n
+    } catch {
+      counts[t] = "missing"
+    }
+  }
+
+  // 3. products with affiliate state
+  const products = await query(`
+    SELECT
+      p.id,
+      p.name,
+      p.category,
+      p.status,
+      (
+        SELECT count(*)::int FROM affiliate_programs ap
+        WHERE ap.product_id = p.id AND ap.status = 'link_ready' AND coalesce(ap.affiliate_link, '') <> ''
+      ) AS link_ready_count,
+      (
+        SELECT coalesce(ap.affiliate_link, '') FROM affiliate_programs ap
+        WHERE ap.product_id = p.id AND coalesce(ap.affiliate_link, '') <> ''
+        ORDER BY ap.updated_at DESC LIMIT 1
+      ) AS top_link,
+      (
+        SELECT coalesce(ap.network, '') FROM affiliate_programs ap
+        WHERE ap.product_id = p.id AND coalesce(ap.affiliate_link, '') <> ''
+        ORDER BY ap.updated_at DESC LIMIT 1
+      ) AS top_network,
+      (
+        SELECT count(*)::int FROM final_copies fc WHERE fc.product_id = p.id
+      ) AS final_copies_total,
+      (
+        SELECT count(*)::int FROM final_copies fc
+        WHERE fc.product_id = p.id AND fc.status = 'operator_approved'
+      ) AS final_copies_approved,
+      (
+        SELECT count(*)::int FROM final_copies fc
+        WHERE fc.product_id = p.id AND fc.status = 'ready_for_operator_approval'
+      ) AS final_copies_waiting,
+      (
+        SELECT count(*)::int FROM final_copies fc
+        WHERE fc.product_id = p.id AND fc.status = 'needs_system_fix'
+      ) AS final_copies_blocked,
+      (
+        SELECT count(*)::int FROM published_records pr
+        WHERE pr.product_id = p.id AND pr.verification_status = 'verified' AND coalesce(pr.live_url, '') <> ''
+      ) AS published_verified
+    FROM products p
+    ORDER BY p.name
+  `)
+
+  // 4. platform breakdown from final_copies + published_records
+  const platformBreakdown = await query(`
+    SELECT
+      fc.platform,
+      count(*)::int                                                 AS final_copies_total,
+      count(*) FILTER (WHERE fc.status = 'operator_approved')::int  AS approved,
+      count(*) FILTER (WHERE fc.status = 'ready_for_operator_approval')::int AS waiting,
+      count(*) FILTER (WHERE fc.status = 'needs_system_fix')::int   AS needs_fix,
+      (
+        SELECT count(*)::int FROM published_records pr
+        WHERE pr.platform = fc.platform AND pr.verification_status = 'verified' AND coalesce(pr.live_url, '') <> ''
+      ) AS published_verified
+    FROM final_copies fc
+    GROUP BY fc.platform
+    ORDER BY fc.platform
+  `)
+
+  const publishedRows = await query(`
+    SELECT
+      pr.platform,
+      p.name AS product,
+      pr.live_url,
+      pr.verified_at
+    FROM published_records pr
+    JOIN products p ON p.id = pr.product_id
+    WHERE pr.verification_status = 'verified' AND coalesce(pr.live_url, '') <> ''
+    ORDER BY pr.verified_at DESC NULLS LAST, p.name
+  `)
+
+  // 5. publish_jobs breakdown
+  const publishJobsByStatus = await query(`
+    SELECT status, count(*)::int AS n FROM publish_jobs GROUP BY status ORDER BY status
+  `).catch(() => [])
+
+  // 6. platform connections (real, not memory)
+  const connections = await query(`
+    SELECT platform, status, updated_at FROM platform_connections ORDER BY platform
+  `).catch(() => [])
+
+  // 7. assemble markdown
+  const lines = []
+  const ts = new Date().toISOString()
+  lines.push(`# Operator Source of Truth`)
+  lines.push("")
+  lines.push(`> Generated by \`scripts/export-truth.js\` from Supabase live DB.`)
+  lines.push(`> Generated at: ${ts}`)
+  lines.push(`> Do NOT edit by hand — re-run the script to refresh.`)
+  lines.push("")
+  lines.push(`## 1. Schema inventory`)
+  lines.push("")
+  lines.push(`Public tables present in DB: **${tables.length}**`)
+  lines.push("")
+  lines.push("| Table | Rows |")
+  lines.push("| --- | --- |")
+  for (const t of TABLES_OF_INTEREST) {
+    lines.push(`| \`${t}\` | ${typeof counts[t] === "number" ? he(counts[t]) : counts[t]} |`)
+  }
+  lines.push("")
+
+  lines.push(`## 2. Products`)
+  lines.push("")
+  lines.push(`Total products: **${products.length}**`)
+  lines.push("")
+  lines.push("| Product | Category | link_ready | Network | Top link | Final copies | Approved | Waiting MENI | Needs fix | Published |")
+  lines.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+  for (const p of products) {
+    const link = p.top_link ? p.top_link.length > 48 ? p.top_link.slice(0, 45) + "..." : p.top_link : "—"
+    lines.push(
+      `| ${p.name} | ${p.category ?? "—"} | ${p.link_ready_count > 0 ? "✅" : "❌"} | ${p.top_network || "—"} | ${link} | ${p.final_copies_total} | ${p.final_copies_approved} | ${p.final_copies_waiting} | ${p.final_copies_blocked} | ${p.published_verified} |`,
+    )
+  }
+  lines.push("")
+
+  lines.push(`## 3. Platforms (final_copies + published_records)`)
+  lines.push("")
+  lines.push("| Platform | Final copies | Approved | Waiting MENI | Needs fix | Published verified |")
+  lines.push("| --- | --- | --- | --- | --- | --- |")
+  for (const r of platformBreakdown) {
+    lines.push(
+      `| ${r.platform} | ${r.final_copies_total} | ${r.approved} | ${r.waiting} | ${r.needs_fix} | ${r.published_verified} |`,
+    )
+  }
+  lines.push("")
+
+  lines.push(`## 4. Publish jobs by status`)
+  lines.push("")
+  if (publishJobsByStatus.length === 0) {
+    lines.push(`_None._`)
+  } else {
+    lines.push("| Status | Count |")
+    lines.push("| --- | --- |")
+    for (const r of publishJobsByStatus) lines.push(`| ${r.status} | ${r.n} |`)
+  }
+  lines.push("")
+
+  lines.push(`## 5. Verified published records`)
+  lines.push("")
+  if (publishedRows.length === 0) {
+    lines.push(`_No verified published records._`)
+  } else {
+    lines.push("| Platform | Product | Live URL | Verified at |")
+    lines.push("| --- | --- | --- | --- |")
+    for (const r of publishedRows) {
+      lines.push(`| ${r.platform} | ${r.product} | <${r.live_url}> | ${r.verified_at ?? "—"} |`)
+    }
+  }
+  lines.push("")
+
+  lines.push(`## 6. Platform connections (live DB state)`)
+  lines.push("")
+  if (connections.length === 0) {
+    lines.push(`_Table \`platform_connections\` empty or missing._`)
+  } else {
+    lines.push("| Platform | Status | Updated at |")
+    lines.push("| --- | --- | --- |")
+    for (const c of connections) lines.push(`| ${c.platform} | ${c.status} | ${c.updated_at} |`)
+  }
+  lines.push("")
+
+  lines.push(`## 7. What this means for MENI`)
+  lines.push("")
+  const totalFinal = platformBreakdown.reduce((s, r) => s + r.final_copies_total, 0)
+  const totalApproved = platformBreakdown.reduce((s, r) => s + r.approved, 0)
+  const totalWaiting = platformBreakdown.reduce((s, r) => s + r.waiting, 0)
+  const totalNeedsFix = platformBreakdown.reduce((s, r) => s + r.needs_fix, 0)
+  const totalPublished = platformBreakdown.reduce((s, r) => s + r.published_verified, 0)
+  lines.push(`- Total final copies: **${totalFinal}**`)
+  lines.push(`- Approved by MENI: **${totalApproved}**`)
+  lines.push(`- Waiting for MENI approval: **${totalWaiting}**`)
+  lines.push(`- Needs system fix (Quora/Reddit policy, etc.): **${totalNeedsFix}**`)
+  lines.push(`- Verified published with real live URL: **${totalPublished}**`)
+  lines.push("")
+  lines.push(`> A post counts as **published** only when a row exists in \`published_records\` with \`verification_status='verified'\` and a non-empty \`live_url\`. Anything else is a draft, approval queue item, or unfinished publish_job.`)
+  lines.push("")
+
+  const outPath = path.join(__dirname, "..", "docs", "OPERATOR_SOURCE_OF_TRUTH.md")
+  fs.mkdirSync(path.dirname(outPath), { recursive: true })
+  fs.writeFileSync(outPath, lines.join("\n"), "utf8")
+  console.log(`wrote ${outPath}`)
+  console.log(`products=${products.length} final_copies=${totalFinal} published_verified=${totalPublished}`)
+
+  await c.end()
+}
+
+main().catch(async (err) => {
+  console.error("ERROR:", err.message)
+  try { await c.end() } catch {}
+  process.exit(1)
+})
