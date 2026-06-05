@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -6,7 +7,7 @@ const path = require('path');
 const c = new Client({
   host: 'db.gbkwydsodondarccqyet.supabase.co',
   port: 5432, database: 'postgres', user: 'postgres',
-  password: '5552223332RRuu', ssl: { rejectUnauthorized: false }
+  password: process.env.SUPABASE_DB_PASSWORD, ssl: { rejectUnauthorized: false }
 });
 
 const SYSTEME_LINK = 'https://systeme.io/?sa=sa0272930337c3024fcafe085f6b63e73bbc0e3365';

@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
@@ -5,7 +6,7 @@ const path = require('path');
 const c = new Client({
   host: 'db.gbkwydsodondarccqyet.supabase.co',
   port: 5432, database: 'postgres', user: 'postgres',
-  password: '5552223332RRuu', ssl: { rejectUnauthorized: false }
+  password: process.env.SUPABASE_DB_PASSWORD, ssl: { rejectUnauthorized: false }
 });
 
 function slugify(name) {

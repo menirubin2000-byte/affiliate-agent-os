@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '.env.local' })
 const { Client } = require('pg');
 
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
@@ -46,7 +47,7 @@ async function main() {
   const db = new Client({
     host: 'db.gbkwydsodondarccqyet.supabase.co',
     port: 5432, database: 'postgres', user: 'postgres',
-    password: process.env.SUPABASE_DB_PASSWORD || '5552223332RRuu',
+    password: process.env.SUPABASE_DB_PASSWORD,
     ssl: { rejectUnauthorized: false }
   });
 

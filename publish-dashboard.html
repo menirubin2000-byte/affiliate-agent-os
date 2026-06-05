@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Affiliate Agent OS — פרסום פוסטים</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, sans-serif; background: #0d1117; color: #e6edf3; padding: 20px; }
+h1 { margin-bottom: 20px; color: #58a6ff; }
+.product { margin-bottom: 30px; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+.product h2 { color: #7ee787; margin-bottom: 12px; }
+.platform { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #21262d; }
+.platform:last-child { border-bottom: none; }
+.platform-name { width: 100px; font-weight: bold; color: #79c0ff; }
+.btn { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.btn-copy { background: #238636; color: white; }
+.btn-copy:hover { background: #2ea043; }
+.btn-copy.copied { background: #1f6feb; }
+.btn-open { background: #30363d; color: #e6edf3; text-decoration: none; display: inline-block; }
+.btn-open:hover { background: #484f58; }
+.btn-publish { background: #da3633; color: white; }
+.status { font-size: 12px; color: #8b949e; margin-right: 10px; }
+.counter { margin-bottom: 20px; font-size: 18px; color: #8b949e; }
+.instructions { background: #161b22; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #30363d; }
+.instructions ol { padding-right: 20px; }
+.instructions li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<h1>📋 פרסום פוסטים — Affiliate Agent OS</h1>
+<div class="counter">סה"כ: <span id="total">24</span> פוסטים | פורסמו: <span id="published">0</span></div>
+<div class="instructions">
+<h3>איך מפרסמים (3 לחיצות לכל פוסט):</h3>
+<ol>
+<li><strong>העתק</strong> — לוחצים "העתק" ליד הפוסט</li>
+<li><strong>פתח</strong> — לוחצים "פתח פלטפורמה" (נפתח הדף)</li>
+<li><strong>הדבק</strong> — Ctrl+V בדף שנפתח ולוחצים Publish/Post</li>
+</ol>
+</div>
+<div id="posts"></div>
+
+<script>
+const POSTS = [
+  {
+    product: "Systeme.io",
+    affiliate: "https://systeme.io/?sa=sa0272930337c3024fcafe085f6b63e73bbc0e3365",
+    platforms: {
+      medium: { url: "https://medium.com/new-story", title: "Systeme.io Review: Free Funnel and Email Marketing Platform for Online Businesses", published: "https://medium.com/@Rubin-Q.S/systeme-io-review-free-funnel-and-email-marketing-platform-for-online-businesses-8c4f042ceaa9" },
+      linkedin: { url: "https://www.linkedin.com/feed/?shareActive=true", title: "Systeme.io Review", published: "https://www.linkedin.com/feed/update/urn:li:activity:7466268842743422976/" },
+      substack: { url: "https://menirubin.substack.com/publish/post", title: "Systeme.io Review", published: "https://menirubin.substack.com/p/systemeio-review" },
+      tiktok: { url: "https://www.tiktok.com/creator#/upload", title: "Systeme.io Script" },
+      quora: { url: "https://he.quora.com/", title: "Systeme.io Answer" },
+      reddit: { url: "https://www.reddit.com/user/Ok_Neighborhood1699/submit", title: "Systeme.io Post" }
+    }
+  },
+  {
+    product: "ElevenLabs",
+    affiliate: "https://try.elevenlabs.io/bcwxftu128a9",
+    platforms: {
+      medium: { url: "https://medium.com/new-story", title: "ElevenLabs Review", published: "https://medium.com/@Rubin-Q.S/elevenlabs-review-is-it-worth-it-in-2026-e9f198c5c04f" },
+      linkedin: { url: "https://www.linkedin.com/feed/?shareActive=true", title: "ElevenLabs Review", published: "https://www.linkedin.com/feed/update/urn:li:activity:7466494313263284224/" },
+      substack: { url: "https://menirubin.substack.com/publish/post", title: "ElevenLabs Review", published: "https://menirubin.substack.com/p/elevenlabs-quick-review" },
+      tiktok: { url: "https://www.tiktok.com/creator#/upload", title: "ElevenLabs Script" },
+      quora: { url: "https://he.quora.com/", title: "ElevenLabs Answer" },
+      reddit: { url: "https://www.reddit.com/user/Ok_Neighborhood1699/submit", title: "ElevenLabs Post" }
+    }
+  },
+  {
+    product: "GetResponse",
+    affiliate: "https://try.getresponsetoday.com/lnnr40k51ywy",
+    platforms: {
+      medium: { url: "https://medium.com/new-story", title: "GetResponse Review" },
+      linkedin: { url: "https://www.linkedin.com/feed/?shareActive=true", title: "GetResponse Review" },
+      substack: { url: "https://menirubin.substack.com/publish/post", title: "GetResponse Review" },
+      tiktok: { url: "https://www.tiktok.com/creator#/upload", title: "GetResponse Script" },
+      quora: { url: "https://he.quora.com/", title: "GetResponse Answer" },
+      reddit: { url: "https://www.reddit.com/user/Ok_Neighborhood1699/submit", title: "GetResponse Post" }
+    }
+  },
+  {
+    product: "Willo",
+    affiliate: "https://www.willo.ai/?ref=meni",
+    platforms: {
+      medium: { url: "https://medium.com/new-story", title: "Willo Review" },
+      linkedin: { url: "https://www.linkedin.com/feed/?shareActive=true", title: "Willo Review" },
+      substack: { url: "https://menirubin.substack.com/publish/post", title: "Willo Review" },
+      tiktok: { url: "https://www.tiktok.com/creator#/upload", title: "Willo Script" },
+      quora: { url: "https://he.quora.com/", title: "Willo Answer" },
+      reddit: { url: "https://www.reddit.com/user/Ok_Neighborhood1699/submit", title: "Willo Post" }
+    }
+  }
+];
+
+// Load post content from files (embedded)
+const CONTENT = {};
+
+async function loadContent() {
+  for (const product of POSTS) {
+    const slug = product.product.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    CONTENT[product.product] = {};
+    for (const platform of Object.keys(product.platforms)) {
+      try {
+        const res = await fetch(`content/review-queue/${slug}/${platform}.md`);
+        if (res.ok) {
+          CONTENT[product.product][platform] = await res.text();
+        }
+      } catch(e) {}
+    }
+  }
+}
+
+function renderPosts() {
+  const container = document.getElementById('posts');
+  let publishedCount = 0;
+
+  for (const product of POSTS) {
+    const div = document.createElement('div');
+    div.className = 'product';
+    let html = `<h2>${product.product}</h2>`;
+
+    for (const [platform, info] of Object.entries(product.platforms)) {
+      const isPublished = !!info.published;
+      if (isPublished) publishedCount++;
+
+      const content = CONTENT[product.product]?.[platform] || `${info.title}\n\nContent loading...`;
+      const escaped = content.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+
+      html += `<div class="platform">
+        <span class="platform-name">${platform}</span>
+        ${isPublished
+          ? `<span class="status">✅ פורסם</span><a href="${info.published}" target="_blank" class="btn btn-open">צפה</a>`
+          : `<button class="btn btn-copy" onclick="copyPost(this, '${escaped}')">העתק</button>
+             <a href="${info.url}" target="_blank" class="btn btn-open">פתח פלטפורמה</a>
+             <span class="status">⏳ ממתין</span>`
+        }
+      </div>`;
+    }
+
+    div.innerHTML = html;
+    container.appendChild(div);
+  }
+
+  document.getElementById('published').textContent = publishedCount;
+  document.getElementById('total').textContent = POSTS.reduce((sum, p) => sum + Object.keys(p.platforms).length, 0);
+}
+
+function copyPost(btn, text) {
+  const decoded = text.replace(/\\n/g, "\n").replace(/\\'/g, "'");
+  navigator.clipboard.writeText(decoded).then(() => {
+    btn.textContent = 'הועתק ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'העתק'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+loadContent().then(renderPosts);
+</script>
+</body>
+</html>
