@@ -13,7 +13,7 @@ import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { cn } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
-import { PlatformRoutingStats, RoutingNavActions } from "../platform-routing-view"
+import { PlatformRegistryTable, PlatformRoutingStats, RoutingNavActions } from "../platform-routing-view"
 import { confirmLinkedInOfficialPublishAction, confirmPreparedPublishJobAction } from "./actions"
 
 export const dynamic = "force-dynamic"
@@ -25,6 +25,11 @@ const platformLabels: Record<string, string> = {
   tiktok: "TikTok",
   quora: "Quora",
   reddit: "Reddit",
+  facebook_page: "Facebook Page",
+  instagram_professional: "Instagram Business",
+  pinterest: "Pinterest",
+  x_twitter: "X / Twitter",
+  youtube: "YouTube",
 }
 
 const statusLabels: Record<PublishJobStatus, string> = {
@@ -109,6 +114,8 @@ export default async function HebrewPublishReadyPage() {
           </CardDescription>
         </CardHeader>
       </Card>
+
+      <PlatformRegistryTable overview={overview} />
 
       {hasLinkedInJobs ? (
         <Card className={linkedinCapability.configured ? "border-primary/30" : "border-amber-300"}>

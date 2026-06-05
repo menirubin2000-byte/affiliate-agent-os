@@ -280,6 +280,11 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
   },
 ]
 
+// Default-visible platforms when includePendingSetupPlatforms is false.
+// All 11 platforms in the registry are routable; the new platforms
+// (facebook_page, instagram_professional, pinterest, x_twitter, youtube)
+// were previously filtered out which made the hebrew dashboards look
+// like they only support 6 surfaces.
 const ROUTED_CORE_PLATFORMS = new Set<PlatformRoutingKey>([
   "linkedin",
   "medium",
@@ -287,6 +292,11 @@ const ROUTED_CORE_PLATFORMS = new Set<PlatformRoutingKey>([
   "tiktok",
   "quora",
   "reddit",
+  "facebook_page",
+  "instagram_professional",
+  "pinterest",
+  "x_twitter",
+  "youtube",
 ])
 
 export function getPlatformRoutingDefinition(platform: string) {

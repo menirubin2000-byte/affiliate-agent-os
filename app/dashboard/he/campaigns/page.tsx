@@ -24,6 +24,11 @@ const platformLabels: Record<string, string> = {
   tiktok: "TikTok",
   quora: "Quora",
   reddit: "Reddit",
+  facebook_page: "Facebook Page",
+  instagram_professional: "Instagram Business",
+  pinterest: "Pinterest",
+  x_twitter: "X / Twitter",
+  youtube: "YouTube",
 }
 
 function qualityLabel(adaptation: PlatformAdaptation) {
