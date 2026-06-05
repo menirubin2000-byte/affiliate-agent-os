@@ -1,5 +1,35 @@
 # Affiliate Agent OS - Claude Code Instructions
 
+## 🔴 חוק ראשון — להפעיל את התוכנה הקיימת, לא לבנות חדשה
+
+**שם התוכנה:** Affiliate Agent OS
+**תקייה:** `C:\Users\USER\Documents\אוטומציה`
+**Live URL:** https://affiliate-agent-os.vercel.app/dashboard/he
+**Repo:** https://github.com/menirubin2000-byte/affiliate-agent-os
+
+התוכנה **כבר קיימת** וכוללת:
+- דשבורד שלם בעברית (`/dashboard/he/...`)
+- DB מלא ב-Supabase עם 21 מוצרים פעילים, 80+ final_copies, publish_jobs, performance_metrics
+- workflow מסודר: `final_copy → MENI approves in UI → publish_job → executor → published_records`
+- חיבורי פלטפורמות פעילים: Facebook + Instagram (טוקנים תקפים, פוסטים פורסמו)
+
+### חוקי תפעול
+1. **להוסיף מוצר** → דרך `/dashboard/products/new` בדפדפן, **לא דרך סקריפט CLI**.
+2. **לאשר פוסט** → דרך `/dashboard/he/approve`, **לא דרך SQL ישיר**.
+3. **לפרסם פוסט** → דרך `/dashboard/he/publish-ready` → publish_job, **לא דרך `node scripts/publish-*.js` ישיר**.
+4. **כל סקריפט `publish-*.js` חוסם את עצמו** עם `safety-guard.js` (Codex אכף).
+5. **אסור auto-approval.** רק MENI מאשר.
+6. **אסור affiliate link ישיר ב-Quora/Reddit.**
+7. **אסור פרסום טקסט ל-TikTok** — פלטפורמת וידאו.
+
+### מה לעשות לפני שמוסיפים כל דבר חדש
+1. לבדוק אם יש כבר דף בדשבורד שעושה את זה.
+2. לבדוק אם יש כבר טבלה ב-DB שמייצגת את זה.
+3. לבדוק אם יש כבר API route ב-`app/api/`.
+4. רק אם אין → להוסיף כפיצ'ר במערכת, **לא** כסקריפט חד-פעמי.
+
+---
+
 ## Product Goal
 Build and maintain a small working MVP for an affiliate marketing operations tool.
 
