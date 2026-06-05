@@ -31,6 +31,7 @@ export interface PlatformCapability {
   safeExecutorPath: SafeExecutorPath
   browserHelperAllowed: boolean
   browserHelperNotes: string
+  operatorProfileUrl?: string
   blockers: string[]
   nextOperatorAction: string
   sourceUrls: string[]

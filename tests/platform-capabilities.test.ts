@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
+import { PINTEREST_OPERATOR_PROFILE_URL } from "@/lib/operator-social-profiles"
 import { getPlatformCapabilities } from "@/lib/platform-capabilities"
 
 test("researched platforms expose official APIs but remain disconnected", () => {
@@ -31,6 +32,16 @@ test("new platform capabilities never enable browser-helper publishing by defaul
 
   assert.equal(capabilities.every((item) => item.safeExecutorPath === "official_api_only"), true)
   assert.equal(capabilities.every((item) => item.browserHelperAllowed === false), true)
+})
+
+test("Pinterest has a known operator profile but remains disconnected and not publish-ready", () => {
+  const capability = getPlatformCapabilities().find((item) => item.platform === "pinterest")
+
+  assert.equal(capability?.operatorProfileUrl, PINTEREST_OPERATOR_PROFILE_URL)
+  assert.equal(capability?.connectionStatus, "requires_official_connection")
+  assert.equal(capability?.safeExecutorPath, "official_api_only")
+  assert.equal(capability?.browserHelperAllowed, false)
+  assert.equal(capability?.blockers.includes("pinterest_account_not_connected"), true)
 })
 
 test("affiliate content remains disclosure-gated on every researched platform", () => {

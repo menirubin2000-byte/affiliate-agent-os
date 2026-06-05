@@ -1,4 +1,5 @@
 import type { PlatformCapability } from "@/types/platform-capability"
+import { PINTEREST_OPERATOR_PROFILE_URL } from "@/lib/operator-social-profiles"
 
 const CHECKED_AT = "2026-06-05"
 
@@ -92,6 +93,7 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     browserHelperAllowed: false,
     browserHelperNotes:
       "Use the official Pinterest API after app approval. A visual asset and destination board are required.",
+    operatorProfileUrl: PINTEREST_OPERATOR_PROFILE_URL,
     blockers: [
       "pinterest_app_not_approved",
       "pinterest_account_not_connected",

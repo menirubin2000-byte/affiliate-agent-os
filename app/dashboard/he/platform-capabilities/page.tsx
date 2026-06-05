@@ -119,6 +119,10 @@ export default async function PlatformCapabilitiesPage() {
                   <XConnectionPanel connection={xConnection} status={xStoredStatus} />
                 ) : null}
 
+                {capability.operatorProfileUrl ? (
+                  <OperatorProfilePanel profileUrl={capability.operatorProfileUrl} />
+                ) : null}
+
                 <div className="grid gap-4 lg:grid-cols-2">
                   <ListBlock title="הרשאות נדרשות" items={capability.requiredPermissions} />
                   <ListBlock title="חסמים נוכחיים" items={capability.blockers} destructive />
@@ -191,6 +195,37 @@ function XConnectionPanel({
       ) : null}
       <div className="mt-3 text-xs text-muted-foreground">
         אסימונים לא מוצגים במסך ולא נשלפים בשדות ציבוריים.
+      </div>
+    </div>
+  )
+}
+
+function OperatorProfilePanel({ profileUrl }: { profileUrl: string }) {
+  return (
+    <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="font-medium">פרופיל מפעיל ידוע</div>
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex items-center gap-1 text-primary hover:underline"
+            dir="ltr"
+          >
+            {profileUrl}
+            <ExternalLink className="size-3" />
+          </a>
+          <div className="mt-2 text-muted-foreground">
+            זה קישור פרופיל בלבד. הוא לא קישור אפיליאייט, לא חיבור OAuth ולא רשומת פרסום.
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">profile URL known</Badge>
+          <Badge variant="destructive">API לא מחובר</Badge>
+          <Badge variant="destructive">פרסום לא מוכן</Badge>
+          <Badge variant="outline">נדרש API רשמי</Badge>
+        </div>
       </div>
     </div>
   )
