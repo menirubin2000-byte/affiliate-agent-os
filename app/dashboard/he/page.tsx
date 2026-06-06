@@ -50,6 +50,20 @@ export default async function HebrewDashboardPage() {
         actions={<RoutingNavActions />}
       />
 
+      <Card className="border-destructive/40 bg-destructive/5">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="text-destructive">🛑 כללים לקלוד - חובה לקרוא לפני הפעלה</CardTitle>
+            <CardDescription>
+              לפני כל פרסום / אישור / סקריפט - קלוד חייב לעבור על הצ׳קליסט. בלי זה אסור להגיד &quot;אי אפשר&quot;.
+            </CardDescription>
+          </div>
+          <Link href="/dashboard/he/claude-rules" className={cn(buttonVariants({ variant: "destructive" }))}>
+            פתח כללים לקלוד
+          </Link>
+        </CardHeader>
+      </Card>
+
       <PlatformRoutingStats overview={overview} />
 
       {nothingConnected ? (

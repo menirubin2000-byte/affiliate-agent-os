@@ -1,5 +1,9 @@
 # Affiliate Agent OS - Claude Code Instructions
 
+## 🛑 לפני כל פעולה - לפתוח ולקרוא:
+**`/dashboard/he/claude-rules`** (https://affiliate-agent-os.vercel.app/dashboard/he/claude-rules)
+שם רשום: אסור "אי אפשר", חובה 3 ניסיונות, בדיקת `.env.local`, ולדווח "ניסיתי X, Y, Z".
+
 ## 🔥 חוק 0 — דפדפן MCP פעיל. אל תעצור. אל תשאל אישור שוב לפרסום.
 
 **ה-Claude in Chrome extension אצל MENI מחובר ומאושר על הדומיינים הבאים:**
