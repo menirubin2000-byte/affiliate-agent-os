@@ -640,6 +640,7 @@ function pickTopCandidates(input: {
         validationStatus: "unknown",
         blockingReasons: [],
         updatedAt: null,
+        language: "en" as const,
       }
       const program = input.programs.get(route.productId) ?? null
       const campaignLink = input.links.get(route.productId) ?? null

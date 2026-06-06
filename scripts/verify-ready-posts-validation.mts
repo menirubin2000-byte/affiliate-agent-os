@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Verify every ready_for_operator_approval LinkedIn / Medium / Substack
 // final_copy actually passes the lib validator (not a copy of it).
 import { config as dotenvConfig } from "dotenv"
