@@ -12,6 +12,11 @@ import {
   indexRankingsByProductPlatform,
   type TrafficEngineRanking,
 } from "@/lib/traffic-engine-db"
+import {
+  getInternalTrafficSnapshot,
+  indexScoresByProductPlatform,
+  type InternalTrafficScore,
+} from "@/lib/internal-traffic-engine"
 import { cn, truncate } from "@/lib/utils"
 
 import {
@@ -49,8 +54,9 @@ type ReadyCandidate = {
   program: AffiliateProgramSummary | null
   campaignLink: CampaignLinkSummary | null
   ranking: TrafficEngineRanking | null
+  internalScore: InternalTrafficScore | null
   selectionReason: string
-  selectionSource: "traffic_engine" | "fallback"
+  selectionSource: "internal_traffic_engine" | "external_robin" | "fallback"
 }
 
 export default async function HebrewApprovePage(props: {
@@ -79,6 +85,14 @@ export default async function HebrewApprovePage(props: {
   let topCandidates: ReadyCandidate[] = []
   let trafficConnected = false
   let trafficError: string | null = null
+  let internalConnected = false
+  let internalError: string | null = null
+  let internalTotals: { products_with_metrics: number; products_with_campaign_link: number; total_clicks: number; total_revenue: number } = {
+    products_with_metrics: 0,
+    products_with_campaign_link: 0,
+    total_clicks: 0,
+    total_revenue: 0,
+  }
 
   try {
     const overview = await getPlatformRoutingOverview()
@@ -97,10 +111,18 @@ export default async function HebrewApprovePage(props: {
 
     legacyDraftsCount = await countLegacyDrafts()
 
-    const trafficSnapshot = await getTrafficEngineSnapshot()
+    const [trafficSnapshot, internalSnapshot] = await Promise.all([
+      getTrafficEngineSnapshot(),
+      getInternalTrafficSnapshot(),
+    ])
     trafficConnected = trafficSnapshot.connected
     trafficError = trafficSnapshot.connectionError
     const rankingIndex = indexRankingsByProductPlatform(trafficSnapshot.rankings)
+
+    internalConnected = internalSnapshot.connected
+    internalError = internalSnapshot.fetchError
+    internalTotals = internalSnapshot.totals
+    const internalIndex = indexScoresByProductPlatform(internalSnapshot.scores)
 
     if (readyRoutes.length > 0) {
       const finalCopyIds = readyRoutes.map((r) => r.finalCopyId!).filter(Boolean)
@@ -117,6 +139,7 @@ export default async function HebrewApprovePage(props: {
         programs,
         links,
         rankingIndex,
+        internalIndex,
         trafficConnected,
         limit: TOP_LIMIT,
         maxPerProduct: MAX_PER_PRODUCT,
@@ -194,6 +217,11 @@ export default async function HebrewApprovePage(props: {
         </Card>
       ) : null}
 
+      <InternalTrafficEngineBanner
+        connected={internalConnected}
+        fetchError={internalError}
+        totals={internalTotals}
+      />
       <TrafficEngineBanner connected={trafficConnected} connectionError={trafficError} />
 
       <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -209,7 +237,8 @@ export default async function HebrewApprovePage(props: {
           <CardTitle>1. מוכן לאישור MENI ({TOP_LIMIT} הראשונים)</CardTitle>
           <CardDescription>
             עברו: יש קישור שותף אמיתי + link_ready, Final Copy תקין, אין כפילות עם published_records, הפלטפורמה פעילה.
-            הסדר {trafficConnected ? "מ-Traffic Engine (Robin)" : "fallback זמני - לפי readiness / updated_at"}.
+            הסדר: Internal Traffic Engine (performance_metrics + campaign_links של AAOS) → Robin →
+            fallback מוכנות. {internalConnected ? "(Internal פעיל)" : "(Internal אין מדדים, fallback)"}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -297,6 +326,47 @@ export default async function HebrewApprovePage(props: {
   )
 }
 
+function InternalTrafficEngineBanner({
+  connected,
+  fetchError,
+  totals,
+}: {
+  connected: boolean
+  fetchError: string | null
+  totals: { products_with_metrics: number; products_with_campaign_link: number; total_clicks: number; total_revenue: number }
+}) {
+  if (connected) {
+    return (
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Badge variant="default">Internal Traffic Engine</Badge>
+            <span>מסונן לפי ביצועים אמיתיים של AAOS</span>
+          </CardTitle>
+          <CardDescription>
+            הסדר משתמש ב-performance_metrics ו-campaign_links שכבר ב-Supabase. מוצרים עם {totals.products_with_metrics} מטריקות וב-{totals.products_with_campaign_link} עם קישור UTM מוכן.
+            סך קליקים: {totals.total_clicks} · סך הכנסות: ${totals.total_revenue.toFixed(2)}.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+  return (
+    <Card className="border-amber-300 bg-amber-50/80">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Badge variant="outline">fallback זמני</Badge>
+          <span>Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות</span>
+        </CardTitle>
+        <CardDescription>
+          ב-AAOS עוד אין performance_metrics אמיתיים (אין import מ-Impact / PartnerStack / Reditus) או שאין campaign_links מוכנים עבור הזוגות (מוצר, פלטפורמה) המומלצים. הסדר הזמני: link_ready → validation_status=valid → updated_at. ברגע שמתחילים לייבא קליקים אמיתיים - הסדר עובר אוטומטית לציון אמיתי.
+          {fetchError ? <em> (מצב: {fetchError})</em> : null}
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  )
+}
+
 function TrafficEngineBanner({
   connected,
   connectionError,
@@ -365,7 +435,15 @@ function CountBadge({
 }
 
 function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
-  const { route, detail, program, campaignLink, ranking, selectionReason, selectionSource } = candidate
+  const { route, detail, program, campaignLink, ranking, internalScore, selectionReason, selectionSource } = candidate
+  const sourceBadge =
+    selectionSource === "internal_traffic_engine" ? (
+      <Badge variant="default">נבחר על ידי Internal Traffic Engine</Badge>
+    ) : selectionSource === "external_robin" ? (
+      <Badge variant="default">נבחר על ידי Traffic Engine (Robin)</Badge>
+    ) : (
+      <Badge variant="outline">fallback זמני</Badge>
+    )
   return (
     <div className="space-y-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -378,11 +456,7 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {selectionSource === "traffic_engine" ? (
-            <Badge variant="default">נבחר על ידי Traffic Engine</Badge>
-          ) : (
-            <Badge variant="outline">fallback זמני</Badge>
-          )}
+          {sourceBadge}
           <Badge variant="secondary">{route.platform.contentType}</Badge>
         </div>
       </div>
@@ -432,6 +506,12 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
             {ranking.reason ? ` · ${ranking.reason}` : ""}
             {" · "}
             מקור: {ranking.source}
+          </p>
+        ) : null}
+        {internalScore ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Internal score: {internalScore.score.toFixed(2)} · clicks: {internalScore.clicks} · conversions: {internalScore.conversions} · revenue: ${internalScore.revenue.toFixed(2)}
+            {internalScore.hasCampaignLink ? " · יש campaign_link מוכן" : " · אין campaign_link"}
           </p>
         ) : null}
       </div>
@@ -509,6 +589,7 @@ function pickTopCandidates(input: {
   programs: Map<string, AffiliateProgramSummary>
   links: Map<string, CampaignLinkSummary>
   rankingIndex: Map<string, TrafficEngineRanking>
+  internalIndex: Map<string, InternalTrafficScore>
   trafficConnected: boolean
   limit: number
   maxPerProduct: number
@@ -524,34 +605,49 @@ function pickTopCandidates(input: {
       const program = input.programs.get(route.productId) ?? null
       const campaignLink = input.links.get(route.productId) ?? null
       const ranking = input.rankingIndex.get(`${route.productId}::${route.platform.key}`) ?? null
+      const internalScore =
+        input.internalIndex.get(`${route.productId}::${route.platform.key}`) ?? null
       let selectionReason: string
-      let selectionSource: "traffic_engine" | "fallback"
-      if (ranking) {
-        selectionSource = "traffic_engine"
+      let selectionSource: "internal_traffic_engine" | "external_robin" | "fallback"
+      // Priority order: internal AAOS signal > Robin signal > fallback.
+      // The internal signal is built from real performance_metrics + active
+      // campaign_links — both owned by AAOS — so it is preferred when available.
+      if (internalScore && internalScore.score > 0) {
+        selectionSource = "internal_traffic_engine"
+        selectionReason = `Internal score ${internalScore.score.toFixed(2)} (${internalScore.reason})`
+      } else if (ranking) {
+        selectionSource = "external_robin"
         selectionReason = ranking.reason
-          ? `Traffic Engine score ${ranking.score} (${ranking.reason})`
-          : `Traffic Engine score ${ranking.score}`
+          ? `Robin Traffic Engine score ${ranking.score} (${ranking.reason})`
+          : `Robin Traffic Engine score ${ranking.score}`
       } else if (input.trafficConnected) {
         selectionSource = "fallback"
         selectionReason =
-          "Traffic Engine מחובר אבל אין דירוג לזוג (מוצר, פלטפורמה) הזה - הצגה לפי readiness כ-fallback."
+          "Robin Traffic Engine מחובר אבל אין דירוג לזוג (מוצר, פלטפורמה) הזה - הצגה לפי readiness כ-fallback."
       } else {
         selectionSource = "fallback"
         selectionReason =
-          "Traffic Engine לא מחובר עדיין - fallback לפי readiness (link_ready + validation valid) ו-updated_at."
+          "Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות (link_ready + validation valid) ו-updated_at."
       }
-      return { route, detail, program, campaignLink, ranking, selectionReason, selectionSource }
+      return { route, detail, program, campaignLink, ranking, internalScore, selectionReason, selectionSource }
     })
     // Hard filter: must have a real affiliate link from a link_ready program.
     .filter((c) => Boolean(c.program?.affiliateLink) && c.program?.status === "link_ready")
 
   candidates.sort((a, b) => {
-    const aScore = a.ranking?.score ?? -Infinity
-    const bScore = b.ranking?.score ?? -Infinity
-    if (aScore !== bScore) return bScore - aScore
+    // 1. Internal Traffic Engine score (real AAOS performance data).
+    const aInternal = a.internalScore?.score ?? -Infinity
+    const bInternal = b.internalScore?.score ?? -Infinity
+    if (aInternal !== bInternal) return bInternal - aInternal
+    // 2. External Robin Traffic Engine score (if present).
+    const aRobin = a.ranking?.score ?? -Infinity
+    const bRobin = b.ranking?.score ?? -Infinity
+    if (aRobin !== bRobin) return bRobin - aRobin
+    // 3. Freshness — newer final_copy first.
     const aDate = a.detail.updatedAt ? Date.parse(a.detail.updatedAt) : 0
     const bDate = b.detail.updatedAt ? Date.parse(b.detail.updatedAt) : 0
     if (bDate !== aDate) return bDate - aDate
+    // 4. Last-resort alphabetical tie-break only.
     return a.route.productName.localeCompare(b.route.productName)
   })
 
