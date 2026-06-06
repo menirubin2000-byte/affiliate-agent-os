@@ -25,6 +25,18 @@ export type PlatformPublishMode =
   | "manual_sensitive"
   | "blocked"
 
+/** Per-platform capability matrix — what can the surface actually carry? */
+export interface PlatformMediaCapability {
+  /** Text-only posts are allowed (no media required). */
+  textOnly: boolean
+  /** Images can be attached / embedded. */
+  image: "supported" | "required" | "unsupported"
+  /** Videos can be attached / embedded. */
+  video: "supported" | "required" | "unsupported"
+  /** Operator-readable note (Hebrew). */
+  notes: string
+}
+
 export interface PlatformRoutingDefinition {
   key: PlatformRoutingKey
   hebrewName: string
@@ -33,6 +45,7 @@ export interface PlatformRoutingDefinition {
   contentType: string
   publishMode: PlatformPublishMode
   approvalRequired: boolean
+  media?: PlatformMediaCapability
   status: PlatformRoutingStatus
   directAffiliateLinksAllowed: boolean
   policySummary: string
@@ -154,6 +167,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש חיבור API רשמי. אין אוטומציית דפדפן לא רשמית.",
     setupBlocker: "linkedin_official_api_not_configured",
+    media: { textOnly: true, image: "supported", video: "supported", notes: "מותר טקסט בלבד; תמונה/וידאו מומלצים להגדלת engagement." },
   },
   {
     key: "medium",
@@ -167,6 +181,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "מותר עם גילוי שותפים ותוכן בעל ערך.",
     setupBlocker: null,
+    media: { textOnly: true, image: "supported", video: "supported", notes: "כדאי תמונת hero למאמר." },
   },
   {
     key: "substack",
@@ -180,6 +195,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש תוכן אמיתי עם ערך, לא פרסומת בלבד.",
     setupBlocker: null,
+    media: { textOnly: true, image: "supported", video: "supported", notes: "תמונת hero מומלצת." },
   },
   {
     key: "quora",
@@ -193,6 +209,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: false,
     policySummary: "אסור קישור אפיליאייט ישיר. רק תשובה מועילה וקישור חיצוני בטוח אם מתאים.",
     setupBlocker: "quora_no_direct_affiliate_links",
+    media: { textOnly: true, image: "supported", video: "supported", notes: "תמונה בתוך התשובה מותרת." },
   },
   {
     key: "reddit",
@@ -206,6 +223,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: false,
     policySummary: "נדרש אימות חוקים לפי subreddit. לא מפרסמים affiliate-heavy.",
     setupBlocker: "reddit_community_rules_not_verified",
+    media: { textOnly: true, image: "supported", video: "supported", notes: "Reddit מקבל text/image/video; subreddit מוגבל לפי חוקים." },
   },
   {
     key: "tiktok",
@@ -219,6 +237,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "לא מפרסמים טקסט. נדרש וידאו וגילוי מסחרי.",
     setupBlocker: "video_asset_required",
+    media: { textOnly: false, image: "unsupported", video: "required", notes: "וידאו בלבד - שום פוסט אחר לא ייקלט." },
   },
   {
     key: "facebook_page",
@@ -232,6 +251,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "ממתין לחשבון/עמוד וחיבור Graph API רשמי.",
     setupBlocker: getFacebookPageOfficialApiCapability().configured ? null : FACEBOOK_CURRENT_BLOCKING_REASON,
+    media: { textOnly: true, image: "supported", video: "supported", notes: "תמונה/וידאו מגדילים reach משמעותית." },
   },
   {
     key: "instagram_professional",
@@ -245,6 +265,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש חשבון מקצועי וחיבור Meta רשמי.",
     setupBlocker: getInstagramOfficialApiCapability().configured ? null : INSTAGRAM_CURRENT_BLOCKING_REASON,
+    media: { textOnly: false, image: "required", video: "supported", notes: "אסור פוסט טקסט בלבד - חובה תמונה או ריל." },
   },
   {
     key: "pinterest",
@@ -258,6 +279,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "פרופיל ידוע. פרסום דורש Pinterest API רשמי, access token, board יעד ונכס ויזואלי.",
     setupBlocker: getPinterestOfficialApiCapability().blockingReason,
+    media: { textOnly: false, image: "required", video: "supported", notes: "Pin = תמונה (או וידאו) חובה. בלי אסט - לא נשלח." },
   },
   {
     key: "x_twitter",
@@ -271,6 +293,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש OAuth רשמי ו-X API access ready.",
     setupBlocker: "x_api_access_not_ready",
+    media: { textOnly: true, image: "supported", video: "supported", notes: "אפשר טקסט בלבד, תמונה מגדילה engagement." },
   },
   {
     key: "youtube",
@@ -284,6 +307,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש וידאו, OAuth והרשאות YouTube Data API.",
     setupBlocker: "youtube_video_and_api_required",
+    media: { textOnly: false, image: "unsupported", video: "required", notes: "וידאו בלבד - שום פוסט אחר לא ייקלט." },
   },
 ]
 

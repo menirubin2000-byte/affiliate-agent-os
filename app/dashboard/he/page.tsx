@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { PageHeader } from "@/components/dashboard/page-header"
+import { PlatformCapabilitiesPanel } from "@/components/dashboard/platform-capabilities-panel"
 import { PlatformConnectionsPanel } from "@/components/dashboard/platform-connections-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
@@ -119,6 +120,8 @@ export default async function HebrewDashboardPage() {
       </Card>
 
       <PlatformConnectionsPanel connections={connections} />
+
+      <PlatformCapabilitiesPanel platforms={overview.platforms} />
 
       <PlatformRegistryTable overview={overview} />
     </div>
