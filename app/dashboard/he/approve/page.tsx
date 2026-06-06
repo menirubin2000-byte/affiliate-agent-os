@@ -773,21 +773,40 @@ async function loadAffiliateProgramSummaries(productIds: string[]): Promise<Map<
 
 type ProductImages = { en: string | null; he: string | null }
 
+/**
+ * Append a cache-busting version param to a Supabase Storage URL so the
+ * browser fetches a fresh copy every time products.asset_synced_at advances.
+ * Without this, after replacing the file in Storage the browser keeps showing
+ * the previous image from its disk cache for hours.
+ */
+function withVersion(url: string | null, version: string | null): string | null {
+  if (!url) return null
+  if (!version) return url
+  const sep = url.includes("?") ? "&" : "?"
+  return `${url}${sep}v=${encodeURIComponent(version)}`
+}
+
 async function loadProductImages(productIds: string[]): Promise<Map<string, ProductImages>> {
   const map = new Map<string, ProductImages>()
   if (productIds.length === 0) return map
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("products")
-    .select("id, image_url, image_url_he")
+    .select("id, image_url, image_url_he, asset_synced_at, updated_at")
     .in("id", productIds)
   if (error || !data) return map
   for (const row of data as Array<{
     id: string
     image_url: string | null
     image_url_he: string | null
+    asset_synced_at: string | null
+    updated_at: string | null
   }>) {
-    map.set(row.id, { en: row.image_url, he: row.image_url_he })
+    const version = row.asset_synced_at ?? row.updated_at ?? null
+    map.set(row.id, {
+      en: withVersion(row.image_url, version),
+      he: withVersion(row.image_url_he, version),
+    })
   }
   return map
 }
