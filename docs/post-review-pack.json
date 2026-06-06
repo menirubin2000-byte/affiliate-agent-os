@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T14:16:04.305Z",
+  "generated_at": "2026-06-06T14:21:54.929Z",
   "total": 129,
   "rule": "READ-ONLY export. No publish_jobs / published_records / approvals created. Posts unchanged.",
   "posts": [
@@ -894,7 +894,7 @@
       "product_id": "22a8ab05-a54c-4478-a494-e770d0258408",
       "language": "en",
       "platform": "linkedin",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Geo Targetly - Geolocation Personalization that actually fits growth teams",
       "full_post_text": "*Affiliate disclosure: this post contains an affiliate link.*\n\nI've been looking at Geo Targetly for geolocation personalization.\n\nThe thing that stood out: geo-personalize a site or landing page without touching the codebase.\n\nWhere it fits:\n- Country-specific landing page redirects\n- Localized popups and offers\n- Region-specific pricing display\n- Automatic language switching\n\nBest for: growth teams, e-commerce operators, multi-region SaaS.\n\nHonest tradeoffs:\n- Monthly subscription for real use\n- Specialized tool — fit depends on your existing stack\n- Some features gated on higher tiers\n\nWorth evaluating against what you already run.\n\nTry Geo Targetly: https://geotargetly.com/?red=rubinq",
@@ -909,11 +909,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:44.748Z",
-      "final_copy_updated_at": "2026-06-06T07:04:44.748Z"
+      "final_copy_updated_at": "2026-06-06T14:21:21.597Z"
     },
     {
       "final_copy_id": "a3bfbef7-5ed4-48bf-8933-2e6ba19534f0",
@@ -921,7 +921,7 @@
       "product_id": "22a8ab05-a54c-4478-a494-e770d0258408",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Geo Targetly Review: Geolocation Personalization for growth teams in 2026",
       "full_post_text": "*Affiliate disclosure: This article includes an affiliate link.*\n\n## Why Geo Targetly\n\nNo-code geolocation personalization platform for redirects, popups, content, and language based on visitor country, region, or city.\n\nThe angle that makes it interesting: geo-personalize a site or landing page without touching the codebase.\n\n## Use Cases\n\n- Country-specific landing page redirects\n- Localized popups and offers\n- Region-specific pricing display\n- Automatic language switching\n- Geo-conditional content blocks\n\n## Who It Fits\n\ngrowth teams, e-commerce operators, multi-region SaaS.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on the existing stack\n- Some advanced features live on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Geo Targetly is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n[Try Geo Targetly here](https://geotargetly.com/?red=rubinq)",
@@ -936,11 +936,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:46.050Z",
-      "final_copy_updated_at": "2026-06-06T07:04:46.050Z"
+      "final_copy_updated_at": "2026-06-06T14:21:22.971Z"
     },
     {
       "final_copy_id": "8cead0b7-28e7-4d00-b2c4-3325949045f6",
@@ -948,7 +948,7 @@
       "product_id": "22a8ab05-a54c-4478-a494-e770d0258408",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Geo Targetly: A Practical Geolocation Personalization Look",
       "full_post_text": "*Affiliate disclosure: This post includes an affiliate link.*\n\n## Why Geo Targetly\n\nNo-code geolocation personalization platform for redirects, popups, content, and language based on visitor country, region, or city.\n\nWhy I looked at it: geo-personalize a site or landing page without touching the codebase.\n\n## Use Cases\n\n- Country-specific landing page redirects\n- Localized popups and offers\n- Region-specific pricing display\n- Automatic language switching\n- Geo-conditional content blocks\n\n## Who It Fits\n\ngrowth teams, e-commerce operators, multi-region SaaS.\n\n## Honest Tradeoffs\n\n- Monthly subscription for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you already do the work Geo Targetly is built for, worth evaluating against your current setup. Start on the lowest tier before committing.\n\n[Try Geo Targetly here](https://geotargetly.com/?red=rubinq)",
@@ -963,11 +963,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:47.360Z",
-      "final_copy_updated_at": "2026-06-06T07:04:47.360Z"
+      "final_copy_updated_at": "2026-06-06T14:21:24.349Z"
     },
     {
       "final_copy_id": "cc3b2618-f824-42cf-bbf9-de71908cd2bf",
@@ -1495,7 +1495,7 @@
       "product_id": "230b9849-e3a4-446c-9fd1-c0a440aff9bb",
       "language": "en",
       "platform": "linkedin",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Joiin - Multi-entity Financial Reporting that actually fits accountants",
       "full_post_text": "*Affiliate disclosure: this post contains an affiliate link.*\n\nI've been looking at Joiin for multi-entity financial reporting.\n\nThe thing that stood out: consolidate multi-entity QuickBooks and Xero accounts into one report without manual spreadsheets.\n\nWhere it fits:\n- Multi-entity profit and loss consolidation\n- Cross-currency financial reports\n- Client reporting packs for accountants\n- Group cash flow and budget comparison\n\nBest for: accountants, fractional CFOs, finance teams managing groups of entities.\n\nHonest tradeoffs:\n- Monthly subscription for real use\n- Specialized tool — fit depends on your existing stack\n- Some features gated on higher tiers\n\nWorth evaluating against what you already run.\n\nTry Joiin: https://joiin.co/?red=rubinq&utm_source=rubinq&utm_medium=revshare&utm_affiliate_network=reditus",
@@ -1510,11 +1510,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:34.384Z",
-      "final_copy_updated_at": "2026-06-06T07:04:34.384Z"
+      "final_copy_updated_at": "2026-06-06T14:21:11.603Z"
     },
     {
       "final_copy_id": "d9760772-930e-45e4-8346-060d8758e1c1",
@@ -1549,7 +1549,7 @@
       "product_id": "230b9849-e3a4-446c-9fd1-c0a440aff9bb",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Joiin Review: Multi-entity Financial Reporting for accountants in 2026",
       "full_post_text": "*Affiliate disclosure: This article includes an affiliate link.*\n\n## Why Joiin\n\nMulti-entity financial consolidation and reporting platform for accountants and finance teams managing multiple QuickBooks and Xero entities.\n\nThe angle that makes it interesting: consolidate multi-entity QuickBooks and Xero accounts into one report without manual spreadsheets.\n\n## Use Cases\n\n- Multi-entity profit and loss consolidation\n- Cross-currency financial reports\n- Client reporting packs for accountants\n- Group cash flow and budget comparison\n- Drill-down across entities in one view\n\n## Who It Fits\n\naccountants, fractional CFOs, finance teams managing groups of entities.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on the existing stack\n- Some advanced features live on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Joiin is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n[Try Joiin here](https://joiin.co/?red=rubinq&utm_source=rubinq&utm_medium=revshare&utm_affiliate_network=reditus)",
@@ -1564,11 +1564,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:35.682Z",
-      "final_copy_updated_at": "2026-06-06T07:04:35.682Z"
+      "final_copy_updated_at": "2026-06-06T14:21:13.176Z"
     },
     {
       "final_copy_id": "aa23be76-c728-4edc-b659-ef898f1a4dcd",
@@ -1603,7 +1603,7 @@
       "product_id": "230b9849-e3a4-446c-9fd1-c0a440aff9bb",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Joiin: A Practical Multi-entity Financial Reporting Look",
       "full_post_text": "*Affiliate disclosure: This post includes an affiliate link.*\n\n## Why Joiin\n\nMulti-entity financial consolidation and reporting platform for accountants and finance teams managing multiple QuickBooks and Xero entities.\n\nWhy I looked at it: consolidate multi-entity QuickBooks and Xero accounts into one report without manual spreadsheets.\n\n## Use Cases\n\n- Multi-entity profit and loss consolidation\n- Cross-currency financial reports\n- Client reporting packs for accountants\n- Group cash flow and budget comparison\n- Drill-down across entities in one view\n\n## Who It Fits\n\naccountants, fractional CFOs, finance teams managing groups of entities.\n\n## Honest Tradeoffs\n\n- Monthly subscription for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you already do the work Joiin is built for, worth evaluating against your current setup. Start on the lowest tier before committing.\n\n[Try Joiin here](https://joiin.co/?red=rubinq&utm_source=rubinq&utm_medium=revshare&utm_affiliate_network=reditus)",
@@ -1618,11 +1618,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:36.979Z",
-      "final_copy_updated_at": "2026-06-06T07:04:36.979Z"
+      "final_copy_updated_at": "2026-06-06T14:21:14.776Z"
     },
     {
       "final_copy_id": "c1cf0e95-23ee-482a-99ee-a173d2b68a6e",
@@ -1790,7 +1790,7 @@
       "product_id": "c98fb93b-1bd3-415d-b446-a830bd835103",
       "language": "en",
       "platform": "linkedin",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Pricefy - E-commerce Pricing that actually fits e-commerce store owners",
       "full_post_text": "*Affiliate disclosure: this post contains an affiliate link.*\n\nI've been looking at Pricefy for e-commerce pricing.\n\nThe thing that stood out: stop checking competitor prices manually — get a daily dashboard and dynamic repricing rules.\n\nWhere it fits:\n- Daily competitor price monitoring\n- Repricing rules per product\n- Price history charts\n- Margin protection alerts\n\nBest for: e-commerce store owners, pricing managers, Shopify merchants.\n\nHonest tradeoffs:\n- Monthly subscription for real use\n- Specialized tool — fit depends on your existing stack\n- Some features gated on higher tiers\n\nWorth evaluating against what you already run.\n\nTry Pricefy: https://www.pricefy.io/?red=rubinq",
@@ -1805,11 +1805,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:49.948Z",
-      "final_copy_updated_at": "2026-06-06T07:04:49.948Z"
+      "final_copy_updated_at": "2026-06-06T14:21:16.694Z"
     },
     {
       "final_copy_id": "b9682dde-760a-43e0-92b0-55e04601078c",
@@ -1817,7 +1817,7 @@
       "product_id": "c98fb93b-1bd3-415d-b446-a830bd835103",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Pricefy Review: E-commerce Pricing for e-commerce store owners in 2026",
       "full_post_text": "*Affiliate disclosure: This article includes an affiliate link.*\n\n## Why Pricefy\n\nE-commerce competitor price tracking and dynamic pricing for Shopify, WooCommerce, Magento and other storefronts.\n\nThe angle that makes it interesting: stop checking competitor prices manually — get a daily dashboard and dynamic repricing rules.\n\n## Use Cases\n\n- Daily competitor price monitoring\n- Repricing rules per product\n- Price history charts\n- Margin protection alerts\n- Multi-channel price sync\n\n## Who It Fits\n\ne-commerce store owners, pricing managers, Shopify merchants.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on the existing stack\n- Some advanced features live on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Pricefy is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n[Try Pricefy here](https://www.pricefy.io/?red=rubinq)",
@@ -1832,11 +1832,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:51.258Z",
-      "final_copy_updated_at": "2026-06-06T07:04:51.258Z"
+      "final_copy_updated_at": "2026-06-06T14:21:18.265Z"
     },
     {
       "final_copy_id": "ad6ddb35-b82a-4d4f-861c-aecf9c2e909a",
@@ -1844,7 +1844,7 @@
       "product_id": "c98fb93b-1bd3-415d-b446-a830bd835103",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Pricefy: A Practical E-commerce Pricing Look",
       "full_post_text": "*Affiliate disclosure: This post includes an affiliate link.*\n\n## Why Pricefy\n\nE-commerce competitor price tracking and dynamic pricing for Shopify, WooCommerce, Magento and other storefronts.\n\nWhy I looked at it: stop checking competitor prices manually — get a daily dashboard and dynamic repricing rules.\n\n## Use Cases\n\n- Daily competitor price monitoring\n- Repricing rules per product\n- Price history charts\n- Margin protection alerts\n- Multi-channel price sync\n\n## Who It Fits\n\ne-commerce store owners, pricing managers, Shopify merchants.\n\n## Honest Tradeoffs\n\n- Monthly subscription for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you already do the work Pricefy is built for, worth evaluating against your current setup. Start on the lowest tier before committing.\n\n[Try Pricefy here](https://www.pricefy.io/?red=rubinq)",
@@ -1859,11 +1859,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:52.550Z",
-      "final_copy_updated_at": "2026-06-06T07:04:52.550Z"
+      "final_copy_updated_at": "2026-06-06T14:21:19.786Z"
     },
     {
       "final_copy_id": "430769c6-cde3-4233-809c-5f98527ecd0e",
