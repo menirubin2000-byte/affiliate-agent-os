@@ -56,6 +56,7 @@ type ReadyCandidate = {
   ranking: TrafficEngineRanking | null
   internalScore: InternalTrafficScore | null
   imageUrl: string | null
+  assetStatus: ProductAssetStatus | null
   selectionReason: string
   selectionSource: "internal_traffic_engine" | "external_robin" | "fallback"
 }
@@ -128,11 +129,12 @@ export default async function HebrewApprovePage(props: {
     if (readyRoutes.length > 0) {
       const finalCopyIds = readyRoutes.map((r) => r.finalCopyId!).filter(Boolean)
       const productIds = Array.from(new Set(readyRoutes.map((r) => r.productId)))
-      const [details, programs, links, images] = await Promise.all([
+      const [details, programs, links, images, assetStatuses] = await Promise.all([
         loadFinalCopyDetails(finalCopyIds),
         loadAffiliateProgramSummaries(productIds),
         loadCampaignLinks(productIds),
         loadProductImages(productIds),
+        loadProductAssetStatuses(productIds),
       ])
 
       topCandidates = pickTopCandidates({
@@ -141,6 +143,7 @@ export default async function HebrewApprovePage(props: {
         programs,
         links,
         images,
+        assetStatuses,
         rankingIndex,
         internalIndex,
         trafficConnected,
@@ -438,7 +441,7 @@ function CountBadge({
 }
 
 function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
-  const { route, detail, program, campaignLink, ranking, internalScore, imageUrl, selectionReason, selectionSource } = candidate
+  const { route, detail, program, campaignLink, ranking, internalScore, imageUrl, assetStatus, selectionReason, selectionSource } = candidate
   const sourceBadge =
     selectionSource === "internal_traffic_engine" ? (
       <Badge variant="default">נבחר על ידי Internal Traffic Engine</Badge>
@@ -475,6 +478,19 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
         <div className="flex flex-wrap gap-2">
           {sourceBadge}
           <Badge variant="secondary">{route.platform.contentType}</Badge>
+          {assetStatus?.imageStatus === "ready" ? (
+            <Badge variant="default">🖼 image ready</Badge>
+          ) : assetStatus?.imageStatus === "missing" ? (
+            <Badge variant="destructive">🖼 image missing</Badge>
+          ) : null}
+          {assetStatus?.videoStatus === "ready" ? (
+            <Badge variant="default">
+              🎬 video ready
+              {assetStatus.videoSuitableFor.length > 0
+                ? ` (${assetStatus.videoSuitableFor.join("/")})`
+                : ""}
+            </Badge>
+          ) : null}
         </div>
       </div>
 
@@ -606,6 +622,7 @@ function pickTopCandidates(input: {
   programs: Map<string, AffiliateProgramSummary>
   links: Map<string, CampaignLinkSummary>
   images: Map<string, string>
+  assetStatuses: Map<string, ProductAssetStatus>
   rankingIndex: Map<string, TrafficEngineRanking>
   internalIndex: Map<string, InternalTrafficScore>
   trafficConnected: boolean
@@ -623,6 +640,7 @@ function pickTopCandidates(input: {
       const program = input.programs.get(route.productId) ?? null
       const campaignLink = input.links.get(route.productId) ?? null
       const imageUrl = input.images.get(route.productId) ?? null
+      const assetStatus = input.assetStatuses.get(route.productId) ?? null
       const ranking = input.rankingIndex.get(`${route.productId}::${route.platform.key}`) ?? null
       const internalScore =
         input.internalIndex.get(`${route.productId}::${route.platform.key}`) ?? null
@@ -648,7 +666,7 @@ function pickTopCandidates(input: {
         selectionReason =
           "Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות (link_ready + validation valid) ו-updated_at."
       }
-      return { route, detail, program, campaignLink, ranking, internalScore, imageUrl, selectionReason, selectionSource }
+      return { route, detail, program, campaignLink, ranking, internalScore, imageUrl, assetStatus, selectionReason, selectionSource }
     })
     // Hard filter: must have a real affiliate link from a link_ready program.
     .filter((c) => Boolean(c.program?.affiliateLink) && c.program?.status === "link_ready")
@@ -757,6 +775,38 @@ async function loadProductImages(productIds: string[]): Promise<Map<string, stri
   if (error || !data) return map
   for (const row of data as Array<{ id: string; image_url: string | null }>) {
     if (row.image_url) map.set(row.id, row.image_url)
+  }
+  return map
+}
+
+type ProductAssetStatus = {
+  imageStatus: "ready" | "missing" | null
+  videoStatus: "ready" | "missing" | null
+  videoSuitableFor: string[]
+}
+
+async function loadProductAssetStatuses(
+  productIds: string[],
+): Promise<Map<string, ProductAssetStatus>> {
+  const map = new Map<string, ProductAssetStatus>()
+  if (productIds.length === 0) return map
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, image_status, video_status, video_suitable_for")
+    .in("id", productIds)
+  if (error || !data) return map
+  for (const row of data as Array<{
+    id: string
+    image_status: "ready" | "missing" | null
+    video_status: "ready" | "missing" | null
+    video_suitable_for: string[] | null
+  }>) {
+    map.set(row.id, {
+      imageStatus: row.image_status,
+      videoStatus: row.video_status,
+      videoSuitableFor: row.video_suitable_for ?? [],
+    })
   }
   return map
 }
