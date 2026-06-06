@@ -1,9 +1,11 @@
 import Link from "next/link"
 
 import { PageHeader } from "@/components/dashboard/page-header"
+import { PlatformConnectionsPanel } from "@/components/dashboard/platform-connections-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import { getSupabaseReadiness } from "@/lib/env"
+import { listPlatformConnections } from "@/lib/platform-connections-db"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
@@ -30,7 +32,10 @@ export default async function HebrewDashboardPage() {
     )
   }
 
-  const overview = await getPlatformRoutingOverview()
+  const [overview, connections] = await Promise.all([
+    getPlatformRoutingOverview(),
+    listPlatformConnections(),
+  ])
   const totals = overview.counts
   const nothingConnected =
     totals.products === 0 && totals.publishedVerified === 0 && totals.waitingApproval === 0
@@ -112,6 +117,8 @@ export default async function HebrewDashboardPage() {
           </CardDescription>
         </CardHeader>
       </Card>
+
+      <PlatformConnectionsPanel connections={connections} />
 
       <PlatformRegistryTable overview={overview} />
     </div>

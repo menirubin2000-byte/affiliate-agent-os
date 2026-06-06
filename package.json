@@ -10,7 +10,12 @@
     "test": "tsx --test tests/**/*.test.ts",
     "verify": "npm run lint && npm run test && npm run build",
     "preflight:staging": "node scripts/preflight-staging.mjs",
-    "generate:access-secret": "node scripts/generate-access-secret.mjs"
+    "generate:access-secret": "node scripts/generate-access-secret.mjs",
+    "sync:publish": "node scripts/backfill-fb-ig-published.js",
+    "sync:truth": "node scripts/export-truth.js",
+    "sync:review-pack": "node scripts/export-review-pack.js",
+    "sync:images": "node scripts/sync-product-images.js",
+    "sync:all": "npm run sync:publish && npm run sync:truth && npm run sync:review-pack"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",

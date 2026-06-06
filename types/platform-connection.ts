@@ -1,4 +1,15 @@
-export type PlatformConnectionProvider = "x"
+export type PlatformConnectionProvider =
+  | "x"
+  | "linkedin"
+  | "medium"
+  | "substack"
+  | "facebook_page"
+  | "instagram_professional"
+  | "pinterest"
+  | "youtube"
+  | "quora"
+  | "reddit"
+  | "tiktok"
 
 export type PlatformConnectionStatus =
   | "not_connected"

@@ -21,6 +21,22 @@
 
 **טעות חוזרת לתקן:** עצירה / בקשת אישור חוזרת באמצע batch של פרסום שכבר אושר. אל תחזור עליה.
 
+## 🔁 פקודות סינכרון - לזכור פעם אחת ולא להמציא בכל פעם
+
+אחרי כל פעולה חיצונית שמשנה DB (פרסום ב-FB/IG, החלפת תמונה, ייבוא CSV וכו'):
+
+```
+npm run sync:publish     # מושך פוסטים חדשים מ-FB Graph + IG Graph לתוך published_records
+npm run sync:truth       # מרענן docs/OPERATOR_SOURCE_OF_TRUTH.md
+npm run sync:review-pack # מרענן docs/POST_REVIEW_PACK.md + .json
+npm run sync:images      # מסנכרן תמונות מהתיקייה המקומית ל-Supabase Storage
+npm run sync:all         # מריץ publish + truth + review-pack ברצף
+```
+
+**איפה רואים מה מחובר ומה לא:**
+- `/dashboard/he` - כרטיס "חיבורי פלטפורמות" מציג סטטוס פר surface (connected / api_access_not_ready / requires_reconnect / לא נרשם).
+- הנתונים מגיעים מטבלת `platform_connections` בכל טעינה - לא מ-cache, לא מ-env.
+
 ## 🔴 חוק ראשון — להפעיל את התוכנה הקיימת, לא לבנות חדשה
 
 **שם התוכנה:** Affiliate Agent OS

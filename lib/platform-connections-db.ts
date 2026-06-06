@@ -81,3 +81,30 @@ export async function getPlatformConnection(provider: PlatformConnectionProvider
   if (!data) return null
   return mapConnection(data as PlatformConnectionRow)
 }
+
+/**
+ * List every row in platform_connections so the dashboard can show, per
+ * surface, whether it is wired up, with which scopes, and when it was
+ * connected. Returns an empty list when the table is unreachable or empty.
+ */
+export async function listPlatformConnections(): Promise<PlatformConnection[]> {
+  if (!isSupabaseConfigured()) return []
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("platform_connections")
+    .select(
+      "id, provider, status, connected_by, connected_at, expires_at, scopes, token_type, refresh_token_present, metadata, created_at, updated_at",
+    )
+    .order("provider", { ascending: true })
+
+  if (error) {
+    // Missing-table / column errors during early migrations -> empty list.
+    if (
+      error.message.includes("platform_connections") ||
+      error.message.includes("schema cache") ||
+      error.message.includes("relation")
+    ) return []
+    throw new Error(`Unable to list platform connections: ${error.message}`)
+  }
+  return (data ?? []).map((row) => mapConnection(row as PlatformConnectionRow))
+}
