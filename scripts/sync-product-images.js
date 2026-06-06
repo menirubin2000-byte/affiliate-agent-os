@@ -104,6 +104,28 @@ function detectHebrewVariant(nameWithoutExt) {
   return { isHebrew: false, base: nameWithoutExt }
 }
 
+// Common trailing descriptors operators add when downloading images. Strip
+// them before matching so "Geo Targetly product image.png" still maps to
+// the "Geo Targetly" product without a manual rename.
+const TRAILING_DESCRIPTOR_PATTERNS = [
+  /\s*product\s*image\s*$/i,
+  /\s*logo\s*$/i,
+  /\s*icon\s*$/i,
+  /\s*banner\s*$/i,
+  /\s*screenshot\s*$/i,
+  /\s*hero\s*$/i,
+  /\s*\(\d+\)\s*$/,            // "Name (1)" / "Name (2)" copies
+  /\s+\d+\s*$/,                // trailing space + number like "iCompass 1"
+]
+
+function stripTrailingDescriptors(name) {
+  let s = name
+  for (const pattern of TRAILING_DESCRIPTOR_PATTERNS) {
+    s = s.replace(pattern, "")
+  }
+  return s.trim()
+}
+
 function contentTypeFor(ext) {
   const e = ext.toLowerCase().replace(/^\./, "")
   if (e === "png") return "image/png"
@@ -190,16 +212,29 @@ async function main() {
   let unmatched = 0
   const misses = []
 
-  for (const file of imageFiles) {
+  // Sort by name length so the cleanest filename (e.g. "iCompass.png") is
+  // tried before noisier variants (e.g. "iCompass1.png"). The first one to
+  // match a (product, lang) wins; subsequent matches are skipped.
+  const imageFilesSorted = [...imageFiles].sort((a, b) => a.length - b.length || a.localeCompare(b))
+  const seenImageKey = new Set()
+
+  for (const file of imageFilesSorted) {
     const noExt = stripImageExt(file)
     const variant = detectHebrewVariant(noExt)
-    const baseNorm = normalizeName(variant.base)
+    const cleaned = stripTrailingDescriptors(variant.base)
+    const baseNorm = normalizeName(cleaned)
     const product = byNormalized.get(baseNorm)
     if (!product) {
       misses.push(file)
       unmatched++
       continue
     }
+    const dedupKey = `${product.id}::${variant.isHebrew ? "he" : "en"}`
+    if (seenImageKey.has(dedupKey)) {
+      console.log(`  · ${product.name.padEnd(18)} ${variant.isHebrew ? "(HE) " : "     "} skipped extra variant ${file}`)
+      continue
+    }
+    seenImageKey.add(dedupKey)
     const ext = path.extname(file).toLowerCase()
     const remoteName = variant.isHebrew ? `${product.slug}-he${ext}` : `${product.slug}${ext}`
     const localPath = path.join(IMAGES_DIR, file)
