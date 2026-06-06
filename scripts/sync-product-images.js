@@ -203,26 +203,31 @@ async function main() {
     const ext = path.extname(file).toLowerCase()
     const remoteName = variant.isHebrew ? `${product.slug}-he${ext}` : `${product.slug}${ext}`
     const localPath = path.join(IMAGES_DIR, file)
-    const publicUrl = await uploadImage(localPath, remoteName)
+    const localSize = fs.statSync(localPath).size
+    // Compare to what's currently in Storage before uploading, so we can tell
+    // the operator whether the file content actually changed.
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(remoteName)}`
+    let remoteSize = null
+    try {
+      const head = await fetch(publicUrl, { method: "HEAD" })
+      if (head.ok) remoteSize = Number(head.headers.get("content-length") || 0)
+    } catch {}
+    const contentChanged = remoteSize !== localSize
+    await uploadImage(localPath, remoteName)
     const column = variant.isHebrew ? "image_url_he" : "image_url"
-    const upd = await c.query(
-      `UPDATE products
-       SET ${column} = $1, updated_at = now()
-       WHERE id = $2 AND coalesce(${column}, '') <> $1
-       RETURNING id`,
+    await c.query(
+      `UPDATE products SET ${column} = $1, updated_at = now() WHERE id = $2`,
       [publicUrl, product.id],
     )
-    if (upd.rows.length > 0) {
-      if (variant.isHebrew) {
-        uploadedHe++
-        console.log(`  ✓ ${product.name.padEnd(18)} (HE) <- ${file}`)
-      } else {
-        uploaded++
-        console.log(`  ✓ ${product.name.padEnd(18)}      <- ${file}`)
-      }
+    const heTag = variant.isHebrew ? "(HE) " : "     "
+    if (contentChanged) {
+      if (variant.isHebrew) uploadedHe++
+      else uploaded++
+      const sz = `${(localSize / 1024).toFixed(0)}KB`
+      console.log(`  ✓ ${product.name.padEnd(18)} ${heTag} replaced (${sz}) <- ${file}`)
     } else {
       unchanged++
-      console.log(`  · ${product.name.padEnd(18)} ${variant.isHebrew ? "(HE)" : "    "} unchanged`)
+      console.log(`  · ${product.name.padEnd(18)} ${heTag} unchanged (same bytes)`)
     }
   }
 
