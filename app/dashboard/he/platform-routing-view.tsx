@@ -244,6 +244,9 @@ export function PlatformRegistryTable({ overview }: { overview: PlatformRoutingO
 export function RoutingNavActions() {
   return (
     <div className="flex flex-wrap gap-2">
+      <Link href="/dashboard/he/claude-rules" className={cn(buttonVariants({ variant: "destructive" }))}>
+        🛑 כללים לקלוד
+      </Link>
       <Link href="/dashboard/he/content-review" className={cn(buttonVariants())}>
         אישור פוסטים
       </Link>
