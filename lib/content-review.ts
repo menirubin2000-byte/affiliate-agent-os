@@ -94,10 +94,17 @@ export function validateFinalMediumArticle(input: {
 }): FinalContentValidation {
   const finalLink = input.finalAffiliateLink ?? SYSTEME_IO_MEDIUM_FINAL_LINK
   const body = input.body.trim()
-  const firstAffiliateLinkIndex = body.indexOf("https://systeme.io/?sa=")
+  // For Systeme.io posts the existing semantic is "the affiliate URL pattern
+  // ?sa= must appear exactly once". For every OTHER product we use the full
+  // finalLink as the signature so the duplicate check works for any product
+  // without making the Systeme tests change.
+  const urlSignature = finalLink.includes("https://systeme.io/?sa=")
+    ? "https://systeme.io/?sa="
+    : finalLink
+  const firstAffiliateLinkIndex = body.indexOf(urlSignature)
   const disclosureIndex = body.toLowerCase().indexOf("affiliate disclosure:")
   const finalLinkCount = countOccurrences(body, finalLink)
-  const affiliateUrlCount = countOccurrences(body, "https://systeme.io/?sa=")
+  const affiliateUrlCount = countOccurrences(body, urlSignature)
   const ctaHeadingCount = countOccurrences(body.toLowerCase(), "## call to action")
   const internalNotes = INTERNAL_NOTE_PATTERNS.some((pattern) => pattern.test(body))
   const personalExperience = PERSONAL_EXPERIENCE_PATTERNS.some((pattern) => pattern.test(body))
