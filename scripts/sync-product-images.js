@@ -212,10 +212,17 @@ async function main() {
   let unmatched = 0
   const misses = []
 
-  // Sort by name length so the cleanest filename (e.g. "iCompass.png") is
-  // tried before noisier variants (e.g. "iCompass1.png"). The first one to
-  // match a (product, lang) wins; subsequent matches are skipped.
-  const imageFilesSorted = [...imageFiles].sort((a, b) => a.length - b.length || a.localeCompare(b))
+  // Sort by mtime DESCENDING so the most recently saved file wins per
+  // (product, lang). If two files map to the same product, the newer one is
+  // the canonical one — the older variant is reported as skipped. This is
+  // what the operator means when they "replace" an image: the new file is
+  // newer, even if its name has noise like " (1)" or "..png".
+  const imageFilesSorted = [...imageFiles].sort((a, b) => {
+    const ma = fs.statSync(path.join(IMAGES_DIR, a)).mtimeMs
+    const mb = fs.statSync(path.join(IMAGES_DIR, b)).mtimeMs
+    if (mb !== ma) return mb - ma
+    return a.length - b.length || a.localeCompare(b)
+  })
   const seenImageKey = new Set()
 
   for (const file of imageFilesSorted) {
