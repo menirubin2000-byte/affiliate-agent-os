@@ -103,8 +103,22 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
     ),
   ])
 
+  // Operator rule: only products MENI actually owns belong on the dashboard.
+  // A product is "owned" iff at least one affiliate_programs row has
+  // status='link_ready' AND a non-empty affiliate_link. Everything else is a
+  // tracking placeholder (registered as a potential future partner) and
+  // would only add noise to the queue. The placeholders stay in the DB —
+  // we keep history — but the routing overview ignores them.
+  const ownedProductIds = new Set(
+    affiliatePrograms
+      .filter((p) => p.status === "link_ready" && (p.affiliate_link ?? "").trim() !== "")
+      .map((p) => p.product_id)
+      .filter((id): id is string => Boolean(id)),
+  )
+  const ownedProducts = products.filter((p) => ownedProductIds.has(p.id))
+
   return buildPlatformRoutingOverview({
-    products: products.map(mapProduct),
+    products: ownedProducts.map(mapProduct),
     affiliatePrograms: affiliatePrograms.map(mapAffiliateProgram),
     finalCopies: finalCopies.map(mapFinalCopy),
     publishJobs: publishJobs.map(mapPublishJob),
