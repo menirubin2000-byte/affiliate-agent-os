@@ -55,6 +55,7 @@ type ReadyCandidate = {
   campaignLink: CampaignLinkSummary | null
   ranking: TrafficEngineRanking | null
   internalScore: InternalTrafficScore | null
+  imageUrl: string | null
   selectionReason: string
   selectionSource: "internal_traffic_engine" | "external_robin" | "fallback"
 }
@@ -127,10 +128,11 @@ export default async function HebrewApprovePage(props: {
     if (readyRoutes.length > 0) {
       const finalCopyIds = readyRoutes.map((r) => r.finalCopyId!).filter(Boolean)
       const productIds = Array.from(new Set(readyRoutes.map((r) => r.productId)))
-      const [details, programs, links] = await Promise.all([
+      const [details, programs, links, images] = await Promise.all([
         loadFinalCopyDetails(finalCopyIds),
         loadAffiliateProgramSummaries(productIds),
         loadCampaignLinks(productIds),
+        loadProductImages(productIds),
       ])
 
       topCandidates = pickTopCandidates({
@@ -138,6 +140,7 @@ export default async function HebrewApprovePage(props: {
         details,
         programs,
         links,
+        images,
         rankingIndex,
         internalIndex,
         trafficConnected,
@@ -435,7 +438,7 @@ function CountBadge({
 }
 
 function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
-  const { route, detail, program, campaignLink, ranking, internalScore, selectionReason, selectionSource } = candidate
+  const { route, detail, program, campaignLink, ranking, internalScore, imageUrl, selectionReason, selectionSource } = candidate
   const sourceBadge =
     selectionSource === "internal_traffic_engine" ? (
       <Badge variant="default">נבחר על ידי Internal Traffic Engine</Badge>
@@ -447,13 +450,27 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
   return (
     <div className="space-y-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold">
-            {route.finalCopyTitle ?? `${route.productName} · ${route.platform.hebrewName}`}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            מוצר: {route.productName} · פלטפורמה: {route.platform.hebrewName} ({route.platform.englishName})
-          </p>
+        <div className="flex flex-wrap items-start gap-3">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={route.productName}
+              className="h-16 w-16 shrink-0 rounded border bg-muted object-contain p-1"
+            />
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border bg-muted/30 text-xs text-muted-foreground">
+              ללא תמונה
+            </div>
+          )}
+          <div>
+            <h3 className="font-semibold">
+              {route.finalCopyTitle ?? `${route.productName} · ${route.platform.hebrewName}`}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              מוצר: {route.productName} · פלטפורמה: {route.platform.hebrewName} ({route.platform.englishName})
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {sourceBadge}
@@ -588,6 +605,7 @@ function pickTopCandidates(input: {
   details: Map<string, FinalCopyDetail>
   programs: Map<string, AffiliateProgramSummary>
   links: Map<string, CampaignLinkSummary>
+  images: Map<string, string>
   rankingIndex: Map<string, TrafficEngineRanking>
   internalIndex: Map<string, InternalTrafficScore>
   trafficConnected: boolean
@@ -604,6 +622,7 @@ function pickTopCandidates(input: {
       }
       const program = input.programs.get(route.productId) ?? null
       const campaignLink = input.links.get(route.productId) ?? null
+      const imageUrl = input.images.get(route.productId) ?? null
       const ranking = input.rankingIndex.get(`${route.productId}::${route.platform.key}`) ?? null
       const internalScore =
         input.internalIndex.get(`${route.productId}::${route.platform.key}`) ?? null
@@ -629,7 +648,7 @@ function pickTopCandidates(input: {
         selectionReason =
           "Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות (link_ready + validation valid) ו-updated_at."
       }
-      return { route, detail, program, campaignLink, ranking, internalScore, selectionReason, selectionSource }
+      return { route, detail, program, campaignLink, ranking, internalScore, imageUrl, selectionReason, selectionSource }
     })
     // Hard filter: must have a real affiliate link from a link_ready program.
     .filter((c) => Boolean(c.program?.affiliateLink) && c.program?.status === "link_ready")
@@ -723,6 +742,21 @@ async function loadAffiliateProgramSummaries(productIds: string[]): Promise<Map<
       status: row.status,
       affiliateLink: row.affiliate_link,
     })
+  }
+  return map
+}
+
+async function loadProductImages(productIds: string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  if (productIds.length === 0) return map
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, image_url")
+    .in("id", productIds)
+  if (error || !data) return map
+  for (const row of data as Array<{ id: string; image_url: string | null }>) {
+    if (row.image_url) map.set(row.id, row.image_url)
   }
   return map
 }
