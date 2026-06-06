@@ -230,7 +230,20 @@ async function main() {
     const variant = detectHebrewVariant(noExt)
     const cleaned = stripTrailingDescriptors(variant.base)
     const baseNorm = normalizeName(cleaned)
-    const product = byNormalized.get(baseNorm)
+    let product = byNormalized.get(baseNorm)
+    if (!product) {
+      // Prefix match: a file called "leader.png" should map to product
+      // "Leader Leads" if it's the only product whose normalized name starts
+      // with the file's normalized name. Bails out on ambiguity to avoid
+      // attaching the wrong image.
+      const prefixMatches = []
+      for (const [key, candidate] of byNormalized.entries()) {
+        if (baseNorm.length >= 4 && key.startsWith(baseNorm)) {
+          prefixMatches.push(candidate)
+        }
+      }
+      if (prefixMatches.length === 1) product = prefixMatches[0]
+    }
     if (!product) {
       misses.push(file)
       unmatched++
