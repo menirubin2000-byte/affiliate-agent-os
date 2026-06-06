@@ -54,6 +54,51 @@ function pickImagePath(language, image_url, image_url_he) {
   return image_url ?? image_url_he ?? null
 }
 
+const IMAGE_REQUIRED_FOR_READY = new Set([
+  "linkedin",
+  "facebook_page",
+  "medium",
+  "substack",
+  "instagram_professional",
+  "pinterest",
+  "x_twitter",
+])
+const VIDEO_REQUIRED_FOR_READY = new Set(["tiktok", "youtube"])
+const MANUAL_ONLY_NOT_AUTO_READY = new Set(["quora", "reddit"])
+
+function mediaReadiness(row) {
+  const imageRequired = IMAGE_REQUIRED_FOR_READY.has(row.platform)
+  const videoRequired = VIDEO_REQUIRED_FOR_READY.has(row.platform)
+  const manualOnly = MANUAL_ONLY_NOT_AUTO_READY.has(row.platform)
+  const hasImage =
+    row.image_status === "ready" ||
+    Boolean(row.image_url) ||
+    Boolean(row.image_url_he)
+  const hasVideo =
+    row.video_status === "ready" ||
+    Boolean(row.video_url) ||
+    (Array.isArray(row.video_suitable_for) && row.video_suitable_for.includes(row.platform))
+  const blockingReasons = []
+  if (manualOnly) blockingReasons.push("manual_platform_not_auto_ready")
+  if (imageRequired && !hasImage) blockingReasons.push("image_required_for_ready")
+  if (videoRequired && !hasVideo) blockingReasons.push("video_required_for_ready")
+  return {
+    media_required: imageRequired || videoRequired,
+    media_ready: blockingReasons.length === 0,
+    publish_media_mode: manualOnly ? "manual_only" : videoRequired ? "video" : "image",
+    image_required: imageRequired,
+    video_required: videoRequired,
+    media_blocking_reasons: blockingReasons,
+    next_action: blockingReasons.includes("manual_platform_not_auto_ready")
+      ? "manual_policy_review_required"
+      : blockingReasons.includes("image_required_for_ready")
+        ? "add_product_image"
+        : blockingReasons.includes("video_required_for_ready")
+          ? "add_product_video"
+          : "ready",
+  }
+}
+
 async function main() {
   await c.connect()
 
@@ -130,6 +175,11 @@ async function main() {
 
   const pack = rows.map((r) => {
     const link = lookupCampaignLink(r.product_id, r.platform)
+    const media = mediaReadiness(r)
+    const blockingReasons = Array.from(new Set([
+      ...(Array.isArray(r.blocking_reasons) ? r.blocking_reasons : []),
+      ...media.media_blocking_reasons,
+    ]))
     return {
       final_copy_id: r.final_copy_id,
       product: r.product_name,
@@ -146,10 +196,16 @@ async function main() {
       video_asset_path: r.video_url,
       asset_status: assetStatus(r.image_status, r.video_status),
       video_suitable_for: Array.isArray(r.video_suitable_for) ? r.video_suitable_for : [],
+      media_required: media.media_required,
+      media_ready: media.media_ready,
+      publish_media_mode: media.publish_media_mode,
+      image_required: media.image_required,
+      video_required: media.video_required,
+      next_action: media.next_action,
       published_record_exists: r.published_record_exists,
       published_record_live_url: r.published_record_live_url,
       publish_job_exists: r.publish_job_exists,
-      blocking_reasons: Array.isArray(r.blocking_reasons) ? r.blocking_reasons : [],
+      blocking_reasons: blockingReasons,
       version: r.version,
       final_copy_created_at: r.final_copy_created_at,
       final_copy_updated_at: r.final_copy_updated_at,
@@ -237,6 +293,12 @@ async function main() {
     md.push(`| image_asset_path | ${p.image_asset_path ? `\`${p.image_asset_path}\`` : "—"} |`)
     md.push(`| video_asset_path | ${p.video_asset_path ? `\`${p.video_asset_path}\`` : "—"} |`)
     md.push(`| asset_status | ${p.asset_status} |`)
+    md.push(`| media_required | ${p.media_required ? "yes" : "no"} |`)
+    md.push(`| media_ready | ${p.media_ready ? "yes" : "no"} |`)
+    md.push(`| publish_media_mode | ${p.publish_media_mode} |`)
+    md.push(`| image_required | ${p.image_required ? "yes" : "no"} |`)
+    md.push(`| video_required | ${p.video_required ? "yes" : "no"} |`)
+    md.push(`| next_action | ${p.next_action} |`)
     if (p.video_suitable_for.length > 0) {
       md.push(`| video_suitable_for | ${p.video_suitable_for.join(", ")} |`)
     }

@@ -482,6 +482,9 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
             {detail.language === "he" ? "🇮🇱 עברית" : "🇬🇧 English"}
           </Badge>
           <Badge variant="secondary">{route.platform.contentType}</Badge>
+          <Badge variant={route.mediaReady ? "default" : "destructive"}>
+            {route.publishMediaMode === "video" ? "video READY" : route.publishMediaMode === "manual_only" ? "manual only" : "image READY"}
+          </Badge>
           {assetStatus?.imageStatus === "ready" ? (
             <Badge variant="default">🖼 image ready</Badge>
           ) : assetStatus?.imageStatus === "missing" ? (
@@ -676,6 +679,8 @@ function pickTopCandidates(input: {
     })
     // Hard filter: must have a real affiliate link from a link_ready program.
     .filter((c) => Boolean(c.program?.affiliateLink) && c.program?.status === "link_ready")
+    // Business READY rule: no operator approval without required media.
+    .filter((c) => c.route.mediaReady)
 
   candidates.sort((a, b) => {
     // 1. Internal Traffic Engine score (real AAOS performance data).

@@ -119,6 +119,17 @@ export default async function HebrewDashboardPage() {
         </CardHeader>
       </Card>
 
+      <Card className="border-amber-300 bg-amber-50/80">
+        <CardHeader>
+          <CardTitle>חוק READY עסקי - מדיה חובה</CardTitle>
+          <CardDescription>
+            תמונה חובה לפני READY בפלטפורמות LinkedIn, Facebook Page, Medium, Substack, Instagram Business,
+            Pinterest ו-X/Twitter. וידאו חובה לפני READY ב-TikTok וב-YouTube. Quora ו-Reddit הם ידניים בלבד
+            ולא נכנסים ל-READY אוטומטי. גם אם פלטפורמה תומכת טקסט בלבד, AAOS לא מציג אותה לאישור בלי המדיה הנדרשת.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
       <PlatformConnectionsPanel connections={connections} />
 
       <PlatformCapabilitiesPanel platforms={overview.platforms} />

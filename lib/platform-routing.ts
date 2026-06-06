@@ -8,6 +8,11 @@ import {
   INSTAGRAM_CURRENT_BLOCKING_REASON,
 } from "@/lib/meta-official-api"
 import { getPinterestOfficialApiCapability } from "@/lib/pinterest-official-api"
+import {
+  evaluatePlatformMediaReadiness,
+  type PlatformMediaReadiness,
+  type PublishMediaMode,
+} from "@/lib/platform-media-rules"
 
 export type PlatformRoutingKey =
   | CampaignPlatform
@@ -74,6 +79,12 @@ export interface RoutingProductInput {
   category: string | null
   affiliateLink: string | null
   affiliateUrl: string | null
+  imageUrl?: string | null
+  imageUrlHe?: string | null
+  imageStatus?: string | null
+  videoUrl?: string | null
+  videoStatus?: string | null
+  videoSuitableFor?: string[] | null
 }
 
 export interface RoutingAffiliateProgramInput {
@@ -126,6 +137,13 @@ export interface PlatformRoute {
   publishedRecordId: string | null
   liveUrl: string | null
   nextActionHe: string
+  mediaRequired: boolean
+  mediaReady: boolean
+  publishMediaMode: PublishMediaMode
+  imageRequired: boolean
+  videoRequired: boolean
+  mediaBlockingReasons: string[]
+  mediaNextAction: string
 }
 
 export interface ProductRoutingSummary {
@@ -167,7 +185,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש חיבור API רשמי. אין אוטומציית דפדפן לא רשמית.",
     setupBlocker: "linkedin_official_api_not_configured",
-    media: { textOnly: true, image: "supported", video: "supported", notes: "מותר טקסט בלבד; תמונה/וידאו מומלצים להגדלת engagement." },
+    media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
     key: "medium",
@@ -181,7 +199,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "מותר עם גילוי שותפים ותוכן בעל ערך.",
     setupBlocker: null,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "כדאי תמונת hero למאמר." },
+    media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונת hero חובה למאמר." },
   },
   {
     key: "substack",
@@ -195,7 +213,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש תוכן אמיתי עם ערך, לא פרסומת בלבד.",
     setupBlocker: null,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "תמונת hero מומלצת." },
+    media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונת hero חובה." },
   },
   {
     key: "quora",
@@ -209,7 +227,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: false,
     policySummary: "אסור קישור אפיליאייט ישיר. רק תשובה מועילה וקישור חיצוני בטוח אם מתאים.",
     setupBlocker: "quora_no_direct_affiliate_links",
-    media: { textOnly: true, image: "supported", video: "supported", notes: "תמונה בתוך התשובה מותרת." },
+    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Quora לא READY אוטומטי ולא מקבל affiliate link ישיר." },
   },
   {
     key: "reddit",
@@ -223,7 +241,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: false,
     policySummary: "נדרש אימות חוקים לפי subreddit. לא מפרסמים affiliate-heavy.",
     setupBlocker: "reddit_community_rules_not_verified",
-    media: { textOnly: true, image: "supported", video: "supported", notes: "Reddit מקבל text/image/video; subreddit מוגבל לפי חוקים." },
+    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Reddit לא READY אוטומטי עד אימות חוקי subreddit." },
   },
   {
     key: "tiktok",
@@ -251,7 +269,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "ממתין לחשבון/עמוד וחיבור Graph API רשמי.",
     setupBlocker: getFacebookPageOfficialApiCapability().configured ? null : FACEBOOK_CURRENT_BLOCKING_REASON,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "תמונה/וידאו מגדילים reach משמעותית." },
+    media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
     key: "instagram_professional",
@@ -293,7 +311,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש OAuth רשמי ו-X API access ready.",
     setupBlocker: "x_api_access_not_ready",
-    media: { textOnly: true, image: "supported", video: "supported", notes: "אפשר טקסט בלבד, תמונה מגדילה engagement." },
+    media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
     key: "youtube",
@@ -516,6 +534,19 @@ function buildPlatformRoute(input: {
     })
   }
 
+  const media = evaluatePlatformMediaReadiness(input.platform.key, input.product)
+  if (!media.mediaReady) {
+    return route(input, {
+      state: "needs_system_fix",
+      labelHe: "חסר מדיה ל-READY",
+      blocker: media.blockingReasons.join(", ") || "media_not_ready",
+      finalCopy: latestFinalCopy,
+      publishJob,
+      publishedRecord: null,
+      nextActionHe: mediaNextActionHe(media),
+    })
+  }
+
   if (latestFinalCopy.status === "ready_for_operator_approval" || latestFinalCopy.status === "validated") {
     return route(input, {
       state: "pending_meni_approval",
@@ -559,6 +590,19 @@ function routeFromPublishJob(
   finalCopy: RoutingFinalCopyInput | null,
   publishJob: RoutingPublishJobInput,
 ): PlatformRoute {
+  const media = evaluatePlatformMediaReadiness(input.platform.key, input.product)
+  if (!media.mediaReady && publishJob.status !== "verified") {
+    return route(input, {
+      state: "needs_system_fix",
+      labelHe: "חסר מדיה ל-READY",
+      blocker: [publishJob.blockingReason, ...media.blockingReasons].filter(Boolean).join(", "),
+      finalCopy,
+      publishJob,
+      publishedRecord: null,
+      nextActionHe: mediaNextActionHe(media),
+    })
+  }
+
   const jobMap: Partial<Record<string, { state: PlatformRouteState; labelHe: string; nextActionHe: string }>> = {
     pending_meni_approval: {
       state: "pending_meni_approval",
@@ -646,6 +690,7 @@ function route(
     nextActionHe: string
   },
 ): PlatformRoute {
+  const media = evaluatePlatformMediaReadiness(input.platform.key, input.product)
   return {
     productId: input.product.id,
     productName: input.product.name,
@@ -659,7 +704,21 @@ function route(
     publishedRecordId: state.publishedRecord?.id ?? null,
     liveUrl: state.publishedRecord?.liveUrl ?? state.publishJob?.liveUrl ?? null,
     nextActionHe: state.nextActionHe,
+    mediaRequired: media.mediaRequired,
+    mediaReady: media.mediaReady,
+    publishMediaMode: media.publishMediaMode,
+    imageRequired: media.imageRequired,
+    videoRequired: media.videoRequired,
+    mediaBlockingReasons: media.blockingReasons,
+    mediaNextAction: media.nextAction,
   }
+}
+
+function mediaNextActionHe(media: PlatformMediaReadiness) {
+  if (media.nextAction === "add_product_image") return "להוסיף תמונה למוצר לפני READY"
+  if (media.nextAction === "add_product_video") return "להוסיף וידאו למוצר לפני READY"
+  if (media.nextAction === "manual_policy_review_required") return "פלטפורמה ידנית - לא READY אוטומטי"
+  return "מדיה תקינה"
 }
 
 function findLatestPublishJob(

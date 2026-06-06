@@ -14,6 +14,12 @@ const product = {
   category: "SaaS",
   affiliateLink: "https://example.com/affiliate",
   affiliateUrl: "https://example.com/affiliate",
+  imageUrl: "https://example.com/image.png",
+  imageUrlHe: null,
+  imageStatus: "ready",
+  videoUrl: null,
+  videoStatus: "missing",
+  videoSuitableFor: [],
 }
 
 test("Facebook stays pending setup until official API credentials are configured", () => {
@@ -116,4 +122,36 @@ test("approved final copy without a job routes to executor work, not published",
 
   assert.equal(medium?.state, "ready_for_executor")
   assert.equal(medium?.publishedRecordId, null)
+})
+
+test("business READY blocks image-required platforms without a product image", () => {
+  const overview = buildPlatformRoutingOverview({
+    products: [{
+      ...product,
+      imageUrl: null,
+      imageStatus: "missing",
+    }],
+    affiliatePrograms: [{ productId: product.id, status: "link_ready", affiliateLink: product.affiliateLink }],
+    finalCopies: [
+      {
+        id: "copy-3",
+        productId: product.id,
+        platform: "medium",
+        status: "ready_for_operator_approval",
+        validationStatus: "valid",
+        title: "Ready copy",
+        blockingReasons: [],
+      },
+    ],
+    publishJobs: [],
+    publishedRecords: [],
+  })
+
+  const medium = overview.products[0]?.routes.find((route) => route.platform.key === "medium")
+
+  assert.equal(medium?.state, "needs_system_fix")
+  assert.equal(medium?.mediaRequired, true)
+  assert.equal(medium?.mediaReady, false)
+  assert.equal(medium?.imageRequired, true)
+  assert.deepEqual(medium?.mediaBlockingReasons, ["image_required_for_ready"])
 })

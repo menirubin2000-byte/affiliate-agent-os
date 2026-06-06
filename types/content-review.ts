@@ -46,5 +46,9 @@ export interface FinalContentValidation {
     noInternalNotes: boolean
     noPersonalExperienceClaim: boolean
     noIncomeOrGuaranteeClaim: boolean
+    mediaReady?: boolean
+    imageReady?: boolean
+    videoReady?: boolean
+    automaticReadyAllowed?: boolean
   }
 }

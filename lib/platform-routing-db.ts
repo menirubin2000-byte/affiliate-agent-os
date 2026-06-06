@@ -18,6 +18,12 @@ type ProductRow = {
   category: string | null
   affiliate_link?: string | null
   affiliate_url: string | null
+  image_url?: string | null
+  image_url_he?: string | null
+  image_status?: string | null
+  video_url?: string | null
+  video_status?: string | null
+  video_suitable_for?: string[] | null
 }
 
 type AffiliateProgramRow = {
@@ -74,7 +80,7 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
     safeSelect<ProductRow>("products", () =>
       supabase
         .from("products")
-        .select("id, name, status, category, affiliate_link, affiliate_url")
+        .select("id, name, status, category, affiliate_link, affiliate_url, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for")
         .order("updated_at", { ascending: false }),
     ),
     safeSelect<AffiliateProgramRow>("affiliate_programs", () =>
@@ -153,6 +159,12 @@ function mapProduct(row: ProductRow): RoutingProductInput {
     category: row.category,
     affiliateLink: row.affiliate_link ?? null,
     affiliateUrl: row.affiliate_url,
+    imageUrl: row.image_url ?? null,
+    imageUrlHe: row.image_url_he ?? null,
+    imageStatus: row.image_status ?? null,
+    videoUrl: row.video_url ?? null,
+    videoStatus: row.video_status ?? null,
+    videoSuitableFor: row.video_suitable_for ?? [],
   }
 }
 

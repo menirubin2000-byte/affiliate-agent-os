@@ -7,6 +7,7 @@ import {
   validateFinalMediumArticle,
 } from "@/lib/content-review"
 import { createImprovementTask } from "@/lib/db"
+import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
 import { createOrUpdatePublishJobForFinalCopy } from "@/lib/publish-jobs-db"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
@@ -44,6 +45,15 @@ type PlatformAdaptationRow = {
   campaign_link_url: string | null
   content_hash: string
   campaign_approval_status: string
+}
+
+type ProductMediaRow = {
+  image_url: string | null
+  image_url_he: string | null
+  image_status: string | null
+  video_url: string | null
+  video_status: string | null
+  video_suitable_for: string[] | null
 }
 
 function mapFinalCopy(row: FinalCopyRow, productName?: string | null): FinalCopy {
@@ -164,10 +174,24 @@ export async function getOrCreateSystemeIoMediumFinalCopy(): Promise<FinalCopy |
 }
 
 export async function getFinalCopyValidation(finalCopy: FinalCopy) {
-  return validateFinalMediumArticle({
+  const validation = validateFinalMediumArticle({
     body: finalCopy.body,
     finalAffiliateLink: finalCopy.affiliateLink ?? undefined,
   })
+  const productMedia = await getProductMedia(finalCopy.productId)
+  const media = evaluatePlatformMediaReadiness(finalCopy.platform, productMedia)
+  const blockingReasons = Array.from(new Set([...validation.blockingReasons, ...media.blockingReasons]))
+  return {
+    validationStatus: blockingReasons.length ? "blocked" as const : validation.validationStatus,
+    blockingReasons,
+    checks: {
+      ...validation.checks,
+      mediaReady: media.mediaReady,
+      imageReady: !media.imageRequired || media.mediaReady,
+      videoReady: !media.videoRequired || media.mediaReady,
+      automaticReadyAllowed: media.automaticReadyAllowed,
+    },
+  }
 }
 
 export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> {
@@ -188,6 +212,12 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
     throw new Error(`Cannot approve invalid final copy: ${validation.blockingReasons.join(", ")}`)
   }
 
+  const productMedia = await getProductMedia(finalCopy.product_id)
+  const media = evaluatePlatformMediaReadiness(finalCopy.platform, productMedia)
+  if (!media.mediaReady) {
+    throw new Error(`Cannot approve invalid final copy: ${media.blockingReasons.join(", ")}`)
+  }
+
   const { data: updated, error: updateError } = await supabase
     .from("final_copies")
     .update({
@@ -204,6 +234,18 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
   if (updateError) throw new Error(`Unable to approve final copy: ${updateError.message}`)
   await createOrUpdatePublishJobForFinalCopy(finalCopyId)
   return mapFinalCopy(updated as FinalCopyRow)
+}
+
+async function getProductMedia(productId: string): Promise<ProductMediaRow | null> {
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("products")
+    .select("image_url, image_url_he, image_status, video_url, video_status, video_suitable_for")
+    .eq("id", productId)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data as ProductMediaRow
 }
 
 export async function rejectFinalCopy(finalCopyId: string): Promise<FinalCopy> {
