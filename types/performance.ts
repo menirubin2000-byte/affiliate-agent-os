@@ -30,6 +30,8 @@ export interface CreatePerformanceMetricInput {
   revenue?: number | null
   notes?: string | null
   recordedAt?: string | null
+  /** External network/platform the metric came from. Adapter-set, never user-set. */
+  source?: string | null
 }
 
 export interface PerformanceChannelSummary {

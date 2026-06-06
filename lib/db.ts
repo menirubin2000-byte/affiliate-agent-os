@@ -1792,6 +1792,7 @@ export async function createPerformanceMetric(input: CreatePerformanceMetricInpu
       revenue: input.revenue ?? null,
       notes: input.notes?.trim() || null,
       recorded_at: input.recordedAt ?? new Date().toISOString(),
+      source: input.source?.trim() || null,
     })
     .select("id")
     .single()
