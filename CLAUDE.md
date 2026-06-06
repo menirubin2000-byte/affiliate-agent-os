@@ -6,11 +6,12 @@
 
 ## 📡 Sandbox allowlist - מה אני יכול לקרוא דרך HTTP/fetch ישירות
 לפני שאני מדווח "לא יכול להגיע ל-X" - לבדוק אם הוא ברשימה הזו:
-- `db.gbkwydsodondarccqyet.supabase.co` (Supabase DB)
-- `he.quora.com` (Quora בעברית)
 - `linkedin.com` + `api.linkedin.com` (LinkedIn web + REST API)
-- `medium.com` + `api.medium.com` (Medium web + REST API - יש `MEDIUM_INTEGRATION_TOKEN`)
+- `medium.com` + `api.medium.com` (Medium web + REST API)
 - `menirubin.substack.com` (Substack publish)
+- `quora.com` + `he.quora.com` (Quora אנגלית + עברית)
+- `reddit.com` + `www.reddit.com` + `oauth.reddit.com` (Reddit web + OAuth API)
+- `db.gbkwydsodondarccqyet.supabase.co` + `supabase.co` (Supabase DB + API)
 
 הרשימה הזו מתוחזקת ע"י MENI ב-Claude Code settings (Domain allowlist).
 אם הדומיין ברשימה - אני יכול לקרוא אליו ישיר. אם לא - לבקש מ-MENI להוסיף.

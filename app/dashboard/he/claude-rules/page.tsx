@@ -28,13 +28,18 @@ const ALLOWED = [
 // Claude Code sandbox allowlist - MENI maintains this in Claude Code settings.
 // Whenever I think 'I can't reach X' - I check this list first.
 const SANDBOX_DOMAINS = [
-  { domain: "db.gbkwydsodondarccqyet.supabase.co", use: "Supabase DB (קריאה/כתיבה דרך service-role)" },
-  { domain: "he.quora.com", use: "Quora בעברית" },
-  { domain: "linkedin.com", use: "LinkedIn web" },
   { domain: "api.linkedin.com", use: "LinkedIn REST API (פרסום ישיר)" },
+  { domain: "linkedin.com", use: "LinkedIn web" },
+  { domain: "api.medium.com", use: "Medium REST API (פרסום עם MEDIUM_INTEGRATION_TOKEN)" },
   { domain: "medium.com", use: "Medium web" },
-  { domain: "api.medium.com", use: "Medium REST API (פרסום ישיר עם MEDIUM_INTEGRATION_TOKEN)" },
   { domain: "menirubin.substack.com", use: "Substack publish endpoint" },
+  { domain: "quora.com", use: "Quora (אנגלית)" },
+  { domain: "he.quora.com", use: "Quora בעברית" },
+  { domain: "reddit.com", use: "Reddit web" },
+  { domain: "www.reddit.com", use: "Reddit posts/feed" },
+  { domain: "oauth.reddit.com", use: "Reddit OAuth API (פרסום עם token)" },
+  { domain: "db.gbkwydsodondarccqyet.supabase.co", use: "Supabase DB (קריאה/כתיבה דרך service-role)" },
+  { domain: "supabase.co", use: "Supabase API" },
 ]
 const FORBIDDEN = [
   "להזין סיסמה / טוקן / קוד 2FA לתוך UI.",
