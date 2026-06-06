@@ -93,7 +93,7 @@ function suitabilityFor(durationSec) {
 // "בעיברית" (or "-he" / "_he") is treated as the Hebrew image for the same
 // product. We strip the suffix before matching, upload it as "<slug>-he.<ext>"
 // and store it in products.image_url_he.
-const HE_SUFFIX_PATTERNS = [/\s*בעיברית\s*$/, /[-_]he$/i]
+const HE_SUFFIX_PATTERNS = [/\s*בעיברית\s*$/, /\s*בעברית\s*$/, /[-_]he$/i]
 
 function detectHebrewVariant(nameWithoutExt) {
   for (const pattern of HE_SUFFIX_PATTERNS) {
