@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T15:56:01.028Z",
+  "generated_at": "2026-06-06T18:34:19.828Z",
   "total": 129,
   "rule": "READ-ONLY export. No publish_jobs / published_records / approvals created. Posts unchanged.",
   "posts": [
@@ -36,7 +36,7 @@
       "product_id": "81f43a1a-fae5-4368-b7c7-7eddc763740b",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Ad Turbo Review: AI Ads Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Ad Turbo Is\n\nAI advertising assistant for generating ad copy and creative.\n\n## Key Use Cases\n\n- Generate Facebook and Google ad headlines\n- Test ad variations quickly\n- Build product-led ad creative\n\n## Who It Is For\n\nAd Turbo fits performance marketers, small e-commerce stores, agencies. The angle that makes it interesting is: AI ad copy generator that speeds up Meta and Google ad creative workflows.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of performance marketers, small e-commerce stores, agencies\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Ad Turbo is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Ad Turbo here:\n\nhttps://adturbo.ai/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=ad-turbo_medium&utm_content=en_v1",
@@ -51,11 +51,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:26.275Z",
-      "final_copy_updated_at": "2026-06-06T15:55:22.526Z"
+      "final_copy_updated_at": "2026-06-06T16:09:13.331Z"
     },
     {
       "final_copy_id": "8b5a5fbd-09e9-47be-85b7-413b2f4f83a5",
@@ -115,7 +115,7 @@
       "product_id": "81f43a1a-fae5-4368-b7c7-7eddc763740b",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Ad Turbo Review: A Practical Look for performance marketers",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Ad Turbo\n\nAI advertising assistant for generating ad copy and creative.\n\nThe angle that makes it interesting: AI ad copy generator that speeds up Meta and Google ad creative workflows.\n\n## Use Cases\n\n- Generate Facebook and Google ad headlines\n- Test ad variations quickly\n- Build product-led ad creative\n\n## Who It Fits\n\nperformance marketers, small e-commerce stores, agencies.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Ad Turbo is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Ad Turbo here:\n\nhttps://adturbo.ai/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=ad-turbo_substack&utm_content=en_v1",
@@ -130,11 +130,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:28.849Z",
-      "final_copy_updated_at": "2026-06-06T15:55:22.847Z"
+      "final_copy_updated_at": "2026-06-06T16:09:07.633Z"
     },
     {
       "final_copy_id": "0f311dcf-7941-4c3d-8db7-38f1167d7f32",
@@ -223,7 +223,7 @@
       "product_id": "37a7bda3-669f-4a95-ab40-041909a756ea",
       "language": "he",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "AhaSlides - סקירה מעשית למרצים ב-2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link. גילוי שותפים: הפוסט כולל קישור שותף.\n\n*גילוי שותפים: המאמר כולל קישור שותף. אם רוכשים דרך הקישור אני מקבל עמלה בלי עלות נוספת לכם.*\n\n## למה לבחון את AhaSlides\n\nפלטפורמת מצגות אינטראקטיביות עם סקרים בזמן אמת, שאלות מהקהל, ענן מילים וחידונים. עובדת בדפדפן בלי התקנה.\n\nהזווית שמעניינת אצל AhaSlides: להפוך מצגות חד-כיווניות לדיון פעיל עם הקהל בלי כלים חיצוניים.\n\n## מקרי שימוש\n\n- סקרים חיים במהלך מצגות\n- שאלות מהקהל עם הצבעת קהל\n- חידונים תחרותיים בסשנים\n- ענני מילים לפתיחת דיון\n- תיאום סדנאות וסיעורי מוחות\n\n## למי זה מתאים\n\nמרצים, מנחים, מורים ומנהלי הדרכה.\n\n## מה כדאי לדעת מראש\n\n- מנוי חודשי נדרש לשימוש רציני\n- כלי ייעודי - ההתאמה תלויה במערכות הקיימות שלכם\n- חלק מהיכולות המתקדמות בתוכניות גבוהות יותר\n\n## שורה תחתונה\n\nאם אתם כבר עושים את העבודה ש-AhaSlides נבנה עבורה - שווה לבחון אותו מול הפתרון הנוכחי שלכם. רוב התוכניות מאפשרות התחלה ברמה נמוכה כדי לבדוק לפני שמשלמים על הגדולות.\n\n## Call to Action\n\nנסו את AhaSlides כאן:\n\nhttps://ahaslides.com/?red=rubinq&utm_affiliate_network=reditus&utm_source=medium&utm_medium=organic&utm_campaign=ahaslides_medium&utm_content=he_v1",
@@ -238,11 +238,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T12:29:27.534Z",
-      "final_copy_updated_at": "2026-06-06T15:55:24.139Z"
+      "final_copy_updated_at": "2026-06-06T16:08:42.884Z"
     },
     {
       "final_copy_id": "daf5f1d3-5bff-48d7-825d-4732f70cd231",
@@ -329,7 +329,7 @@
       "product_id": "37a7bda3-669f-4a95-ab40-041909a756ea",
       "language": "he",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "AhaSlides: מבט מעשי על מצגות אינטראקטיביות",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link. גילוי שותפים: הפוסט כולל קישור שותף.\n\n*גילוי שותפים: הפוסט כולל קישור שותף.*\n\n## למה AhaSlides\n\nפלטפורמת מצגות אינטראקטיביות עם סקרים בזמן אמת, שאלות מהקהל, ענן מילים וחידונים. עובדת בדפדפן בלי התקנה.\n\nהסיבה שבדקתי: להפוך מצגות חד-כיווניות לדיון פעיל עם הקהל בלי כלים חיצוניים.\n\n## מקרי שימוש\n\n- סקרים חיים במהלך מצגות\n- שאלות מהקהל עם הצבעת קהל\n- חידונים תחרותיים בסשנים\n- ענני מילים לפתיחת דיון\n- תיאום סדנאות וסיעורי מוחות\n\n## למי זה מתאים\n\nמרצים, מנחים, מורים ומנהלי הדרכה.\n\n## מה כדאי לדעת\n\n- מנוי חודשי לשימוש רציני\n- כלי ייעודי - ההתאמה תלויה במערכות הקיימות שלכם\n- יכולות מתקדמות בתוכניות גבוהות יותר\n\n## שורה תחתונה\n\nאם אתם כבר עושים את העבודה ש-AhaSlides נבנה עבורה - שווה להתחיל ברמה הנמוכה ביותר ולבחון מול הפתרון הנוכחי לפני שמרחיבים.\n\n## Call to Action\n\nנסו את AhaSlides כאן:\n\nhttps://ahaslides.com/?red=rubinq&utm_affiliate_network=reditus&utm_source=substack&utm_medium=organic&utm_campaign=ahaslides_substack&utm_content=he_v1",
@@ -344,11 +344,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T12:29:28.821Z",
-      "final_copy_updated_at": "2026-06-06T15:55:24.784Z"
+      "final_copy_updated_at": "2026-06-06T16:08:38.089Z"
     },
     {
       "final_copy_id": "aaf72263-f544-48ce-9d11-f37f3fac0d8d",
@@ -383,7 +383,7 @@
       "product_id": "c889a774-e309-47ee-830b-7ff630d60203",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Algomo Review: AI Chatbot Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Algomo Is\n\nAI chatbot platform for customer support and lead capture.\n\n## Key Use Cases\n\n- Automate support FAQs\n- Capture leads outside business hours\n- Multilingual customer support\n\n## Who It Is For\n\nAlgomo fits small businesses, e-commerce stores. The angle that makes it interesting is: AI chatbot that handles routine customer support and captures leads 24/7.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of small businesses, e-commerce stores\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Algomo is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Algomo here:\n\nhttps://www.algomo.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=algomo_medium&utm_content=en_v1",
@@ -398,11 +398,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:09.294Z",
-      "final_copy_updated_at": "2026-06-06T15:55:25.432Z"
+      "final_copy_updated_at": "2026-06-06T16:08:33.394Z"
     },
     {
       "final_copy_id": "c9ab70fc-3fd0-4e37-b0d4-36a8b8bb9646",
@@ -462,7 +462,7 @@
       "product_id": "c889a774-e309-47ee-830b-7ff630d60203",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Algomo Review: A Practical Look for small businesses",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Algomo\n\nAI chatbot platform for customer support and lead capture.\n\nThe angle that makes it interesting: AI chatbot that handles routine customer support and captures leads 24/7.\n\n## Use Cases\n\n- Automate support FAQs\n- Capture leads outside business hours\n- Multilingual customer support\n\n## Who It Fits\n\nsmall businesses, e-commerce stores.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Algomo is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Algomo here:\n\nhttps://www.algomo.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=algomo_substack&utm_content=en_v1",
@@ -477,11 +477,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:11.841Z",
-      "final_copy_updated_at": "2026-06-06T15:55:25.751Z"
+      "final_copy_updated_at": "2026-06-06T16:08:29.617Z"
     },
     {
       "final_copy_id": "3696b488-fd50-4840-85df-7b975c997d64",
@@ -516,7 +516,7 @@
       "product_id": "de32aaed-b747-4121-8ef8-43293525293a",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Audiorista Review: Audio Platform Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Audiorista Is\n\nAudio publishing and audiobook platform for creators.\n\n## Key Use Cases\n\n- Distribute audiobooks\n- Publish podcasts\n- Monetize audio content\n\n## Who It Is For\n\nAudiorista fits podcasters, audiobook authors, creators publishing audio. The angle that makes it interesting is: audio publishing and distribution tool for independent creators.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of podcasters, audiobook authors, creators publishing audio\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Audiorista is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Audiorista here:\n\nhttps://www.audiorista.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=audiorista_medium&utm_content=en_v1",
@@ -531,11 +531,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:17.888Z",
-      "final_copy_updated_at": "2026-06-06T15:55:26.397Z"
+      "final_copy_updated_at": "2026-06-06T16:08:25.956Z"
     },
     {
       "final_copy_id": "554344e8-0ece-4b05-9477-78602281e470",
@@ -595,7 +595,7 @@
       "product_id": "de32aaed-b747-4121-8ef8-43293525293a",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Audiorista Review: A Practical Look for podcasters",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Audiorista\n\nAudio publishing and audiobook platform for creators.\n\nThe angle that makes it interesting: audio publishing and distribution tool for independent creators.\n\n## Use Cases\n\n- Distribute audiobooks\n- Publish podcasts\n- Monetize audio content\n\n## Who It Fits\n\npodcasters, audiobook authors, creators publishing audio.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Audiorista is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Audiorista here:\n\nhttps://www.audiorista.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=audiorista_substack&utm_content=en_v1",
@@ -610,11 +610,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:20.431Z",
-      "final_copy_updated_at": "2026-06-06T15:55:26.717Z"
+      "final_copy_updated_at": "2026-06-06T16:08:22.212Z"
     },
     {
       "final_copy_id": "5b1e2193-fff3-4123-afde-dfbf55b4c2fb",
@@ -788,7 +788,7 @@
       "product_id": "8e5b65dd-f6d9-4aec-97be-caef9e9b784b",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "EmailListVerify Review: Email Verification Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What EmailListVerify Is\n\nBulk email verification service to clean lists and improve deliverability.\n\n## Key Use Cases\n\n- Clean lists before email campaigns\n- Reduce bounce rate\n- Protect sender reputation\n\n## Who It Is For\n\nEmailListVerify fits email marketers, cold outreach teams, list owners. The angle that makes it interesting is: verify large email lists before sending to protect sender reputation.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of email marketers, cold outreach teams, list owners\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that EmailListVerify is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry EmailListVerify here:\n\nhttps://www.emaillistverify.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=emaillistverify_medium&utm_content=en_v1",
@@ -803,11 +803,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:23:00.829Z",
-      "final_copy_updated_at": "2026-06-06T15:55:27.360Z"
+      "final_copy_updated_at": "2026-06-06T16:08:18.067Z"
     },
     {
       "final_copy_id": "07930235-012d-4281-8447-a5993b56557b",
@@ -867,7 +867,7 @@
       "product_id": "8e5b65dd-f6d9-4aec-97be-caef9e9b784b",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "EmailListVerify Review: A Practical Look for email marketers",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why EmailListVerify\n\nBulk email verification service to clean lists and improve deliverability.\n\nThe angle that makes it interesting: verify large email lists before sending to protect sender reputation.\n\n## Use Cases\n\n- Clean lists before email campaigns\n- Reduce bounce rate\n- Protect sender reputation\n\n## Who It Fits\n\nemail marketers, cold outreach teams, list owners.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work EmailListVerify is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry EmailListVerify here:\n\nhttps://www.emaillistverify.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=emaillistverify_substack&utm_content=en_v1",
@@ -882,11 +882,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:23:03.371Z",
-      "final_copy_updated_at": "2026-06-06T15:55:27.682Z"
+      "final_copy_updated_at": "2026-06-06T16:08:13.455Z"
     },
     {
       "final_copy_id": "db872d20-54ea-47da-863c-39d7187e4542",
@@ -1126,7 +1126,7 @@
       "product_id": "a8248eaa-9fd1-46b5-8d15-53f82bf84613",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "GrapeLeads Review: B2B Leads Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What GrapeLeads Is\n\nB2B lead generation and prospect intelligence platform.\n\n## Key Use Cases\n\n- Build B2B prospect lists\n- Enrich CRM contacts\n- Find decision makers\n\n## Who It Is For\n\nGrapeLeads fits B2B sales teams, solo founders running outbound. The angle that makes it interesting is: B2B prospect data tuned for outbound sales pipelines.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of B2B sales teams, solo founders running outbound\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that GrapeLeads is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry GrapeLeads here:\n\nhttps://grapeleads.com/?gr_pk=mKQ0&utm_source=medium&utm_medium=organic&utm_campaign=grapeleads_medium&utm_content=en_v1",
@@ -1141,11 +1141,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:23:18.061Z",
-      "final_copy_updated_at": "2026-06-06T15:55:28.326Z"
+      "final_copy_updated_at": "2026-06-06T16:08:07.185Z"
     },
     {
       "final_copy_id": "cc3d2737-2873-4fee-9977-ac64e2f24eea",
@@ -1205,7 +1205,7 @@
       "product_id": "a8248eaa-9fd1-46b5-8d15-53f82bf84613",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "GrapeLeads Review: A Practical Look for B2B sales teams",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why GrapeLeads\n\nB2B lead generation and prospect intelligence platform.\n\nThe angle that makes it interesting: B2B prospect data tuned for outbound sales pipelines.\n\n## Use Cases\n\n- Build B2B prospect lists\n- Enrich CRM contacts\n- Find decision makers\n\n## Who It Fits\n\nB2B sales teams, solo founders running outbound.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work GrapeLeads is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry GrapeLeads here:\n\nhttps://grapeleads.com/?gr_pk=mKQ0&utm_source=substack&utm_medium=organic&utm_campaign=grapeleads_substack&utm_content=en_v1",
@@ -1220,11 +1220,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:23:20.614Z",
-      "final_copy_updated_at": "2026-06-06T15:55:28.649Z"
+      "final_copy_updated_at": "2026-06-06T16:08:03.171Z"
     },
     {
       "final_copy_id": "add19c25-48c1-48df-b905-be1ac0e773e3",
@@ -1259,7 +1259,7 @@
       "product_id": "69f694d7-5555-4af4-8fbc-2d697d908dd8",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Guideflow Review: Product Demos Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Guideflow Is\n\nInteractive product demo creator for SaaS marketing and sales.\n\n## Key Use Cases\n\n- Embed click-through demos in landing pages\n- Share demos in cold emails\n- Use demos in onboarding\n\n## Who It Is For\n\nGuideflow fits SaaS marketing and sales teams, solo founders. The angle that makes it interesting is: interactive product demos that visitors can click through without a sales call.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of SaaS marketing and sales teams, solo founders\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Guideflow is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Guideflow here:\n\nhttps://guideflow.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=guideflow_medium&utm_content=en_v1",
@@ -1274,11 +1274,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:26.464Z",
-      "final_copy_updated_at": "2026-06-06T15:55:29.293Z"
+      "final_copy_updated_at": "2026-06-06T16:07:58.987Z"
     },
     {
       "final_copy_id": "920e1d85-066d-455e-834c-8fd72b268b81",
@@ -1338,7 +1338,7 @@
       "product_id": "69f694d7-5555-4af4-8fbc-2d697d908dd8",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Guideflow Review: A Practical Look for SaaS marketing and sales teams",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Guideflow\n\nInteractive product demo creator for SaaS marketing and sales.\n\nThe angle that makes it interesting: interactive product demos that visitors can click through without a sales call.\n\n## Use Cases\n\n- Embed click-through demos in landing pages\n- Share demos in cold emails\n- Use demos in onboarding\n\n## Who It Fits\n\nSaaS marketing and sales teams, solo founders.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Guideflow is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Guideflow here:\n\nhttps://guideflow.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=guideflow_substack&utm_content=en_v1",
@@ -1353,11 +1353,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:29.008Z",
-      "final_copy_updated_at": "2026-06-06T15:55:29.619Z"
+      "final_copy_updated_at": "2026-06-06T16:07:54.065Z"
     },
     {
       "final_copy_id": "257bdc4d-b5c6-4c1a-b76d-a54448244fd3",
@@ -1684,7 +1684,7 @@
       "product_id": "da08e1da-a684-486f-87dc-80b71db92006",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Leader Leads Review: Lead Generation Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Leader Leads Is\n\nB2B lead generation platform for prospecting and outbound sales.\n\n## Key Use Cases\n\n- Build targeted B2B lead lists\n- Enrich existing CRM data\n- Run outbound sequences\n\n## Who It Is For\n\nLeader Leads fits B2B sales teams, solo founders building outbound pipelines. The angle that makes it interesting is: lead-gen workflow that pairs verified prospect data with outbound sequencing.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of B2B sales teams, solo founders building outbound pipelines\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Leader Leads is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Leader Leads here:\n\nhttps://leader.net/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=leader-leads_medium&utm_content=en_v1",
@@ -1699,11 +1699,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:34.893Z",
-      "final_copy_updated_at": "2026-06-06T15:55:31.226Z"
+      "final_copy_updated_at": "2026-06-06T16:07:49.100Z"
     },
     {
       "final_copy_id": "4df14858-3bb0-4460-bcbe-8d878a7dbff8",
@@ -1763,7 +1763,7 @@
       "product_id": "da08e1da-a684-486f-87dc-80b71db92006",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Leader Leads Review: A Practical Look for B2B sales teams",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Leader Leads\n\nB2B lead generation platform for prospecting and outbound sales.\n\nThe angle that makes it interesting: lead-gen workflow that pairs verified prospect data with outbound sequencing.\n\n## Use Cases\n\n- Build targeted B2B lead lists\n- Enrich existing CRM data\n- Run outbound sequences\n\n## Who It Fits\n\nB2B sales teams, solo founders building outbound pipelines.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Leader Leads is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Leader Leads here:\n\nhttps://leader.net/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=leader-leads_substack&utm_content=en_v1",
@@ -1778,11 +1778,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:37.449Z",
-      "final_copy_updated_at": "2026-06-06T15:55:31.548Z"
+      "final_copy_updated_at": "2026-06-06T16:07:45.109Z"
     },
     {
       "final_copy_id": "c9e26cba-798a-4f39-a4b7-55b323c83648",
@@ -1952,7 +1952,7 @@
       "product_id": "df6568ae-bb67-4cbb-b1a3-2ff9643b385b",
       "language": "he",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Reditus - סקירה מעשית למשווקי שותפים ב-2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link. גילוי שותפים: הפוסט כולל קישור שותף.\n\n*גילוי שותפים: המאמר כולל קישור שותף. אם רוכשים דרך הקישור אני מקבל עמלה בלי עלות נוספת לכם.*\n\n## למה לבחון את Reditus\n\nרשת שותפים ייעודית לעסקי SaaS - מציעה תוכניות שותפים, מערכת מעקב, דוחות וגישה לקטלוג מוצרים אמיתי שאפשר לקדם.\n\nהזווית שמעניינת אצל Reditus: להתחיל קידום שותפים ל-SaaS בלי לחפש תוכניות בנפרד - הכל במקום אחד.\n\n## מקרי שימוש\n\n- גישה לעשרות תוכניות שותפים של SaaS\n- קישורי שותף מותאמים אישית לכל מוצר\n- מעקב קליקים, רישומים ועמלות\n- תשלום מאוחד מכל התוכניות\n- דוחות ביצועים פר מוצר\n\n## למי זה מתאים\n\nמשווקי שותפים, יוצרי תוכן ובעלי בלוגים בתחום SaaS.\n\n## מה כדאי לדעת מראש\n\n- מנוי חודשי נדרש לשימוש רציני\n- כלי ייעודי - ההתאמה תלויה במערכות הקיימות שלכם\n- חלק מהיכולות המתקדמות בתוכניות גבוהות יותר\n\n## שורה תחתונה\n\nאם אתם כבר עושים את העבודה ש-Reditus נבנה עבורה - שווה לבחון אותו מול הפתרון הנוכחי שלכם. רוב התוכניות מאפשרות התחלה ברמה נמוכה כדי לבדוק לפני שמשלמים על הגדולות.\n\n## Call to Action\n\nנסו את Reditus כאן:\n\nhttps://www.getreditus.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=reditus_medium&utm_content=he_v1",
@@ -1967,11 +1967,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T12:29:37.858Z",
-      "final_copy_updated_at": "2026-06-06T15:55:32.848Z"
+      "final_copy_updated_at": "2026-06-06T16:07:40.440Z"
     },
     {
       "final_copy_id": "58083083-3959-43a3-8f17-4b97f0dead8d",
@@ -2058,7 +2058,7 @@
       "product_id": "df6568ae-bb67-4cbb-b1a3-2ff9643b385b",
       "language": "he",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Reditus: מבט מעשי על רשת שותפים ל-SaaS",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link. גילוי שותפים: הפוסט כולל קישור שותף.\n\n*גילוי שותפים: הפוסט כולל קישור שותף.*\n\n## למה Reditus\n\nרשת שותפים ייעודית לעסקי SaaS - מציעה תוכניות שותפים, מערכת מעקב, דוחות וגישה לקטלוג מוצרים אמיתי שאפשר לקדם.\n\nהסיבה שבדקתי: להתחיל קידום שותפים ל-SaaS בלי לחפש תוכניות בנפרד - הכל במקום אחד.\n\n## מקרי שימוש\n\n- גישה לעשרות תוכניות שותפים של SaaS\n- קישורי שותף מותאמים אישית לכל מוצר\n- מעקב קליקים, רישומים ועמלות\n- תשלום מאוחד מכל התוכניות\n- דוחות ביצועים פר מוצר\n\n## למי זה מתאים\n\nמשווקי שותפים, יוצרי תוכן ובעלי בלוגים בתחום SaaS.\n\n## מה כדאי לדעת\n\n- מנוי חודשי לשימוש רציני\n- כלי ייעודי - ההתאמה תלויה במערכות הקיימות שלכם\n- יכולות מתקדמות בתוכניות גבוהות יותר\n\n## שורה תחתונה\n\nאם אתם כבר עושים את העבודה ש-Reditus נבנה עבורה - שווה להתחיל ברמה הנמוכה ביותר ולבחון מול הפתרון הנוכחי לפני שמרחיבים.\n\n## Call to Action\n\nנסו את Reditus כאן:\n\nhttps://www.getreditus.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=reditus_substack&utm_content=he_v1",
@@ -2073,11 +2073,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T12:29:39.148Z",
-      "final_copy_updated_at": "2026-06-06T15:55:33.492Z"
+      "final_copy_updated_at": "2026-06-06T16:06:28.448Z"
     },
     {
       "final_copy_id": "49f51ad7-e280-4c2d-9cf9-77edc0d2a509",
@@ -2112,7 +2112,7 @@
       "product_id": "17830658-e09a-4c75-91d1-6f9b00def09d",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Search Atlas Review: SEO Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Search Atlas Is\n\nAll-in-one SEO platform for content optimization and keyword research.\n\n## Key Use Cases\n\n- Keyword research and clustering\n- On-page SEO optimization\n- Rank tracking and reporting\n\n## Who It Is For\n\nSearch Atlas fits content marketers, SEO agencies, solo bloggers. The angle that makes it interesting is: content optimization and rank tracking inside one SEO workflow.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of content marketers, SEO agencies, solo bloggers\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Search Atlas is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Search Atlas here:\n\nhttps://searchatlas.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=search-atlas_medium&utm_content=en_v1",
@@ -2127,11 +2127,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:23:09.406Z",
-      "final_copy_updated_at": "2026-06-06T15:55:34.132Z"
+      "final_copy_updated_at": "2026-06-06T16:05:43.358Z"
     },
     {
       "final_copy_id": "ced59842-34fe-4a2f-b4e7-760227027f25",
@@ -2191,7 +2191,7 @@
       "product_id": "17830658-e09a-4c75-91d1-6f9b00def09d",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Search Atlas Review: A Practical Look for content marketers",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Search Atlas\n\nAll-in-one SEO platform for content optimization and keyword research.\n\nThe angle that makes it interesting: content optimization and rank tracking inside one SEO workflow.\n\n## Use Cases\n\n- Keyword research and clustering\n- On-page SEO optimization\n- Rank tracking and reporting\n\n## Who It Fits\n\ncontent marketers, SEO agencies, solo bloggers.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Search Atlas is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Search Atlas here:\n\nhttps://searchatlas.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=search-atlas_substack&utm_content=en_v1",
@@ -2206,11 +2206,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:23:11.948Z",
-      "final_copy_updated_at": "2026-06-06T15:55:34.456Z"
+      "final_copy_updated_at": "2026-06-06T16:05:38.518Z"
     },
     {
       "final_copy_id": "98fcb7dc-4d6d-4ae2-9f86-1b4210e97df4",
@@ -2385,7 +2385,7 @@
       "product_id": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "SignEasy Review: E-signature Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What SignEasy Is\n\nElectronic signature platform for small businesses and freelancers.\n\n## Key Use Cases\n\n- Sign client contracts on the go\n- Send NDAs and proposals\n- Mobile-first signature workflows\n\n## Who It Is For\n\nSignEasy fits freelancers, small business owners, sales teams. The angle that makes it interesting is: fast e-signature alternative for closing contracts on mobile and desktop.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of freelancers, small business owners, sales teams\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that SignEasy is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry SignEasy here:\n\nhttps://signeasy.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=signeasy_medium&utm_content=en_v1",
@@ -2400,11 +2400,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:52.241Z",
-      "final_copy_updated_at": "2026-06-06T15:55:35.098Z"
+      "final_copy_updated_at": "2026-06-06T16:05:34.351Z"
     },
     {
       "final_copy_id": "fbb17fe3-d358-490f-9235-c8257e57855f",
@@ -2464,7 +2464,7 @@
       "product_id": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "SignEasy Review: A Practical Look for freelancers",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why SignEasy\n\nElectronic signature platform for small businesses and freelancers.\n\nThe angle that makes it interesting: fast e-signature alternative for closing contracts on mobile and desktop.\n\n## Use Cases\n\n- Sign client contracts on the go\n- Send NDAs and proposals\n- Mobile-first signature workflows\n\n## Who It Fits\n\nfreelancers, small business owners, sales teams.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work SignEasy is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry SignEasy here:\n\nhttps://signeasy.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=signeasy_substack&utm_content=en_v1",
@@ -2479,11 +2479,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:54.789Z",
-      "final_copy_updated_at": "2026-06-06T15:55:35.422Z"
+      "final_copy_updated_at": "2026-06-06T16:05:29.288Z"
     },
     {
       "final_copy_id": "fd0ff380-aded-436f-ab05-5d04e17f7b18",
@@ -2518,7 +2518,7 @@
       "product_id": "290322bd-8b78-4ca3-97c1-1a869f17c747",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Synthesia Review: AI Video Generation for Creators and Small Teams in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Synthesia Is\n\nSynthesia is an AI video generation platform that turns written scripts into professional video presentations with realistic AI avatars and voiceovers. It removes the need for cameras, studios, actors, or video editing software.\n\n## Key Features\n\n- 230+ AI avatars across multiple ethnicities and styles\n- 140+ languages and accents for voiceover\n- Custom avatar creation (premium tiers)\n- Template library for common video formats\n- Built-in editor for slides, transitions, and music\n- Team collaboration features\n- API access for higher-tier plans\n\n## Who It Is For\n\nSolo content creators, marketing teams, internal training departments, course creators, and small businesses that need to produce video at scale without a production crew. Great for product reviews, explainer videos, internal training, and short marketing clips.\n\n## Who It Is Not For\n\nTeams that need very specific actor performance, cinematic productions, or emotional storytelling. AI avatars are excellent for talking-head content but cannot replace human nuance for narrative work.\n\n## Pros\n\n- Turns a script into video in minutes\n- Multiple languages from one script\n- No camera, lighting, or editing skills required\n- Consistent on-brand video output\n- Scales cheaply once you know the workflow\n\n## Cons\n\n- Monthly subscription required for serious use\n- AI avatars still feel slightly synthetic on close inspection\n- Custom avatars cost extra and require enterprise tier\n- Output style is constrained — not for cinematic work\n\n## Pricing\n\nPersonal plans start with a small free tier (limited minutes per month). Paid Starter and Creator plans add more minutes, avatars, and features. Enterprise plans include custom avatars and API access.\n\n## Practical Take\n\nIf you publish video content regularly and want to skip the production headache, Synthesia is one of the strongest AI video tools available in 2026. The avatars and voices have improved dramatically and the editor is approachable enough for non-video-experts.\n\n## Call to Action\n\nTry Synthesia here:\n\nhttps://www.synthesia.io/?via=meni&utm_source=medium&utm_medium=organic&utm_campaign=synthesia_medium&utm_content=en_v1",
@@ -2533,11 +2533,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T18:15:12.074Z",
-      "final_copy_updated_at": "2026-06-06T15:55:36.070Z"
+      "final_copy_updated_at": "2026-06-06T16:05:12.275Z"
     },
     {
       "final_copy_id": "b6c8e483-5289-4f23-8707-de5a0e1c3dec",
@@ -2597,7 +2597,7 @@
       "product_id": "290322bd-8b78-4ca3-97c1-1a869f17c747",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Synthesia Review: A Practical Look at AI Video for Solo Creators",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Synthesia\n\nIf you publish video content but cannot justify a camera setup, lighting, and editing pipeline, Synthesia is one of the cleanest paths to professional-looking video in 2026. You write a script, pick an AI avatar and voice, and the platform generates the finished video.\n\n## What Stands Out\n\n- **Speed** — script in, video out in minutes\n- **Multilingual reach** — 140+ languages from the same script\n- **Avatar library** — 230+ presenters across styles and ethnicities\n- **Templates** — for explainers, social cuts, product reviews\n- **Built-in editor** — slides, captions, transitions, soundtrack\n\n## Where It Falls Short\n\n- Subscription cost on top of any other tools you use\n- AI avatars still read slightly synthetic on close inspection\n- Custom avatars are gated behind higher tiers\n- Output is constrained to talking-head and slide formats\n\n## Who Should Try It\n\nSolo content creators, course teachers, internal training teams, marketing teams running multilingual campaigns, and reviewers who want to add video to written content without a full production stack.\n\n## Bottom Line\n\nSynthesia is worth testing on the free tier if you produce video regularly or want to add video to a written publishing pipeline.\n\n## Call to Action\n\nTry Synthesia here:\n\nhttps://www.synthesia.io/?via=meni&utm_source=substack&utm_medium=organic&utm_campaign=synthesia_substack&utm_content=en_v1",
@@ -2612,11 +2612,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T18:15:14.643Z",
-      "final_copy_updated_at": "2026-06-06T15:55:36.391Z"
+      "final_copy_updated_at": "2026-06-06T16:05:02.520Z"
     },
     {
       "final_copy_id": "53b018ab-94a3-4bfa-bf94-027f0d0168a5",
@@ -2871,7 +2871,7 @@
       "product_id": "eff480cb-2bcb-48dc-9539-b742ff01a130",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "UptimeRobot Review: Uptime Monitoring for SaaS founders in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why UptimeRobot\n\nWebsite and API uptime monitoring with public status pages and instant alerts via email, SMS, Slack, and webhooks.\n\nThe angle that makes it interesting: uptime monitoring you can actually trust with a free tier that already covers a real production site.\n\n## Use Cases\n\n- HTTP and HTTPS endpoint monitoring\n- Public status pages for customers\n- Multi-channel incident alerts\n- SSL certificate expiry warnings\n- Heartbeat and cron monitoring\n\n## Who It Fits\n\nSaaS founders, devops teams, agencies running multiple client sites.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on the existing stack\n- Some advanced features live on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work UptimeRobot is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry UptimeRobot here:\n\nhttps://uptimerobot.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=uptimerobot_medium&utm_content=en_v1",
@@ -2886,11 +2886,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:40.866Z",
-      "final_copy_updated_at": "2026-06-06T15:55:37.998Z"
+      "final_copy_updated_at": "2026-06-06T16:04:54.918Z"
     },
     {
       "final_copy_id": "9a94ae4f-2308-4bdc-bdec-27b2343d4b8c",
@@ -2898,7 +2898,7 @@
       "product_id": "eff480cb-2bcb-48dc-9539-b742ff01a130",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "UptimeRobot: A Practical Uptime Monitoring Look",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why UptimeRobot\n\nWebsite and API uptime monitoring with public status pages and instant alerts via email, SMS, Slack, and webhooks.\n\nWhy I looked at it: uptime monitoring you can actually trust with a free tier that already covers a real production site.\n\n## Use Cases\n\n- HTTP and HTTPS endpoint monitoring\n- Public status pages for customers\n- Multi-channel incident alerts\n- SSL certificate expiry warnings\n- Heartbeat and cron monitoring\n\n## Who It Fits\n\nSaaS founders, devops teams, agencies running multiple client sites.\n\n## Honest Tradeoffs\n\n- Monthly subscription for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you already do the work UptimeRobot is built for, worth evaluating against your current setup. Start on the lowest tier before committing.\n\n## Call to Action\n\nTry UptimeRobot here:\n\nhttps://uptimerobot.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=uptimerobot_substack&utm_content=en_v1",
@@ -2913,11 +2913,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-06T07:04:42.165Z",
-      "final_copy_updated_at": "2026-06-06T15:55:38.320Z"
+      "final_copy_updated_at": "2026-06-06T16:04:45.824Z"
     },
     {
       "final_copy_id": "67b124d7-5252-4e19-848d-769468288ddd",
@@ -2952,7 +2952,7 @@
       "product_id": "22029272-dbbb-4904-a6f6-4b714f405664",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Warmup Inbox Review: Cold Email Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Warmup Inbox Is\n\nEmail warmup service that improves cold email deliverability by gradually building sender reputation.\n\n## Key Use Cases\n\n- Warm new sender domains\n- Maintain deliverability for active sequences\n- Avoid spam folders after switching ESPs\n\n## Who It Is For\n\nWarmup Inbox fits outbound sales teams, cold email senders, agencies. The angle that makes it interesting is: email warmup to keep cold sequences out of spam folders.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of outbound sales teams, cold email senders, agencies\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Warmup Inbox is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Warmup Inbox here:\n\nhttps://www.warmupinbox.com/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=warmup-inbox_medium&utm_content=en_v1",
@@ -2967,11 +2967,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:35.044Z",
-      "final_copy_updated_at": "2026-06-06T15:55:38.964Z"
+      "final_copy_updated_at": "2026-06-06T16:04:36.401Z"
     },
     {
       "final_copy_id": "00cfd563-856b-4773-8454-bea18627aed1",
@@ -3031,7 +3031,7 @@
       "product_id": "22029272-dbbb-4904-a6f6-4b714f405664",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Warmup Inbox Review: A Practical Look for outbound sales teams",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Warmup Inbox\n\nEmail warmup service that improves cold email deliverability by gradually building sender reputation.\n\nThe angle that makes it interesting: email warmup to keep cold sequences out of spam folders.\n\n## Use Cases\n\n- Warm new sender domains\n- Maintain deliverability for active sequences\n- Avoid spam folders after switching ESPs\n\n## Who It Fits\n\noutbound sales teams, cold email senders, agencies.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Warmup Inbox is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Warmup Inbox here:\n\nhttps://www.warmupinbox.com/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=warmup-inbox_substack&utm_content=en_v1",
@@ -3046,11 +3046,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:22:37.593Z",
-      "final_copy_updated_at": "2026-06-06T15:55:39.285Z"
+      "final_copy_updated_at": "2026-06-06T16:04:26.294Z"
     },
     {
       "final_copy_id": "319a6879-c7bf-4e5d-939f-2b9bc508b10d",
@@ -3209,7 +3209,7 @@
       "product_id": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Woodpecker Review: Cold Email Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Woodpecker Is\n\nCold email and LinkedIn outreach automation built to keep messages out of spam.\n\n## Key Use Cases\n\n- Run cold email sequences\n- Track replies and opens\n- Pair cold email with LinkedIn outreach\n\n## Who It Is For\n\nWoodpecker fits outbound sales teams, agencies, solo founders running cold outreach. The angle that makes it interesting is: cold email automation that focuses on deliverability and inbox placement.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of outbound sales teams, agencies, solo founders running cold outreach\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Woodpecker is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Woodpecker here:\n\nhttps://woodpecker.co/?red=rubinq&utm_source=medium&utm_medium=organic&utm_campaign=woodpecker_medium&utm_content=en_v1",
@@ -3224,11 +3224,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:43.518Z",
-      "final_copy_updated_at": "2026-06-06T15:55:39.932Z"
+      "final_copy_updated_at": "2026-06-06T16:04:01.932Z"
     },
     {
       "final_copy_id": "420f3960-56ce-405d-879a-4f4f5da442e9",
@@ -3288,7 +3288,7 @@
       "product_id": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Woodpecker Review: A Practical Look for outbound sales teams",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Woodpecker\n\nCold email and LinkedIn outreach automation built to keep messages out of spam.\n\nThe angle that makes it interesting: cold email automation that focuses on deliverability and inbox placement.\n\n## Use Cases\n\n- Run cold email sequences\n- Track replies and opens\n- Pair cold email with LinkedIn outreach\n\n## Who It Fits\n\noutbound sales teams, agencies, solo founders running cold outreach.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Woodpecker is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Woodpecker here:\n\nhttps://woodpecker.co/?red=rubinq&utm_source=substack&utm_medium=organic&utm_campaign=woodpecker_substack&utm_content=en_v1",
@@ -3303,11 +3303,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:46.069Z",
-      "final_copy_updated_at": "2026-06-06T15:55:40.252Z"
+      "final_copy_updated_at": "2026-06-06T16:03:50.412Z"
     },
     {
       "final_copy_id": "865687cc-f506-45f3-9ec7-4e3048efbcdb",
@@ -3342,7 +3342,7 @@
       "product_id": "6d7e564a-a8c1-4d33-b3d8-2ba9d5898432",
       "language": "en",
       "platform": "medium",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Writecream Review: AI Writing Tool Worth Evaluating in 2026",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## What Writecream Is\n\nAI writing assistant for cold emails, blog posts, marketing copy, voiceovers, and image generation.\n\n## Key Use Cases\n\n- Cold email outreach with personalized openers\n- Blog and SEO articles\n- Voiceover scripts and AI voices\n- AI image generation for posts\n- LinkedIn and social copy\n\n## Who It Is For\n\nWritecream fits solo creators, freelance copywriters, small marketing teams. The angle that makes it interesting is: all-in-one AI writing studio that covers cold email, blog content, voiceover, and images in one tool.\n\n## Pros\n\n- Built for a focused workflow rather than generic productivity\n- Fits naturally into the day-to-day of solo creators, freelance copywriters, small marketing teams\n- Reasonable starting tier for solo users and small teams\n\n## Cons\n\n- Monthly subscription required for serious use\n- Like any specialized tool, the right fit depends on the existing stack\n- Some advanced features sit on higher tiers\n\n## Pricing\n\nPricing tiers and plan limits change over time — check the official site for current numbers before committing.\n\n## Practical Take\n\nIf you are already doing the work that Writecream is built for, the tool is worth a real evaluation rather than another generic alternative. Test it against your current workflow before paying for a long subscription.\n\n## Call to Action\n\nTry Writecream here:\n\nhttps://www.writecream.com/?gr_pk=Qg8m&utm_source=medium&utm_medium=organic&utm_campaign=writecream_medium&utm_content=en_v1",
@@ -3357,11 +3357,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:17.669Z",
-      "final_copy_updated_at": "2026-06-06T15:55:40.896Z"
+      "final_copy_updated_at": "2026-06-06T16:03:20.150Z"
     },
     {
       "final_copy_id": "f2905433-17c3-4a27-9cb4-2423a52c549d",
@@ -3421,7 +3421,7 @@
       "product_id": "6d7e564a-a8c1-4d33-b3d8-2ba9d5898432",
       "language": "en",
       "platform": "substack",
-      "status": "ready_for_operator_approval",
+      "status": "operator_approved",
       "validation_status": "valid",
       "post_title": "Writecream Review: A Practical Look for solo creators",
       "full_post_text": "Affiliate disclosure: This post contains an affiliate link.\n\n## Why Writecream\n\nAI writing assistant for cold emails, blog posts, marketing copy, voiceovers, and image generation.\n\nThe angle that makes it interesting: all-in-one AI writing studio that covers cold email, blog content, voiceover, and images in one tool.\n\n## Use Cases\n\n- Cold email outreach with personalized openers\n- Blog and SEO articles\n- Voiceover scripts and AI voices\n- AI image generation for posts\n- LinkedIn and social copy\n\n## Who It Fits\n\nsolo creators, freelance copywriters, small marketing teams.\n\n## Honest Tradeoffs\n\n- Monthly subscription required for serious use\n- Specialized tool — fit depends on existing stack\n- Advanced features on higher tiers\n\n## Bottom Line\n\nIf you are already doing the work Writecream is built for, evaluate it against your current stack. The starter tier is usually enough to test before paying.\n\n## Call to Action\n\nTry Writecream here:\n\nhttps://www.writecream.com/?gr_pk=Qg8m&utm_source=substack&utm_medium=organic&utm_campaign=writecream_substack&utm_content=en_v1",
@@ -3436,11 +3436,11 @@
       "video_suitable_for": [],
       "published_record_exists": false,
       "published_record_live_url": null,
-      "publish_job_exists": false,
+      "publish_job_exists": true,
       "blocking_reasons": [],
       "version": 1,
       "final_copy_created_at": "2026-06-05T19:21:20.223Z",
-      "final_copy_updated_at": "2026-06-06T15:55:41.217Z"
+      "final_copy_updated_at": "2026-06-06T16:03:08.896Z"
     }
   ]
 }
