@@ -1,0 +1,15 @@
+{
+  "product": "Reditus",
+  "platform": "medium",
+  "language": "he",
+  "status": "ready_for_operator_approval",
+  "affiliate_link": "https://www.getreditus.com/?red=rubinq",
+  "source_content_id": "a80035eb-1705-400e-978e-754eefa8a1be",
+  "platform_adaptation_id": "58bb893f-e60a-49e7-ba81-e7b8dde3d2d7",
+  "final_copy_id": "ef3e248a-c028-40b5-a77e-ded08043d2f9",
+  "validation_status": "valid",
+  "blocking_reasons": [],
+  "reviewer_status": "ready_for_review",
+  "reviewer_notes": "מוכן לאישור MENI - גרסה עברית עם תמונה עברית",
+  "content_hash": "fe2b918b8e7091a3"
+}
