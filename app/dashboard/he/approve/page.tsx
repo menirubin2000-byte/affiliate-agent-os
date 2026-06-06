@@ -35,6 +35,7 @@ type FinalCopyDetail = {
   validationStatus: string
   blockingReasons: string[]
   updatedAt: string | null
+  language: "en" | "he"
 }
 
 type AffiliateProgramSummary = {
@@ -477,6 +478,9 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {sourceBadge}
+          <Badge variant={detail.language === "he" ? "default" : "outline"}>
+            {detail.language === "he" ? "🇮🇱 עברית" : "🇬🇧 English"}
+          </Badge>
           <Badge variant="secondary">{route.platform.contentType}</Badge>
           {assetStatus?.imageStatus === "ready" ? (
             <Badge variant="default">🖼 image ready</Badge>
@@ -621,7 +625,7 @@ function pickTopCandidates(input: {
   details: Map<string, FinalCopyDetail>
   programs: Map<string, AffiliateProgramSummary>
   links: Map<string, CampaignLinkSummary>
-  images: Map<string, string>
+  images: Map<string, ProductImages>
   assetStatuses: Map<string, ProductAssetStatus>
   rankingIndex: Map<string, TrafficEngineRanking>
   internalIndex: Map<string, InternalTrafficScore>
@@ -639,7 +643,8 @@ function pickTopCandidates(input: {
       }
       const program = input.programs.get(route.productId) ?? null
       const campaignLink = input.links.get(route.productId) ?? null
-      const imageUrl = input.images.get(route.productId) ?? null
+      const productImages = input.images.get(route.productId) ?? null
+      const imageUrl = pickImageForLanguage(productImages, detail.language)
       const assetStatus = input.assetStatuses.get(route.productId) ?? null
       const ranking = input.rankingIndex.get(`${route.productId}::${route.platform.key}`) ?? null
       const internalScore =
@@ -716,7 +721,7 @@ async function loadFinalCopyDetails(ids: string[]): Promise<Map<string, FinalCop
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("final_copies")
-    .select("id, body, validation_status, blocking_reasons, updated_at")
+    .select("id, body, validation_status, blocking_reasons, updated_at, language")
     .in("id", ids)
   if (error || !data) return map
   for (const row of data as Array<{
@@ -725,12 +730,14 @@ async function loadFinalCopyDetails(ids: string[]): Promise<Map<string, FinalCop
     validation_status: string | null
     blocking_reasons: unknown
     updated_at: string | null
+    language: string | null
   }>) {
     map.set(row.id, {
       body: row.body ?? "",
       validationStatus: row.validation_status ?? "unknown",
       blockingReasons: Array.isArray(row.blocking_reasons) ? (row.blocking_reasons as string[]) : [],
       updatedAt: row.updated_at,
+      language: row.language === "he" ? "he" : "en",
     })
   }
   return map
@@ -764,19 +771,31 @@ async function loadAffiliateProgramSummaries(productIds: string[]): Promise<Map<
   return map
 }
 
-async function loadProductImages(productIds: string[]): Promise<Map<string, string>> {
-  const map = new Map<string, string>()
+type ProductImages = { en: string | null; he: string | null }
+
+async function loadProductImages(productIds: string[]): Promise<Map<string, ProductImages>> {
+  const map = new Map<string, ProductImages>()
   if (productIds.length === 0) return map
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("products")
-    .select("id, image_url")
+    .select("id, image_url, image_url_he")
     .in("id", productIds)
   if (error || !data) return map
-  for (const row of data as Array<{ id: string; image_url: string | null }>) {
-    if (row.image_url) map.set(row.id, row.image_url)
+  for (const row of data as Array<{
+    id: string
+    image_url: string | null
+    image_url_he: string | null
+  }>) {
+    map.set(row.id, { en: row.image_url, he: row.image_url_he })
   }
   return map
+}
+
+function pickImageForLanguage(images: ProductImages | null, language: "en" | "he"): string | null {
+  if (!images) return null
+  if (language === "he" && images.he) return images.he
+  return images.en ?? images.he ?? null
 }
 
 type ProductAssetStatus = {
