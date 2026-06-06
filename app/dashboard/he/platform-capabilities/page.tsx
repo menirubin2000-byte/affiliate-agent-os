@@ -61,9 +61,13 @@ function getXBlockingReason(status: StoredConnectionStatus) {
 }
 
 export default async function PlatformCapabilitiesPage() {
-  const [xConnection] = await Promise.all([getPlatformConnection("x")])
+  const [xConnection, youtubeConnection] = await Promise.all([
+    getPlatformConnection("x"),
+    getPlatformConnection("youtube"),
+  ])
   const capabilities = getPlatformCapabilities()
   const xStoredStatus = getXConnectionStatus(xConnection)
+  const youtubeStoredStatus = youtubeConnection?.status ?? "not_connected"
 
   return (
     <div dir="rtl" className="space-y-6">
@@ -90,6 +94,7 @@ export default async function PlatformCapabilitiesPage() {
       <section className="space-y-4">
         {capabilities.map((capability) => {
           const isX = capability.platform === "x_twitter"
+          const isYouTube = capability.platform === "youtube"
 
           return (
             <Card key={capability.platform}>
@@ -104,6 +109,7 @@ export default async function PlatformCapabilitiesPage() {
                     <Badge variant="destructive">{connectionLabels[capability.connectionStatus]}</Badge>
                     <Badge variant="outline">{affiliateLabels[capability.affiliateContentPolicy]}</Badge>
                     {isX ? <Badge variant="secondary">{xStoredStatusLabels[xStoredStatus]}</Badge> : null}
+                    {isYouTube ? <Badge variant="secondary">{xStoredStatusLabels[youtubeStoredStatus]}</Badge> : null}
                   </div>
                 </div>
               </CardHeader>
@@ -117,6 +123,10 @@ export default async function PlatformCapabilitiesPage() {
 
                 {isX ? (
                   <XConnectionPanel connection={xConnection} status={xStoredStatus} />
+                ) : null}
+
+                {isYouTube ? (
+                  <YouTubeConnectionPanel connection={youtubeConnection} status={youtubeStoredStatus} />
                 ) : null}
 
                 {capability.operatorProfileUrl ? (
@@ -139,6 +149,15 @@ export default async function PlatformCapabilitiesPage() {
                     className="inline-flex rounded-md border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                   >
                     חבר X רשמי
+                  </a>
+                ) : null}
+
+                {isYouTube ? (
+                  <a
+                    href="/api/auth/youtube/connect"
+                    className="inline-flex rounded-md border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    חבר YouTube רשמי
                   </a>
                 ) : null}
 
@@ -195,6 +214,59 @@ function XConnectionPanel({
       ) : null}
       <div className="mt-3 text-xs text-muted-foreground">
         אסימונים לא מוצגים במסך ולא נשלפים בשדות ציבוריים.
+      </div>
+    </div>
+  )
+}
+
+function getYouTubeBlockingReason(status: StoredConnectionStatus) {
+  if (status === "api_access_not_ready") {
+    return "חסום - YOUTUBE_API_ACCESS_READY=false. הערוץ יכול להיות מחובר, אבל פרסום דרך YouTube API נשאר כבוי עד שהגישה מאושרת ויש וידאו אמיתי."
+  }
+  if (status === "requires_reconnect") {
+    return "דורש חיבור מחדש - תוקף OAuth פג או שהמערכת צריכה אישור Google חדש."
+  }
+  if (status === "not_connected") {
+    return "לא מחובר - MENI צריך ללחוץ על חבר YouTube רשמי ולהשלים OAuth מול Google."
+  }
+  return "מחובר דרך Google OAuth. פרסום עדיין חסום עד שיש Final Copy מאושר עם וידאו אמיתי ואישור מפורש."
+}
+
+function YouTubeConnectionPanel({
+  connection,
+  status,
+}: {
+  connection: PlatformConnection | null
+  status: StoredConnectionStatus
+}) {
+  const channelId = typeof connection?.metadata.channel_id === "string"
+    ? connection.metadata.channel_id
+    : null
+  const channelTitle = typeof connection?.metadata.channel_title === "string"
+    ? connection.metadata.channel_title
+    : null
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="font-medium">סטטוס חיבור YouTube</div>
+          <div className="mt-1 text-muted-foreground">{getYouTubeBlockingReason(status)}</div>
+        </div>
+        <Badge variant={status === "connected" ? "secondary" : "destructive"}>
+          {xStoredStatusLabels[status]}
+        </Badge>
+      </div>
+      {connection ? (
+        <div className="mt-3 grid gap-2 md:grid-cols-4" dir="ltr">
+          <CapabilityDetail label="connected_at" value={connection.connectedAt ?? "not available"} />
+          <CapabilityDetail label="expires_at" value={connection.expiresAt ?? "not provided"} />
+          <CapabilityDetail label="channel_id" value={channelId ?? "not detected"} />
+          <CapabilityDetail label="channel_title" value={channelTitle ?? "not detected"} />
+        </div>
+      ) : null}
+      <div className="mt-3 text-xs text-muted-foreground">
+        הטוקנים לא מוצגים במסך ולא נשמרים בשדות ציבוריים. YouTube נשאר וידאו בלבד, בלי פרסום טקסט.
       </div>
     </div>
   )

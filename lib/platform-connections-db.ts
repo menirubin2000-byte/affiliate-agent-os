@@ -1,6 +1,6 @@
 import "server-only"
 
-import { buildXConnectionUpsert } from "@/lib/platform-connections"
+import { buildXConnectionUpsert, buildYouTubeConnectionUpsert } from "@/lib/platform-connections"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type {
   PlatformConnection,
@@ -8,6 +8,7 @@ import type {
   PlatformConnectionStatus,
 } from "@/types/platform-connection"
 import type { XOAuthTokenResponse } from "@/lib/x-official-api"
+import type { YouTubeChannel, YouTubeOAuthTokenResponse } from "@/lib/youtube-official-api"
 
 type PlatformConnectionRow = {
   id: string
@@ -62,6 +63,32 @@ export async function upsertXPlatformConnection(input: {
     .single()
 
   if (error) throw new Error(`Unable to store X connection state: ${error.message}`)
+  return mapConnection(data as PlatformConnectionRow)
+}
+
+export async function upsertYouTubePlatformConnection(input: {
+  token: YouTubeOAuthTokenResponse
+  channel: YouTubeChannel | null
+  connectedBy?: string
+}): Promise<PlatformConnection | null> {
+  if (!isSupabaseConfigured()) return null
+  const supabase = getServiceRoleSupabase()
+  const payload = buildYouTubeConnectionUpsert({
+    token: input.token,
+    channel: input.channel,
+    connectedBy: input.connectedBy ?? "MENI",
+    apiAccessReady: process.env.YOUTUBE_API_ACCESS_READY,
+  })
+
+  const { data, error } = await supabase
+    .from("platform_connections")
+    .upsert(payload, { onConflict: "provider" })
+    .select(
+      "id, provider, status, connected_by, connected_at, expires_at, scopes, token_type, refresh_token_present, metadata, created_at, updated_at",
+    )
+    .single()
+
+  if (error) throw new Error(`Unable to store YouTube connection state: ${error.message}`)
   return mapConnection(data as PlatformConnectionRow)
 }
 

@@ -5,9 +5,16 @@ import {
   PINTEREST_BOARD_BLOCKING_REASON,
   PINTEREST_CURRENT_BLOCKING_REASON,
 } from "@/lib/pinterest-official-api"
+import {
+  getYouTubeOfficialApiCapability,
+  YOUTUBE_API_ACCESS_BLOCKING_REASON,
+  YOUTUBE_CURRENT_BLOCKING_REASON,
+  YOUTUBE_VIDEO_ASSET_BLOCKING_REASON,
+} from "@/lib/youtube-official-api"
 
 const CHECKED_AT = "2026-06-05"
 const pinterestCapability = getPinterestOfficialApiCapability()
+const youtubeCapability = getYouTubeOfficialApiCapability()
 
 export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
   {
@@ -160,7 +167,7 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     platform: "youtube",
     label: "YouTube",
     apiAvailability: "official_api_available",
-    connectionStatus: "requires_official_connection",
+    connectionStatus: youtubeCapability.oauthAppConfigured ? "connected" : "requires_official_connection",
     requiredAccountType:
       "Google account with a YouTube channel. YouTube Data API does not support service-account authorization.",
     requiredPermissions: [
@@ -176,12 +183,17 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     browserHelperNotes:
       "Use the YouTube Data API with a real video asset. Unverified API projects upload videos as private until audited.",
     blockers: [
-      "youtube_oauth_not_configured",
+      ...(youtubeCapability.oauthAppConfigured ? [] : [YOUTUBE_CURRENT_BLOCKING_REASON]),
+      ...(youtubeCapability.invalidReasons.includes(YOUTUBE_API_ACCESS_BLOCKING_REASON)
+        ? [YOUTUBE_API_ACCESS_BLOCKING_REASON]
+        : []),
+      YOUTUBE_VIDEO_ASSET_BLOCKING_REASON,
       "youtube_channel_not_connected",
-      "youtube_video_asset_required",
       "youtube_api_project_audit_required_for_public_uploads",
     ],
-    nextOperatorAction: "Connect the YouTube channel through Google OAuth after an upload-ready video exists.",
+    nextOperatorAction: youtubeCapability.oauthAppConfigured
+      ? "Connect the YouTube channel through Google OAuth, then publish only approved video jobs."
+      : "Configure YouTube OAuth credentials, then connect the YouTube channel through Google OAuth.",
     sourceUrls: [
       "https://developers.google.com/youtube/v3/guides/uploading_a_video",
       "https://developers.google.com/youtube/v3/guides/authentication",
