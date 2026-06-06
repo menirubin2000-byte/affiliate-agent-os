@@ -4,6 +4,17 @@
 **`/dashboard/he/claude-rules`** (https://affiliate-agent-os.vercel.app/dashboard/he/claude-rules)
 שם רשום: אסור "אי אפשר", חובה 3 ניסיונות, בדיקת `.env.local`, ולדווח "ניסיתי X, Y, Z".
 
+## 📡 Sandbox allowlist - מה אני יכול לקרוא דרך HTTP/fetch ישירות
+לפני שאני מדווח "לא יכול להגיע ל-X" - לבדוק אם הוא ברשימה הזו:
+- `db.gbkwydsodondarccqyet.supabase.co` (Supabase DB)
+- `he.quora.com` (Quora בעברית)
+- `linkedin.com` + `api.linkedin.com` (LinkedIn web + REST API)
+- `medium.com` + `api.medium.com` (Medium web + REST API - יש `MEDIUM_INTEGRATION_TOKEN`)
+- `menirubin.substack.com` (Substack publish)
+
+הרשימה הזו מתוחזקת ע"י MENI ב-Claude Code settings (Domain allowlist).
+אם הדומיין ברשימה - אני יכול לקרוא אליו ישיר. אם לא - לבקש מ-MENI להוסיף.
+
 ## 🔥 חוק 0 — דפדפן MCP פעיל. אל תעצור. אל תשאל אישור שוב לפרסום.
 
 **ה-Claude in Chrome extension אצל MENI מחובר ומאושר על הדומיינים הבאים:**

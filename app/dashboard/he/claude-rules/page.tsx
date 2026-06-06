@@ -24,6 +24,18 @@ const ALLOWED = [
   "הרצת סקריפטים ב-scripts/ שמסונכרנים ל-npm run sync:*.",
   "commit + push לרפו (גם פעולות כתיבה).",
 ]
+
+// Claude Code sandbox allowlist - MENI maintains this in Claude Code settings.
+// Whenever I think 'I can't reach X' - I check this list first.
+const SANDBOX_DOMAINS = [
+  { domain: "db.gbkwydsodondarccqyet.supabase.co", use: "Supabase DB (קריאה/כתיבה דרך service-role)" },
+  { domain: "he.quora.com", use: "Quora בעברית" },
+  { domain: "linkedin.com", use: "LinkedIn web" },
+  { domain: "api.linkedin.com", use: "LinkedIn REST API (פרסום ישיר)" },
+  { domain: "medium.com", use: "Medium web" },
+  { domain: "api.medium.com", use: "Medium REST API (פרסום ישיר עם MEDIUM_INTEGRATION_TOKEN)" },
+  { domain: "menirubin.substack.com", use: "Substack publish endpoint" },
+]
 const FORBIDDEN = [
   "להזין סיסמה / טוקן / קוד 2FA לתוך UI.",
   "auto-approval. רק MENI מאשר final_copy -> operator_approved.",
@@ -71,6 +83,26 @@ export default function ClaudeRulesPage() {
           <ul className="list-inside list-disc space-y-1 text-sm">
             {ALLOWED.map((line, i) => (
               <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle>📡 Sandbox Allowlist - הדומיינים שאני מורשה לגשת אליהם</CardTitle>
+          <CardDescription>
+            לפני שאני מדווח &quot;לא יכול להגיע ל-X&quot; - אני בודק כאן. אם הדומיין ברשימה - אני יכול לקרוא אליו דרך
+            HTTP/fetch ישירות. הרשימה מתוחזקת ע&quot;י MENI ב-Claude Code settings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-1 text-sm">
+            {SANDBOX_DOMAINS.map((d) => (
+              <li key={d.domain} className="flex flex-wrap items-baseline gap-2 rounded border bg-background px-2 py-1">
+                <code className="text-xs">{d.domain}</code>
+                <span className="text-muted-foreground">{d.use}</span>
+              </li>
             ))}
           </ul>
         </CardContent>
