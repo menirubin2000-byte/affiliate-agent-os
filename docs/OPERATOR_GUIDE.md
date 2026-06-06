@@ -1,5 +1,20 @@
 # Operator Guide
 
+## 🔥 Rule 0 — Browser MCP is pre-authorized. Do not stop. Do not ask again.
+
+MENI's Claude in Chrome extension has standing permission for these domains:
+`linkedin.com`, `medium.com`, `menirubin.substack.com`, `he.quora.com`,
+`db.gbkwydsodondarccqyet.supabase.co`.
+
+When MENI says "publish" or "do N products", that is a complete batch
+authorization for those N items. Do not stop mid-batch to re-ask. The
+login session is real even if the first redirect shows a login screen —
+wait, re-read, then proceed. Never enter passwords/tokens.
+
+Repeated mistake to avoid: stopping mid-publish-batch to seek a fresh
+confirmation. Don't.
+
+
 > One-page guide for MENI. Every claim here is verifiable in the live DB.
 > Use `scripts/export-truth.js` to refresh `docs/OPERATOR_SOURCE_OF_TRUTH.md`
 > whenever you want to confirm the numbers.
