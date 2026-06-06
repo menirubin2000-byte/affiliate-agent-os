@@ -5,6 +5,12 @@ import {
   getLinkedInOfficialApiCapability,
   LINKEDIN_CURRENT_BLOCKING_REASON,
 } from "@/lib/linkedin-official-api"
+import {
+  FACEBOOK_CURRENT_BLOCKING_REASON,
+  getFacebookPageOfficialApiCapability,
+  getInstagramOfficialApiCapability,
+  INSTAGRAM_CURRENT_BLOCKING_REASON,
+} from "@/lib/meta-official-api"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { BrowserPlatform } from "@/types/browser-control"
@@ -106,6 +112,13 @@ function relatedFinalCopy(
   return value ?? null
 }
 
+function executorTypeForPlatform(platform: CampaignPlatform) {
+  if (platform === "linkedin") return "linkedin_official_api"
+  if (platform === "facebook_page") return "meta_pages_api"
+  if (platform === "instagram_professional") return "instagram_graph_api"
+  return "browser_helper"
+}
+
 function mapPublishJob(row: PublishJobRow): PublishJob {
   return {
     id: row.id,
@@ -174,6 +187,32 @@ function getExecutorStateForPlatform(
     }
   }
 
+  if (platform === "facebook_page") {
+    if (getFacebookPageOfficialApiCapability().configured) {
+      return {
+        status: "pending_operator_confirmation",
+        blockingReason: null,
+      }
+    }
+    return {
+      status: "blocked_executor_not_connected",
+      blockingReason: FACEBOOK_CURRENT_BLOCKING_REASON,
+    }
+  }
+
+  if (platform === "instagram_professional") {
+    if (getInstagramOfficialApiCapability().configured) {
+      return {
+        status: "pending_operator_confirmation",
+        blockingReason: null,
+      }
+    }
+    return {
+      status: "blocked_executor_not_connected",
+      blockingReason: INSTAGRAM_CURRENT_BLOCKING_REASON,
+    }
+  }
+
   if (platform !== "medium" && platform !== "substack") {
     return {
       status: "blocked_policy",
@@ -233,7 +272,7 @@ export async function refreshPublishJobsForExecutorConnection() {
       .from("publish_jobs")
       .update({
         status: next.status,
-        executor_type: job.platform === "linkedin" ? "linkedin_official_api" : "browser_helper",
+        executor_type: executorTypeForPlatform(job.platform),
         blocking_reason: next.blockingReason,
       })
       .eq("id", job.id)
@@ -285,7 +324,7 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
       product_id: copy.product_id,
       platform: copy.platform,
       status: executorState.status,
-      executor_type: copy.platform === "linkedin" ? "linkedin_official_api" : "browser_helper",
+      executor_type: executorTypeForPlatform(copy.platform),
       blocking_reason: executorState.blockingReason,
       approval_id: approvalId,
       live_url: null,

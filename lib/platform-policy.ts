@@ -12,6 +12,8 @@ export const CAMPAIGN_PLATFORMS: CampaignPlatform[] = [
   "tiktok",
   "quora",
   "reddit",
+  "facebook_page",
+  "instagram_professional",
 ]
 
 interface PolicyInput {
@@ -28,6 +30,8 @@ const PLATFORM_POLICY_SOURCE: Record<CampaignPlatform, string> = {
   tiktok: "https://www.tiktok.com/legal/page/global/bc-policy/en",
   quora: "https://help.quora.com/hc/en-us/articles/9456583756180-Questions-and-Answers-Policies",
   reddit: "https://support.reddithelp.com/hc/en-us/articles/360043504051-What-constitutes-spam",
+  facebook_page: "https://developers.facebook.com/docs/pages-api/posts/",
+  instagram_professional: "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/content-publishing/",
 }
 
 export function platformAllowsDirectAffiliateLinks(platform: CampaignPlatform) {
@@ -102,6 +106,26 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       publishMode: "api",
       notes: "LinkedIn publishing is allowed only through an approved official API application. No browser-helper or manual publishing fallback is assigned to MENI.",
       blocker: "linkedin_developer_app_blocked_not_enough_connections",
+    })
+  }
+
+  if (input.platform === "facebook_page") {
+    return buildPolicy({
+      platform: input.platform,
+      status: "allowed",
+      publishMode: "api",
+      notes: "Facebook Page publishing is allowed only through the official Meta Pages API with affiliate disclosure.",
+      blocker: null,
+    })
+  }
+
+  if (input.platform === "instagram_professional") {
+    return buildPolicy({
+      platform: input.platform,
+      status: input.hasVideoAsset ? "allowed" : "requires_manual_verification",
+      publishMode: "api",
+      notes: "Instagram publishing requires a Professional account, official API access, commercial disclosure, and a visual asset.",
+      blocker: input.hasVideoAsset ? null : "instagram_media_asset_required",
     })
   }
 

@@ -1,6 +1,13 @@
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { FinalCopyStatus, FinalCopyValidationStatus } from "@/types/content-review"
 import type { PublishJobStatus } from "@/types/publish-job"
+import {
+  FACEBOOK_CURRENT_BLOCKING_REASON,
+  getFacebookPageOfficialApiCapability,
+  getInstagramOfficialApiCapability,
+  INSTAGRAM_CURRENT_BLOCKING_REASON,
+} from "@/lib/meta-official-api"
+import { getPinterestOfficialApiCapability } from "@/lib/pinterest-official-api"
 
 export type PlatformRoutingKey =
   | CampaignPlatform
@@ -221,10 +228,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "פוסט עמוד",
     publishMode: "official_api",
     approvalRequired: true,
-    status: "pending_setup",
+    status: getFacebookPageOfficialApiCapability().configured ? "active" : "pending_setup",
     directAffiliateLinksAllowed: true,
     policySummary: "ממתין לחשבון/עמוד וחיבור Graph API רשמי.",
-    setupBlocker: "facebook_page_pending_setup",
+    setupBlocker: getFacebookPageOfficialApiCapability().configured ? null : FACEBOOK_CURRENT_BLOCKING_REASON,
   },
   {
     key: "instagram_professional",
@@ -234,10 +241,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "תמונה / ריל",
     publishMode: "official_api",
     approvalRequired: true,
-    status: "pending_setup",
+    status: getInstagramOfficialApiCapability().configured ? "active" : "pending_setup",
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש חשבון מקצועי וחיבור Meta רשמי.",
-    setupBlocker: "instagram_api_not_connected",
+    setupBlocker: getInstagramOfficialApiCapability().configured ? null : INSTAGRAM_CURRENT_BLOCKING_REASON,
   },
   {
     key: "pinterest",
@@ -247,10 +254,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "Pin",
     publishMode: "official_api",
     approvalRequired: true,
-    status: "pending_setup",
+    status: getPinterestOfficialApiCapability().publishReady ? "active" : "pending_setup",
     directAffiliateLinksAllowed: true,
-    policySummary: "פרופיל ידוע, אבל API/OAuth עדיין לא מחובר.",
-    setupBlocker: "pinterest_api_not_connected",
+    policySummary: "פרופיל ידוע. פרסום דורש Pinterest API רשמי, access token, board יעד ונכס ויזואלי.",
+    setupBlocker: getPinterestOfficialApiCapability().blockingReason,
   },
   {
     key: "x_twitter",

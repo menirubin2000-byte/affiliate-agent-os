@@ -7,6 +7,8 @@ export const APPROVED_BROWSER_DOMAINS = [
   "tiktok.com",
   "quora.com",
   "reddit.com",
+  "facebook.com",
+  "instagram.com",
   "partnerstack.com",
   "impact.com",
   "systeme.io",
@@ -52,6 +54,8 @@ export function detectBrowserPlatform(url: string | null | undefined): BrowserPl
     if (hostname.endsWith("tiktok.com")) return "tiktok"
     if (hostname.endsWith("quora.com")) return "quora"
     if (hostname.endsWith("reddit.com")) return "reddit"
+    if (hostname.endsWith("facebook.com")) return "facebook_page"
+    if (hostname.endsWith("instagram.com")) return "instagram_professional"
     if (hostname.endsWith("partnerstack.com")) return "partnerstack"
     if (hostname.endsWith("impact.com")) return "impact"
     if (hostname.endsWith("systeme.io")) return "systeme"
@@ -103,6 +107,20 @@ export function isValidPublishedPostUrl(url: string, platform?: string | null) {
 
     if (platform === "quora") {
       return pathname !== "/" && pathname.length > 1
+    }
+
+    if (platform === "facebook_page") {
+      return (
+        pathname.includes("/posts/") ||
+        pathname.includes("/photos/") ||
+        pathname.includes("/videos/") ||
+        pathname.includes("/permalink/") ||
+        /^\/\d+(_\d+)?\/?$/.test(pathname)
+      )
+    }
+
+    if (platform === "instagram_professional") {
+      return pathname.includes("/p/") || pathname.includes("/reel/")
     }
 
     return false

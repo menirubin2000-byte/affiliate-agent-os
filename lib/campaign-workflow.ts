@@ -150,7 +150,15 @@ function hasTargetKeyword(combined: string, targetKeyword: string | null) {
 
 function minimumLengthForPlatform(platform: CampaignPlatform) {
   if (platform === "tiktok") return 180
-  if (platform === "linkedin" || platform === "quora" || platform === "reddit") return 280
+  if (
+    platform === "linkedin" ||
+    platform === "quora" ||
+    platform === "reddit" ||
+    platform === "facebook_page" ||
+    platform === "instagram_professional"
+  ) {
+    return 280
+  }
   return 700
 }
 
@@ -163,6 +171,12 @@ function isPlatformCompatible(platform: CampaignPlatform, body: string) {
   }
   if (platform === "reddit") {
     return hasDisclosure(body)
+  }
+  if (platform === "facebook_page") {
+    return body.length <= 5000
+  }
+  if (platform === "instagram_professional") {
+    return body.length <= 2200
   }
   return true
 }

@@ -5,6 +5,8 @@ export type CampaignPlatform =
   | "tiktok"
   | "quora"
   | "reddit"
+  | "facebook_page"
+  | "instagram_professional"
 
 export type AutoQualityStatus = "pending" | "auto_quality_passed" | "blocked"
 

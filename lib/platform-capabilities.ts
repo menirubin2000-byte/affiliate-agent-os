@@ -1,7 +1,13 @@
 import type { PlatformCapability } from "@/types/platform-capability"
 import { PINTEREST_OPERATOR_PROFILE_URL } from "@/lib/operator-social-profiles"
+import {
+  getPinterestOfficialApiCapability,
+  PINTEREST_BOARD_BLOCKING_REASON,
+  PINTEREST_CURRENT_BLOCKING_REASON,
+} from "@/lib/pinterest-official-api"
 
 const CHECKED_AT = "2026-06-05"
+const pinterestCapability = getPinterestOfficialApiCapability()
 
 export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
   {
@@ -76,7 +82,7 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     platform: "pinterest",
     label: "Pinterest",
     apiAvailability: "official_api_available",
-    connectionStatus: "requires_official_connection",
+    connectionStatus: pinterestCapability.connected ? "connected" : "requires_official_connection",
     requiredAccountType:
       "Pinterest Business account to administer the developer app, plus access to the destination board.",
     requiredPermissions: [
@@ -95,12 +101,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
       "Use the official Pinterest API after app approval. A visual asset and destination board are required.",
     operatorProfileUrl: PINTEREST_OPERATOR_PROFILE_URL,
     blockers: [
-      "pinterest_app_not_approved",
-      "pinterest_account_not_connected",
-      "pinterest_board_not_selected",
+      ...(pinterestCapability.connected ? [] : [PINTEREST_CURRENT_BLOCKING_REASON]),
+      ...(pinterestCapability.missingKeys.includes("PINTEREST_BOARD_ID")
+        ? [PINTEREST_BOARD_BLOCKING_REASON]
+        : []),
       "pinterest_visual_asset_required",
     ],
-    nextOperatorAction: "Connect Pinterest OAuth and select an authorized destination board.",
+    nextOperatorAction: pinterestCapability.publishReady
+      ? "Pinterest API is connected. Create only approved publish jobs with a visual asset and verified board."
+      : "Connect Pinterest OAuth/access token and select an authorized destination board.",
     sourceUrls: [
       "https://developer.pinterest.com/docs/content/",
       "https://developer.pinterest.com/docs/getting-started/introduction/",

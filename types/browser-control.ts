@@ -16,6 +16,8 @@ export type BrowserPlatform =
   | "tiktok"
   | "quora"
   | "reddit"
+  | "facebook_page"
+  | "instagram_professional"
   | "partnerstack"
   | "impact"
   | "systeme"

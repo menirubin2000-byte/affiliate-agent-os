@@ -16,12 +16,12 @@ const product = {
   affiliateUrl: "https://example.com/affiliate",
 }
 
-test("Facebook stays pending setup in central platform routing", () => {
+test("Facebook stays pending setup until official API credentials are configured", () => {
   const facebook = getPlatformRoutingDefinition("facebook_page")
 
   assert.equal(facebook?.status, "pending_setup")
   assert.equal(facebook?.publishMode, "official_api")
-  assert.equal(facebook?.setupBlocker, "facebook_page_pending_setup")
+  assert.equal(facebook?.setupBlocker, "facebook_page_official_api_not_configured")
 })
 
 test("central routing includes active and future platform definitions", () => {
