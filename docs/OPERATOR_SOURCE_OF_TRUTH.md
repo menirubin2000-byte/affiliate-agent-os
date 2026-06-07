@@ -1,14 +1,14 @@
 # Operator Source of Truth
 
-_Generated: 2026-06-07T14:01:28.069Z_
+_Generated: 2026-06-07T17:16:00.892Z_
 
 Numbers come from the production routing function via `scripts/audit-via-prod.ts`.
 They match `/dashboard/he` exactly.
 
 ## Operator-facing buckets
 
-- **ממתינים לאישור MENI:** 58
-- **אושר ומוכן לפרסום:** 46
+- **ממתינים לאישור MENI:** 50
+- **אושר ומוכן לפרסום:** 54
 - **פורסם ואומת:** 16
 - **חסר campaign_link:** 0
 - **חסר תמונה:** 0
@@ -21,11 +21,11 @@ They match `/dashboard/he` exactly.
 
 ## Underlying route states (raw)
 - manual_only_platform: 48
-- pending_meni_approval: 58
+- pending_meni_approval: 50
 - platform_disabled: 24
 - platform_pending_setup: 72
 - published_verified: 16
-- ready_for_executor: 46
+- ready_for_executor: 54
 
 ## Guarantees enforced by code
 - ✅ no_ready_without_campaign_link

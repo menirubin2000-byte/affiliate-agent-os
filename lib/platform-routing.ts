@@ -269,10 +269,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     approvalRequired: true,
     status: "active",
     directAffiliateLinksAllowed: false,
-    policySummary: "ידני בלבד. אסור קישור אפיליאייט ישיר. תשובה מועילה ללא URL.",
+    policySummary: "ידני בלבד. אסור affiliate link ישיר. במקום זה — קישור לפלטפורמה אחרת של MENI (LinkedIn / FB Page / Substack / Medium) ששם נמצא הקישור האמיתי.",
     setupBlocker: null,
     requiresCampaignLink: false,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Quora לא READY אוטומטי ולא מקבל affiliate link ישיר." },
+    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד. במקום affiliate link — קישור עקיף ל-LinkedIn/FB/Substack/Medium של MENI ששם נמצא ה-affiliate." },
   },
   {
     key: "reddit",
@@ -284,10 +284,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     approvalRequired: true,
     status: "active",
     directAffiliateLinksAllowed: false,
-    policySummary: "ידני בלבד. תלוי חוקי subreddit. בלי affiliate link.",
+    policySummary: "ידני בלבד. תלוי חוקי subreddit. אסור affiliate link ישיר — במקום זה קישור לפלטפורמה אחרת של MENI (LinkedIn / FB Page / Substack / Medium) ששם הקישור האמיתי.",
     setupBlocker: null,
     requiresCampaignLink: false,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Reddit לא READY אוטומטי עד אימות חוקי subreddit." },
+    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד. במקום affiliate link — קישור עקיף ל-LinkedIn/FB/Substack/Medium של MENI." },
   },
   {
     key: "tiktok",
@@ -404,6 +404,26 @@ export function getPlatformRoutingDefinition(platform: string) {
   return PLATFORM_ROUTING_DEFINITIONS.find((item) => item.key === platform) ?? null
 }
 
+// Re-evaluate FB / IG / Pinterest capability at call time so a Vercel
+// runtime that loads env vars after module init doesn't permanently
+// freeze the dashboard on "pending_setup". The original
+// PLATFORM_ROUTING_DEFINITIONS values are kept as fallback.
+function refreshPlatformDefinitionStatus(def: PlatformRoutingDefinition): PlatformRoutingDefinition {
+  if (def.key === "facebook_page") {
+    const cap = getFacebookPageOfficialApiCapability()
+    return { ...def, status: cap.configured ? "active" : "pending_setup", setupBlocker: cap.configured ? null : FACEBOOK_CURRENT_BLOCKING_REASON }
+  }
+  if (def.key === "instagram_professional") {
+    const cap = getInstagramOfficialApiCapability()
+    return { ...def, status: cap.configured ? "active" : "pending_setup", setupBlocker: cap.configured ? null : INSTAGRAM_CURRENT_BLOCKING_REASON }
+  }
+  if (def.key === "pinterest") {
+    const cap = getPinterestOfficialApiCapability()
+    return { ...def, status: cap.publishReady ? "active" : "pending_setup", setupBlocker: cap.blockingReason }
+  }
+  return def
+}
+
 export function buildPlatformRoutingOverview(input: {
   products: RoutingProductInput[]
   affiliatePrograms: RoutingAffiliateProgramInput[]
@@ -413,9 +433,10 @@ export function buildPlatformRoutingOverview(input: {
   campaignLinks?: RoutingCampaignLinkInput[]
   includePendingSetupPlatforms?: boolean
 }): PlatformRoutingOverview {
+  const refreshed = PLATFORM_ROUTING_DEFINITIONS.map(refreshPlatformDefinitionStatus)
   const platforms = input.includePendingSetupPlatforms
-    ? PLATFORM_ROUTING_DEFINITIONS
-    : PLATFORM_ROUTING_DEFINITIONS.filter((platform) => ROUTED_CORE_PLATFORMS.has(platform.key))
+    ? refreshed
+    : refreshed.filter((platform) => ROUTED_CORE_PLATFORMS.has(platform.key))
 
   const products = input.products
     .map((product) => buildProductRoutingSummary(product, platforms, input))

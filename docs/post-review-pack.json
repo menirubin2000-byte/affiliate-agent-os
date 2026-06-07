@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-07T14:01:28.069Z",
+  "generated_at": "2026-06-07T17:16:00.892Z",
   "products_link_ready": 24,
   "total_routes": 264,
   "buckets": {
-    "ready_for_meni_approval": 58,
-    "operator_approved_publish_ready": 46,
+    "ready_for_meni_approval": 50,
+    "operator_approved_publish_ready": 54,
     "published_verified": 16,
     "needs_campaign_link": 0,
     "needs_image": 0,
@@ -17,10 +17,10 @@
     "true_blocked": 24
   },
   "raw_state_counts": {
-    "pending_meni_approval": 58,
-    "ready_for_executor": 46,
+    "ready_for_executor": 54,
     "manual_only_platform": 48,
     "platform_disabled": 24,
+    "pending_meni_approval": 50,
     "platform_pending_setup": 72,
     "published_verified": 16
   },
@@ -28,8 +28,8 @@
     "products": 24,
     "affiliateReadyProducts": 24,
     "publishedVerified": 16,
-    "waitingApproval": 58,
-    "readyForExecutor": 46,
+    "waitingApproval": 50,
+    "readyForExecutor": 54,
     "blocked": 24,
     "needsImage": 0,
     "needsVideo": 0,
@@ -47,13 +47,6 @@
   },
   "detail": {
     "ready_for_meni_approval": [
-      {
-        "product": "Ad Turbo",
-        "productId": "81f43a1a-fae5-4368-b7c7-7eddc763740b",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
       {
         "product": "Ad Turbo",
         "productId": "81f43a1a-fae5-4368-b7c7-7eddc763740b",
@@ -211,13 +204,6 @@
       {
         "product": "Guideflow",
         "productId": "69f694d7-5555-4af4-8fbc-2d697d908dd8",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Guideflow",
-        "productId": "69f694d7-5555-4af4-8fbc-2d697d908dd8",
         "platform": "facebook_page",
         "hasMediaReady": true,
         "hasFinalCopy": true
@@ -240,13 +226,6 @@
         "product": "Joiin",
         "productId": "230b9849-e3a4-446c-9fd1-c0a440aff9bb",
         "platform": "instagram_professional",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Leader Leads",
-        "productId": "da08e1da-a684-486f-87dc-80b71db92006",
-        "platform": "linkedin",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -281,13 +260,6 @@
       {
         "product": "Reditus",
         "productId": "df6568ae-bb67-4cbb-b1a3-2ff9643b385b",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Reditus",
-        "productId": "df6568ae-bb67-4cbb-b1a3-2ff9643b385b",
         "platform": "facebook_page",
         "hasMediaReady": true,
         "hasFinalCopy": true
@@ -302,13 +274,6 @@
       {
         "product": "Search Atlas",
         "productId": "17830658-e09a-4c75-91d1-6f9b00def09d",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Search Atlas",
-        "productId": "17830658-e09a-4c75-91d1-6f9b00def09d",
         "platform": "facebook_page",
         "hasMediaReady": true,
         "hasFinalCopy": true
@@ -323,13 +288,6 @@
       {
         "product": "SignEasy",
         "productId": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "SignEasy",
-        "productId": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
         "platform": "facebook_page",
         "hasMediaReady": true,
         "hasFinalCopy": true
@@ -338,13 +296,6 @@
         "product": "SignEasy",
         "productId": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
         "platform": "instagram_professional",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Synthesia",
-        "productId": "290322bd-8b78-4ca3-97c1-1a869f17c747",
-        "platform": "linkedin",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -373,13 +324,6 @@
         "product": "Systeme.io",
         "productId": "4564c6df-65d8-4c2b-9797-c8a64944c6c5",
         "platform": "instagram_professional",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "UptimeRobot",
-        "productId": "eff480cb-2bcb-48dc-9539-b742ff01a130",
-        "platform": "linkedin",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },

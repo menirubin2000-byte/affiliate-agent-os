@@ -48,6 +48,18 @@ const FORBIDDEN = [
   "אפיליאייט-לינק ישיר ב-Quora/Reddit.",
   "טקסט ל-TikTok / YouTube (וידאו בלבד).",
 ]
+
+// כלל הקישור העקיף — חוק תפעולי קבוע
+// בכל פלטפורמה שלא מותר בה affiliate link ישיר (Quora, Reddit, ועוד כל קהילה
+// שאוסרת promotion), הקישור בגוף הפוסט הוא לפלטפורמה אחרת של MENI:
+// LinkedIn / Facebook Page / Substack / Medium. שם נמצא הקישור האמיתי.
+// אסור: affiliate link ישיר בגוף.
+// מותר: linkedin.com/in/meni-rubin-... או menirubin.substack.com/p/... וכו'.
+const INDIRECT_LINK_RULE = [
+  "Quora / Reddit / כל קהילה שאוסרת affiliate ישיר → קישור לפלטפורמה אחרת של MENI (LinkedIn, FB Page, Substack, Medium).",
+  "שם נמצא הקישור האמיתי. ככה הקהילה לא חוסמת ו-MENI עדיין מקבל את התנועה.",
+  "הקופי המוכן ב-DB לא מכיל affiliate link — הוא מכיל קישור עקיף לפי הפלטפורמה.",
+]
 const PROOF_LINE =
   "קראתי את /dashboard/he/claude-rules. ניסיתי 3 דרכים לפני שאני מדווח כשלון. בדקתי .env.local. לא אעצור באמצע batch שאושר."
 
