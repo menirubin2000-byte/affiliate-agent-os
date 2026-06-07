@@ -18,8 +18,12 @@ const stateVariant: Record<PlatformRouteState, "default" | "secondary" | "destru
   running: "secondary",
   waiting_url_verification: "secondary",
   needs_system_fix: "destructive",
-  missing_final_copy: "destructive",
+  needs_image: "outline",
+  needs_video: "outline",
+  needs_campaign_link: "outline",
+  missing_final_copy: "outline",
   missing_affiliate_link: "destructive",
+  manual_only_platform: "outline",
   platform_pending_setup: "outline",
   platform_disabled: "outline",
 }

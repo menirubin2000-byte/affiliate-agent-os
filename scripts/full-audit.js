@@ -185,47 +185,67 @@ async function main() {
   section("12. browser_jobs")
   console.log(`  total: ${(await c.query("SELECT count(*)::int n FROM browser_jobs")).rows[0].n}`)
 
-  // 13. WHERE does the 249 blocked come from? Simulate routing:
-  // For each product (link_ready) × platform (11) → route → bucket
-  section("13. ROUTING SIMULATION (per product × platform) - explains dashboard 'blocked'")
+  // 13. Routing simulation aligned with the new bucket model
+  // (see lib/platform-routing.ts buildPlatformRoute).
+  section("13. ROUTING SIMULATION - new bucket model")
   const products = (await c.query(`
-    SELECT p.id, p.name
+    SELECT p.id, p.name,
+      coalesce(p.image_url, '')    AS image_url,
+      coalesce(p.image_url_he, '') AS image_url_he,
+      coalesce(p.video_url, '')    AS video_url
     FROM products p
     WHERE EXISTS (SELECT 1 FROM affiliate_programs ap WHERE ap.product_id=p.id AND ap.status='link_ready' AND coalesce(ap.affiliate_link,'')<>'')
   `)).rows
+
+  const PLATFORM_STATUS = {
+    linkedin: "active", medium: "active", substack: "active",
+    quora: "active", reddit: "active",  // manual platforms = active in routing, separate bucket
+    facebook_page: "active", instagram_professional: "active", pinterest: "active",
+    x_twitter: "pending_setup", youtube: "pending_setup", tiktok: "disabled",
+  }
+  const REQUIRES_CAMPAIGN_LINK = new Set([
+    "linkedin","medium","substack","facebook_page","instagram_professional","pinterest","x_twitter",
+  ])
   const buckets = {
     published_verified: 0, ready_for_executor: 0, pending_meni_approval: 0,
-    executor_blocked: 0, policy_blocked: 0, requires_auth: 0, running: 0,
-    waiting_url_verification: 0, needs_system_fix: 0, missing_final_copy: 0,
-    missing_affiliate_link: 0, platform_pending_setup: 0, platform_disabled: 0,
+    needs_image: 0, needs_video: 0, needs_campaign_link: 0,
+    needs_system_fix: 0, missing_final_copy: 0,
+    missing_affiliate_link: 0, manual_only_platform: 0,
+    platform_pending_setup: 0, platform_disabled: 0,
   }
+  // Preload all per-route data in 3 bulk queries (no per-route round-trips).
+  const linkRows = (await c.query(`SELECT product_id, lower(coalesce(source,'')) AS source FROM campaign_links WHERE coalesce(status,'active')='active'`)).rows
+  const hasLink = new Set(linkRows.map((r) => `${r.product_id}|${r.source}`))
+  const pubRows = (await c.query(`SELECT product_id, platform FROM published_records WHERE verification_status='verified' AND coalesce(live_url,'')<>''`)).rows
+  const isPublished = new Set(pubRows.map((r) => `${r.product_id}|${r.platform}`))
+  const fcRows = (await c.query(`
+    SELECT DISTINCT ON (product_id, platform) product_id, platform, status, validation_status
+    FROM final_copies ORDER BY product_id, platform, updated_at DESC
+  `)).rows
+  const fcByKey = new Map(fcRows.map((r) => [`${r.product_id}|${r.platform}`, r]))
   for (const p of products) {
     for (const platform of ALL_PLATFORMS) {
-      // simplified routing: look at the most recent final_copy + published_record
-      const pub = (await c.query(`SELECT 1 FROM published_records WHERE product_id=$1 AND platform=$2 AND verification_status='verified' AND coalesce(live_url,'')<>'' LIMIT 1`, [p.id, platform])).rows[0]
-      if (pub) { buckets.published_verified++; continue }
-      const fc = (await c.query(`SELECT status, validation_status FROM final_copies WHERE product_id=$1 AND platform=$2 ORDER BY updated_at DESC LIMIT 1`, [p.id, platform])).rows[0]
-      // Platform status from routing definitions (simplified)
-      if (platform === "tiktok") { buckets.platform_disabled++; continue }
-      const pending = !["medium", "substack"].includes(platform)  // active=medium,substack only currently
-      if (pending) {
-        if (fc?.status === "operator_approved" || fc?.status === "ready_for_manual_publish") {
-          buckets.ready_for_executor++; continue
-        }
-        buckets.platform_pending_setup++; continue
-      }
+      const key = `${p.id}|${platform}`
+      if (isPublished.has(key)) { buckets.published_verified++; continue }
+      const status = PLATFORM_STATUS[platform]
+      if (status === "disabled") { buckets.platform_disabled++; continue }
+      if (status === "pending_setup") { buckets.platform_pending_setup++; continue }
+      if (MANUAL_ONLY.has(platform)) { buckets.manual_only_platform++; continue }
+      const fc = fcByKey.get(key)
       if (!fc) { buckets.missing_final_copy++; continue }
       if (fc.status === "needs_system_fix" || fc.validation_status !== "valid") { buckets.needs_system_fix++; continue }
+      if (IMAGE_REQUIRED.has(platform) && !p.image_url && !p.image_url_he) { buckets.needs_image++; continue }
+      if (VIDEO_REQUIRED.has(platform) && !p.video_url) { buckets.needs_video++; continue }
+      if (REQUIRES_CAMPAIGN_LINK.has(platform) && !hasLink.has(key)) { buckets.needs_campaign_link++; continue }
       if (fc.status === "ready_for_operator_approval" || fc.status === "validated") { buckets.pending_meni_approval++; continue }
       if (fc.status === "operator_approved" || fc.status === "ready_for_manual_publish") { buckets.ready_for_executor++; continue }
       buckets.needs_system_fix++
     }
   }
   for (const [k, v] of Object.entries(buckets)) console.log(`  ${k}: ${v}`)
-  console.log(`  TOTAL routes: ${products.length} products × ${ALL_PLATFORMS.length} platforms = ${products.length * ALL_PLATFORMS.length}`)
-  const blockedCount = buckets.executor_blocked + buckets.policy_blocked + buckets.needs_system_fix +
-    buckets.missing_affiliate_link + buckets.platform_pending_setup + buckets.platform_disabled + buckets.missing_final_copy
-  console.log(`  → dashboard "blocked" counter would be: ${blockedCount}`)
+  console.log(`  TOTAL routes: ${products.length} × ${ALL_PLATFORMS.length} = ${products.length * ALL_PLATFORMS.length}`)
+  const blockedCount = buckets.platform_disabled
+  console.log(`  → dashboard "חסומים אמיתיים": ${blockedCount}`)
 
   await c.end()
 }

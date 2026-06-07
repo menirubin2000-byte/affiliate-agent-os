@@ -116,6 +116,14 @@ test("approved final copy without a job routes to executor work, not published",
     ],
     publishJobs: [],
     publishedRecords: [],
+    campaignLinks: [
+      {
+        productId: product.id,
+        source: "medium",
+        finalUrl: "https://example.com/affiliate?utm_source=medium",
+        status: "active",
+      },
+    ],
   })
 
   const medium = overview.products[0]?.routes.find((route) => route.platform.key === "medium")
@@ -154,4 +162,77 @@ test("business READY blocks image-required platforms without a product image", (
   assert.equal(medium?.mediaReady, false)
   assert.equal(medium?.imageRequired, true)
   assert.deepEqual(medium?.mediaBlockingReasons, ["image_required_for_ready"])
+})
+
+test("missing campaign_link on a paid platform routes to needs_campaign_link, not READY", () => {
+  const overview = buildPlatformRoutingOverview({
+    products: [product],
+    affiliatePrograms: [{ productId: product.id, status: "link_ready", affiliateLink: product.affiliateLink }],
+    finalCopies: [
+      {
+        id: "copy-link-1",
+        productId: product.id,
+        platform: "linkedin",
+        status: "ready_for_operator_approval",
+        validationStatus: "valid",
+        title: "Ready copy",
+        blockingReasons: [],
+      },
+    ],
+    publishJobs: [],
+    publishedRecords: [],
+    campaignLinks: [],
+  })
+
+  const linkedin = overview.products[0]?.routes.find((r) => r.platform.key === "linkedin")
+  assert.equal(linkedin?.state, "needs_campaign_link")
+  assert.equal(overview.counts.needsCampaignLink >= 1, true)
+})
+
+test("Quora bypasses campaign_link gate and stays manual_only", () => {
+  const overview = buildPlatformRoutingOverview({
+    products: [product],
+    affiliatePrograms: [{ productId: product.id, status: "link_ready", affiliateLink: product.affiliateLink }],
+    finalCopies: [
+      {
+        id: "copy-q-1",
+        productId: product.id,
+        platform: "quora",
+        status: "ready_for_operator_approval",
+        validationStatus: "valid",
+        title: "Ready copy",
+        blockingReasons: [],
+      },
+    ],
+    publishJobs: [],
+    publishedRecords: [],
+    campaignLinks: [],
+  })
+
+  const quora = overview.products[0]?.routes.find((r) => r.platform.key === "quora")
+  assert.equal(quora?.state, "manual_only_platform")
+})
+
+test("missing_final_copy is counted separately from needs_system_fix", () => {
+  const overview = buildPlatformRoutingOverview({
+    products: [product],
+    affiliatePrograms: [{ productId: product.id, status: "link_ready", affiliateLink: product.affiliateLink }],
+    finalCopies: [],
+    publishJobs: [],
+    publishedRecords: [],
+    campaignLinks: [
+      {
+        productId: product.id,
+        source: "medium",
+        finalUrl: "https://example.com/affiliate?utm_source=medium",
+        status: "active",
+      },
+    ],
+  })
+
+  const medium = overview.products[0]?.routes.find((r) => r.platform.key === "medium")
+  assert.equal(medium?.state, "missing_final_copy")
+  assert.equal(overview.counts.needsFinalCopy >= 1, true)
+  // missing_final_copy must NOT show up in needs_system_fix any more.
+  assert.equal(overview.counts.needsSystemFix, 0)
 })

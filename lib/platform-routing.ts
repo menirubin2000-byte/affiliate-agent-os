@@ -55,6 +55,12 @@ export interface PlatformRoutingDefinition {
   directAffiliateLinksAllowed: boolean
   policySummary: string
   setupBlocker: string | null
+  /**
+   * True for paid/measurable platforms where every approved post must carry
+   * a tracked campaign_link before MENI approval. Quora/Reddit are manual and
+   * forbid affiliate links in-body; TikTok/YouTube are still pending_setup.
+   */
+  requiresCampaignLink: boolean
 }
 
 export type PlatformRouteState =
@@ -128,6 +134,14 @@ export interface RoutingPublishedRecordInput {
   verifiedAt: string | null
 }
 
+export interface RoutingCampaignLinkInput {
+  productId: string
+  /** Platform routing key, e.g. 'linkedin'. We do platform alias matching too. */
+  source: string
+  finalUrl: string | null
+  status: string | null
+}
+
 export interface PlatformRoute {
   productId: string
   productName: string
@@ -164,6 +178,8 @@ export interface ProductRoutingSummary {
   needsVideoCount: number
   needsCampaignLinkCount: number
   needsSystemFixCount: number
+  /** Routes on a routable platform that don't have a Final Copy generated yet. */
+  needsFinalCopyCount: number
   manualOnlyCount: number
   platformPendingSetupCount: number
   nextActionHe: string
@@ -188,6 +204,8 @@ export interface PlatformRoutingOverview {
     needsCampaignLink: number
     /** Routes that need a code/data fix (validation, system bug). */
     needsSystemFix: number
+    /** Routes on a routable platform that don't have a Final Copy generated yet. */
+    needsFinalCopy: number
     /** Routes on Quora/Reddit etc. that are intentionally manual-only. */
     manualOnly: number
     /** Routes on platforms still pending OAuth/API setup. */
@@ -208,6 +226,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "פרסום ידני ב-LinkedIn דרך MCP. ה-Official API חסום ע\"י LinkedIn עד 100+ חיבורים, אבל הפרסום דרך הדפדפן עובד.",
     setupBlocker: null,
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
@@ -222,6 +241,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "מותר עם גילוי שותפים ותוכן בעל ערך.",
     setupBlocker: null,
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונת hero חובה למאמר." },
   },
   {
@@ -236,6 +256,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש תוכן אמיתי עם ערך, לא פרסומת בלבד.",
     setupBlocker: null,
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונת hero חובה." },
   },
   {
@@ -250,6 +271,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: false,
     policySummary: "ידני בלבד. אסור קישור אפיליאייט ישיר. תשובה מועילה ללא URL.",
     setupBlocker: null,
+    requiresCampaignLink: false,
     media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Quora לא READY אוטומטי ולא מקבל affiliate link ישיר." },
   },
   {
@@ -264,6 +286,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: false,
     policySummary: "ידני בלבד. תלוי חוקי subreddit. בלי affiliate link.",
     setupBlocker: null,
+    requiresCampaignLink: false,
     media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Reddit לא READY אוטומטי עד אימות חוקי subreddit." },
   },
   {
@@ -278,6 +301,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "לא מפרסמים טקסט. נדרש וידאו וגילוי מסחרי.",
     setupBlocker: "video_asset_required",
+    requiresCampaignLink: false,
     media: { textOnly: false, image: "unsupported", video: "required", notes: "וידאו בלבד - שום פוסט אחר לא ייקלט." },
   },
   {
@@ -292,6 +316,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "ממתין לחשבון/עמוד וחיבור Graph API רשמי.",
     setupBlocker: getFacebookPageOfficialApiCapability().configured ? null : FACEBOOK_CURRENT_BLOCKING_REASON,
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
@@ -306,6 +331,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש חשבון מקצועי וחיבור Meta רשמי.",
     setupBlocker: getInstagramOfficialApiCapability().configured ? null : INSTAGRAM_CURRENT_BLOCKING_REASON,
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "אסור פוסט טקסט בלבד - חובה תמונה או ריל." },
   },
   {
@@ -320,6 +346,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "פרופיל ידוע. פרסום דורש Pinterest API רשמי, access token, board יעד ונכס ויזואלי.",
     setupBlocker: getPinterestOfficialApiCapability().blockingReason,
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "Pin = תמונה (או וידאו) חובה. בלי אסט - לא נשלח." },
   },
   {
@@ -334,6 +361,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש OAuth רשמי ו-X API access ready.",
     setupBlocker: "x_api_access_not_ready",
+    requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
@@ -348,6 +376,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש וידאו, OAuth והרשאות YouTube Data API.",
     setupBlocker: "youtube_video_and_api_required",
+    requiresCampaignLink: false,
     media: { textOnly: false, image: "unsupported", video: "required", notes: "וידאו בלבד - שום פוסט אחר לא ייקלט." },
   },
 ]
@@ -381,6 +410,7 @@ export function buildPlatformRoutingOverview(input: {
   finalCopies: RoutingFinalCopyInput[]
   publishJobs: RoutingPublishJobInput[]
   publishedRecords: RoutingPublishedRecordInput[]
+  campaignLinks?: RoutingCampaignLinkInput[]
   includePendingSetupPlatforms?: boolean
 }): PlatformRoutingOverview {
   const platforms = input.includePendingSetupPlatforms
@@ -405,6 +435,7 @@ export function buildPlatformRoutingOverview(input: {
       needsVideo: products.reduce((s, p) => s + p.needsVideoCount, 0),
       needsCampaignLink: products.reduce((s, p) => s + p.needsCampaignLinkCount, 0),
       needsSystemFix: products.reduce((s, p) => s + p.needsSystemFixCount, 0),
+      needsFinalCopy: products.reduce((s, p) => s + p.needsFinalCopyCount, 0),
       manualOnly: products.reduce((s, p) => s + p.manualOnlyCount, 0),
       platformPendingSetup: products.reduce((s, p) => s + p.platformPendingSetupCount, 0),
     },
@@ -419,6 +450,7 @@ function buildProductRoutingSummary(
     finalCopies: RoutingFinalCopyInput[]
     publishJobs: RoutingPublishJobInput[]
     publishedRecords: RoutingPublishedRecordInput[]
+    campaignLinks?: RoutingCampaignLinkInput[]
   },
 ): ProductRoutingSummary {
   const productPrograms = input.affiliatePrograms.filter((program) => program.productId === product.id)
@@ -427,12 +459,17 @@ function buildProductRoutingSummary(
   const hasLinkReadyProgram = productPrograms.some((program) => program.status === "link_ready")
   const affiliateReady = hasRealAffiliateLink && hasLinkReadyProgram
 
+  const productLinks = (input.campaignLinks ?? []).filter(
+    (link) => link.productId === product.id && (link.status ?? "active") === "active",
+  )
+
   const routes = platforms.map((platform) =>
     buildPlatformRoute({
       product,
       platform,
       affiliateReady,
       hasRealAffiliateLink,
+      hasCampaignLink: productLinks.some((link) => (link.source ?? "").toLowerCase() === platform.key),
       finalCopies: input.finalCopies.filter((copy) => copy.productId === product.id && copy.platform === platform.key),
       publishJobs: input.publishJobs.filter((job) => job.productId === product.id && job.platform === platform.key),
       publishedRecords: input.publishedRecords.filter(
@@ -455,9 +492,9 @@ function buildProductRoutingSummary(
   const needsImageCount = routes.filter((r) => r.state === "needs_image").length
   const needsVideoCount = routes.filter((r) => r.state === "needs_video").length
   const needsCampaignLinkCount = routes.filter((r) => r.state === "needs_campaign_link").length
-  const needsSystemFixCount = routes.filter(
-    (r) => r.state === "needs_system_fix" || r.state === "missing_final_copy",
-  ).length
+  // needs_system_fix = code/data bug. missing_final_copy is its own bucket — copy not generated yet.
+  const needsSystemFixCount = routes.filter((r) => r.state === "needs_system_fix").length
+  const needsFinalCopyCount = routes.filter((r) => r.state === "missing_final_copy").length
   const manualOnlyCount = routes.filter((r) => r.state === "manual_only_platform").length
   const platformPendingSetupCount = routes.filter((r) => r.state === "platform_pending_setup").length
 
@@ -475,6 +512,7 @@ function buildProductRoutingSummary(
     needsVideoCount,
     needsCampaignLinkCount,
     needsSystemFixCount,
+    needsFinalCopyCount,
     manualOnlyCount,
     platformPendingSetupCount,
     nextActionHe: buildProductNextAction({ affiliateReady, routes }),
@@ -486,6 +524,7 @@ function buildPlatformRoute(input: {
   platform: PlatformRoutingDefinition
   affiliateReady: boolean
   hasRealAffiliateLink: boolean
+  hasCampaignLink: boolean
   finalCopies: RoutingFinalCopyInput[]
   publishJobs: RoutingPublishJobInput[]
   publishedRecords: RoutingPublishedRecordInput[]
@@ -601,6 +640,23 @@ function buildPlatformRoute(input: {
       publishJob,
       publishedRecord: null,
       nextActionHe: mediaNextActionHe(media),
+    })
+  }
+
+  // Campaign link is the measurability gate for paid surfaces.
+  // LinkedIn / Medium / Substack / Facebook Page / Instagram Business / Pinterest / X
+  // must have a tracked campaign_link before the post can go to MENI for approval.
+  // Quora/Reddit are already short-circuited to manual_only_platform above.
+  // TikTok/YouTube are still pending_setup and never reach this branch.
+  if (input.platform.requiresCampaignLink && !input.hasCampaignLink) {
+    return route(input, {
+      state: "needs_campaign_link",
+      labelHe: "חסר campaign_link",
+      blocker: "missing_campaign_link",
+      finalCopy: latestFinalCopy,
+      publishJob,
+      publishedRecord: null,
+      nextActionHe: "צור campaign link מדיד לפלטפורמה הזו",
     })
   }
 

@@ -5,6 +5,7 @@ import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/ser
 import type {
   PlatformRoutingOverview,
   RoutingAffiliateProgramInput,
+  RoutingCampaignLinkInput,
   RoutingFinalCopyInput,
   RoutingProductInput,
   RoutingPublishJobInput,
@@ -63,6 +64,13 @@ type PublishedRecordRow = {
   verified_at: string | null
 }
 
+type CampaignLinkRow = {
+  product_id: string
+  source: string | null
+  final_url: string | null
+  status: string | null
+}
+
 export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverview> {
   if (!isSupabaseConfigured()) {
     return buildPlatformRoutingOverview({
@@ -71,12 +79,13 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
       finalCopies: [],
       publishJobs: [],
       publishedRecords: [],
+      campaignLinks: [],
       includePendingSetupPlatforms: true,
     })
   }
 
   const supabase = getServiceRoleSupabase()
-  const [products, affiliatePrograms, finalCopies, publishJobs, publishedRecords] = await Promise.all([
+  const [products, affiliatePrograms, finalCopies, publishJobs, publishedRecords, campaignLinks] = await Promise.all([
     safeSelect<ProductRow>("products", () =>
       supabase
         .from("products")
@@ -107,6 +116,12 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
         .select("id, final_copy_id, product_id, platform, live_url, verification_status, verified_at")
         .order("verified_at", { ascending: false }),
     ),
+    safeSelect<CampaignLinkRow>("campaign_links", () =>
+      supabase
+        .from("campaign_links")
+        .select("product_id, source, final_url, status")
+        .order("updated_at", { ascending: false }),
+    ),
   ])
 
   // Operator rule: only products MENI actually owns belong on the dashboard.
@@ -129,6 +144,7 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
     finalCopies: finalCopies.map(mapFinalCopy),
     publishJobs: publishJobs.map(mapPublishJob),
     publishedRecords: publishedRecords.map(mapPublishedRecord),
+    campaignLinks: campaignLinks.map(mapCampaignLink),
     includePendingSetupPlatforms: true,
   })
 }
@@ -198,6 +214,15 @@ function mapPublishJob(row: PublishJobRow): RoutingPublishJobInput {
     blockingReason: row.blocking_reason,
     liveUrl: row.live_url,
     verifiedAt: row.verified_at,
+  }
+}
+
+function mapCampaignLink(row: CampaignLinkRow): RoutingCampaignLinkInput {
+  return {
+    productId: row.product_id,
+    source: row.source ?? "",
+    finalUrl: row.final_url,
+    status: row.status,
   }
 }
 

@@ -102,10 +102,24 @@ export default async function HebrewDashboardPage() {
         <NextActionCard
           title="צריך תיקון מערכת"
           count={totals.needsSystemFix}
-          description="ולידציה נכשלה / חסר Final Copy / blocking_reasons. תיקון קוד או דאטה - לא משימה למני."
+          description="ולידציה נכשלה / blocking_reasons / סטטוס לא נתמך. תיקון קוד או דאטה - לא משימה למני."
           href="/dashboard/he/content-review"
           ctaLabel="פתח בדיקת קופי"
           variant={totals.needsSystemFix > 0 ? "destructive" : "outline"}
+        />
+        <NextActionCard
+          title="חסר קופי לפלטפורמה"
+          count={totals.needsFinalCopy}
+          description="מוצר מאושר אבל אין Final Copy על הפלטפורמה הזו. המערכת צריכה ליצור קופי - לא משימה למני."
+          href="/dashboard/he/content-review"
+          ctaLabel="פתח בדיקת קופי"
+        />
+        <NextActionCard
+          title="חסר campaign_link"
+          count={totals.needsCampaignLink}
+          description="מוצר עם קופי תקין ומדיה, אבל חסר קישור UTM מדיד לפלטפורמה. צריך ליצור campaign_link לפני אישור."
+          href="/dashboard/he/operator"
+          ctaLabel="פתח דשבורד מפעיל"
         />
         <NextActionCard
           title="חסר תמונה"
