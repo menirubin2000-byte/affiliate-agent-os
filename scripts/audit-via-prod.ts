@@ -183,6 +183,9 @@ async function main() {
     needs_campaign_link: products.flatMap((p) =>
       p.routes.filter((r) => r.state === "needs_campaign_link").map((r) => ({ product: p.product.name, platform: r.platform.key })),
     ),
+    needs_system_fix: products.flatMap((p) =>
+      p.routes.filter((r) => r.state === "needs_system_fix").map((r) => ({ product: p.product.name, platform: r.platform.key, blocker: r.blocker })),
+    ),
     missing_final_copy_by_platform: products.flatMap((p) =>
       p.routes.filter((r) => r.state === "missing_final_copy").map((r) => r.platform.key),
     ).reduce<Record<string, number>>((acc, k) => { acc[k] = (acc[k] ?? 0) + 1; return acc }, {}),

@@ -703,6 +703,21 @@ function routeFromPublishJob(
   finalCopy: RoutingFinalCopyInput | null,
   publishJob: RoutingPublishJobInput,
 ): PlatformRoute {
+  // Manual-only platforms (Quora / Reddit) never auto-publish even when a
+  // stale publish_job exists. Treat the platform identity as truth and route
+  // to manual_only_platform regardless of what the publish_job says.
+  const MANUAL_PLATFORMS = new Set<PlatformRoutingKey>(["quora", "reddit"])
+  if (MANUAL_PLATFORMS.has(input.platform.key)) {
+    return route(input, {
+      state: "manual_only_platform",
+      labelHe: "ידני בלבד",
+      blocker: "manual_platform_not_auto_ready",
+      finalCopy,
+      publishJob,
+      publishedRecord: null,
+      nextActionHe: "פרסום ידני ע\"י MENI לפי חוקי הקהילה. אסור affiliate/campaign link.",
+    })
+  }
   const media = evaluatePlatformMediaReadiness(input.platform.key, input.product)
   if (!media.mediaReady && publishJob.status !== "verified") {
     return route(input, {

@@ -1,44 +1,42 @@
 {
-  "generated_at": "2026-06-07T13:34:44.699Z",
+  "generated_at": "2026-06-07T14:01:28.069Z",
   "products_link_ready": 24,
   "total_routes": 264,
   "buckets": {
-    "ready_for_meni_approval": 61,
-    "operator_approved_publish_ready": 3,
+    "ready_for_meni_approval": 58,
+    "operator_approved_publish_ready": 46,
     "published_verified": 16,
     "needs_campaign_link": 0,
     "needs_image": 0,
     "needs_video": 0,
-    "needs_system_fix": 8,
+    "needs_system_fix": 0,
     "missing_final_copy": 0,
-    "manual_only_quora_reddit": 40,
+    "manual_only_quora_reddit": 48,
     "platform_pending_setup": 48,
     "platform_pending_approval": 24,
-    "true_blocked": 64
+    "true_blocked": 24
   },
   "raw_state_counts": {
-    "pending_meni_approval": 61,
-    "executor_blocked": 40,
-    "manual_only_platform": 40,
+    "pending_meni_approval": 58,
+    "ready_for_executor": 46,
+    "manual_only_platform": 48,
     "platform_disabled": 24,
     "platform_pending_setup": 72,
-    "published_verified": 16,
-    "needs_system_fix": 8,
-    "ready_for_executor": 3
+    "published_verified": 16
   },
   "dashboard_counts": {
     "products": 24,
     "affiliateReadyProducts": 24,
     "publishedVerified": 16,
-    "waitingApproval": 61,
-    "readyForExecutor": 3,
-    "blocked": 64,
+    "waitingApproval": 58,
+    "readyForExecutor": 46,
+    "blocked": 24,
     "needsImage": 0,
     "needsVideo": 0,
     "needsCampaignLink": 0,
-    "needsSystemFix": 8,
+    "needsSystemFix": 0,
     "needsFinalCopy": 0,
-    "manualOnly": 40,
+    "manualOnly": 48,
     "platformPendingSetup": 72
   },
   "guarantees": {
@@ -402,13 +400,6 @@
       {
         "product": "Warmup Inbox",
         "productId": "22029272-dbbb-4904-a6f6-4b714f405664",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Warmup Inbox",
-        "productId": "22029272-dbbb-4904-a6f6-4b714f405664",
         "platform": "facebook_page",
         "hasMediaReady": true,
         "hasFinalCopy": true
@@ -437,13 +428,6 @@
       {
         "product": "Woodpecker",
         "productId": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
-        "platform": "linkedin",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Woodpecker",
-        "productId": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
         "platform": "facebook_page",
         "hasMediaReady": true,
         "hasFinalCopy": true
@@ -452,13 +436,6 @@
         "product": "Woodpecker",
         "productId": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
         "platform": "instagram_professional",
-        "hasMediaReady": true,
-        "hasFinalCopy": true
-      },
-      {
-        "product": "Writecream",
-        "productId": "6d7e564a-a8c1-4d33-b3d8-2ba9d5898432",
-        "platform": "linkedin",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -478,6 +455,7 @@
       }
     ],
     "needs_campaign_link": [],
+    "needs_system_fix": [],
     "missing_final_copy_by_platform": {}
   }
 }

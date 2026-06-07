@@ -189,7 +189,7 @@ async function main() {
       ) AS campaign_url
     FROM final_copies fc
     JOIN products p ON p.id = fc.product_id
-    WHERE fc.status = 'ready_for_operator_approval'
+    WHERE fc.status IN ('ready_for_operator_approval','operator_approved')
       AND fc.platform = ANY($1::text[])
     ORDER BY p.name, fc.platform, fc.language, fc.version DESC
     `,

@@ -1,10 +1,9 @@
 import "server-only"
 
 import { detectBrowserPlatform, getPlatformPublishTarget, isValidPublishedPostUrl } from "@/lib/browser-control"
-import {
-  getLinkedInOfficialApiCapability,
-  LINKEDIN_CURRENT_BLOCKING_REASON,
-} from "@/lib/linkedin-official-api"
+// LinkedIn publishing in AAOS goes through Claude in Chrome MCP, not the
+// official LinkedIn API, so we no longer reference the official-API
+// blocking reason here.
 import {
   FACEBOOK_CURRENT_BLOCKING_REASON,
   getFacebookPageOfficialApiCapability,
@@ -218,15 +217,14 @@ function getExecutorStateForPlatform(
   session: ExecutorSessionRow | null,
 ): { status: PublishJobStatus; blockingReason: string | null } {
   if (platform === "linkedin") {
-    if (getLinkedInOfficialApiCapability().configured) {
-      return {
-        status: "pending_operator_confirmation",
-        blockingReason: null,
-      }
-    }
+    // Official API is blocked by LinkedIn until 100+ connections, but we
+    // publish LinkedIn via Claude in Chrome MCP successfully (proven by
+    // multiple verified published_records). So when the official API isn't
+    // available, the operational truth is "approved, ready for MCP
+    // publish" — not blocked.
     return {
-      status: "blocked_executor_not_connected",
-      blockingReason: LINKEDIN_CURRENT_BLOCKING_REASON,
+      status: "pending_operator_confirmation",
+      blockingReason: null,
     }
   }
 
@@ -263,10 +261,15 @@ function getExecutorStateForPlatform(
     }
   }
 
+  // For Medium / Substack: AAOS publishes via Claude in Chrome MCP, not via
+  // a background browser_helper executor. If no executor session is
+  // registered, the operational truth is "approved, waiting for the MCP
+  // publish step", NOT "blocked". Surface that to the dashboard so the
+  // operator sees an actionable item, not a sea of red.
   if (!session) {
     return {
-      status: "blocked_executor_not_connected",
-      blockingReason: "executor_not_connected",
+      status: "pending_operator_confirmation",
+      blockingReason: null,
     }
   }
 
