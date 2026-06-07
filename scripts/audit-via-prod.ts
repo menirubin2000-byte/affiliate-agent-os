@@ -2,22 +2,23 @@
 // directly. Loads Supabase data over HTTPS (IPv4-friendly) instead of
 // pulling in the server-only wrapper, so it runs from any shell.
 // Run: npx tsx scripts/audit-via-prod.ts [--write]
-import "dotenv/config"
 import * as fs from "fs"
 import * as path from "path"
 import { config } from "dotenv"
+// Load env BEFORE importing platform-routing — that module reads
+// FB/IG/Pinterest capability env vars at module-load time, so its
+// PLATFORM_ROUTING_DEFINITIONS' status fields depend on env being set.
 config({ path: ".env.local" })
 
 import { createClient } from "@supabase/supabase-js"
-import {
-  buildPlatformRoutingOverview,
-  type RoutingAffiliateProgramInput,
-  type RoutingCampaignLinkInput,
-  type RoutingFinalCopyInput,
-  type RoutingProductInput,
-  type RoutingPublishJobInput,
-  type RoutingPublishedRecordInput,
-} from "../lib/platform-routing"
+// Dynamic import below in main() to ensure env is loaded first.
+type Routing = typeof import("../lib/platform-routing")
+type RoutingAffiliateProgramInput = Parameters<Routing["buildPlatformRoutingOverview"]>[0]["affiliatePrograms"][number]
+type RoutingCampaignLinkInput = NonNullable<Parameters<Routing["buildPlatformRoutingOverview"]>[0]["campaignLinks"]>[number]
+type RoutingFinalCopyInput = Parameters<Routing["buildPlatformRoutingOverview"]>[0]["finalCopies"][number]
+type RoutingProductInput = Parameters<Routing["buildPlatformRoutingOverview"]>[0]["products"][number]
+type RoutingPublishJobInput = Parameters<Routing["buildPlatformRoutingOverview"]>[0]["publishJobs"][number]
+type RoutingPublishedRecordInput = Parameters<Routing["buildPlatformRoutingOverview"]>[0]["publishedRecords"][number]
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -93,6 +94,7 @@ async function loadOverview() {
     productId: r.product_id, source: r.source ?? "", finalUrl: r.final_url, status: r.status,
   })
 
+  const { buildPlatformRoutingOverview } = await import("../lib/platform-routing")
   return buildPlatformRoutingOverview({
     products: owned.map(mapProduct),
     affiliatePrograms: programs.map(mapAff),

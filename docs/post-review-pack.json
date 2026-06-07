@@ -1,45 +1,45 @@
 {
-  "generated_at": "2026-06-07T10:57:00.465Z",
+  "generated_at": "2026-06-07T13:34:44.699Z",
   "products_link_ready": 24,
   "total_routes": 264,
   "buckets": {
-    "ready_for_meni_approval": 16,
-    "operator_approved_publish_ready": 0,
+    "ready_for_meni_approval": 61,
+    "operator_approved_publish_ready": 3,
     "published_verified": 16,
-    "needs_campaign_link": 3,
+    "needs_campaign_link": 0,
     "needs_image": 0,
     "needs_video": 0,
     "needs_system_fix": 8,
     "missing_final_copy": 0,
     "manual_only_quora_reddit": 40,
     "platform_pending_setup": 48,
-    "platform_pending_approval": 69,
+    "platform_pending_approval": 24,
     "true_blocked": 64
   },
   "raw_state_counts": {
-    "pending_meni_approval": 16,
+    "pending_meni_approval": 61,
     "executor_blocked": 40,
     "manual_only_platform": 40,
     "platform_disabled": 24,
-    "platform_pending_setup": 117,
+    "platform_pending_setup": 72,
     "published_verified": 16,
     "needs_system_fix": 8,
-    "needs_campaign_link": 3
+    "ready_for_executor": 3
   },
   "dashboard_counts": {
     "products": 24,
     "affiliateReadyProducts": 24,
     "publishedVerified": 16,
-    "waitingApproval": 16,
-    "readyForExecutor": 0,
+    "waitingApproval": 61,
+    "readyForExecutor": 3,
     "blocked": 64,
     "needsImage": 0,
     "needsVideo": 0,
-    "needsCampaignLink": 3,
+    "needsCampaignLink": 0,
     "needsSystemFix": 8,
     "needsFinalCopy": 0,
     "manualOnly": 40,
-    "platformPendingSetup": 117
+    "platformPendingSetup": 72
   },
   "guarantees": {
     "no_ready_without_campaign_link": true,
@@ -57,9 +57,37 @@
         "hasFinalCopy": true
       },
       {
+        "product": "Ad Turbo",
+        "productId": "81f43a1a-fae5-4368-b7c7-7eddc763740b",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Ad Turbo",
+        "productId": "81f43a1a-fae5-4368-b7c7-7eddc763740b",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "AhaSlides",
         "productId": "37a7bda3-669f-4a95-ab40-041909a756ea",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "AhaSlides",
+        "productId": "37a7bda3-669f-4a95-ab40-041909a756ea",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "AhaSlides",
+        "productId": "37a7bda3-669f-4a95-ab40-041909a756ea",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -71,9 +99,44 @@
         "hasFinalCopy": true
       },
       {
+        "product": "Algomo",
+        "productId": "c889a774-e309-47ee-830b-7ff630d60203",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Algomo",
+        "productId": "c889a774-e309-47ee-830b-7ff630d60203",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "Audiorista",
         "productId": "de32aaed-b747-4121-8ef8-43293525293a",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Audiorista",
+        "productId": "de32aaed-b747-4121-8ef8-43293525293a",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Audiorista",
+        "productId": "de32aaed-b747-4121-8ef8-43293525293a",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "ElevenLabs",
+        "productId": "96dfd074-b724-49fe-b253-478a4031e93b",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -85,9 +148,65 @@
         "hasFinalCopy": true
       },
       {
+        "product": "EmailListVerify",
+        "productId": "8e5b65dd-f6d9-4aec-97be-caef9e9b784b",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "EmailListVerify",
+        "productId": "8e5b65dd-f6d9-4aec-97be-caef9e9b784b",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Geo Targetly",
+        "productId": "22a8ab05-a54c-4478-a494-e770d0258408",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Geo Targetly",
+        "productId": "22a8ab05-a54c-4478-a494-e770d0258408",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "GetResponse",
+        "productId": "1b1591fe-1cba-4089-82bc-6aa587b4925c",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "GetResponse",
+        "productId": "1b1591fe-1cba-4089-82bc-6aa587b4925c",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "GrapeLeads",
         "productId": "a8248eaa-9fd1-46b5-8d15-53f82bf84613",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "GrapeLeads",
+        "productId": "a8248eaa-9fd1-46b5-8d15-53f82bf84613",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "GrapeLeads",
+        "productId": "a8248eaa-9fd1-46b5-8d15-53f82bf84613",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -99,9 +218,65 @@
         "hasFinalCopy": true
       },
       {
+        "product": "Guideflow",
+        "productId": "69f694d7-5555-4af4-8fbc-2d697d908dd8",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Guideflow",
+        "productId": "69f694d7-5555-4af4-8fbc-2d697d908dd8",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Joiin",
+        "productId": "230b9849-e3a4-446c-9fd1-c0a440aff9bb",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Joiin",
+        "productId": "230b9849-e3a4-446c-9fd1-c0a440aff9bb",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "Leader Leads",
         "productId": "da08e1da-a684-486f-87dc-80b71db92006",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Leader Leads",
+        "productId": "da08e1da-a684-486f-87dc-80b71db92006",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Leader Leads",
+        "productId": "da08e1da-a684-486f-87dc-80b71db92006",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Pricefy",
+        "productId": "c98fb93b-1bd3-415d-b446-a830bd835103",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Pricefy",
+        "productId": "c98fb93b-1bd3-415d-b446-a830bd835103",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -113,9 +288,37 @@
         "hasFinalCopy": true
       },
       {
+        "product": "Reditus",
+        "productId": "df6568ae-bb67-4cbb-b1a3-2ff9643b385b",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Reditus",
+        "productId": "df6568ae-bb67-4cbb-b1a3-2ff9643b385b",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "Search Atlas",
         "productId": "17830658-e09a-4c75-91d1-6f9b00def09d",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Search Atlas",
+        "productId": "17830658-e09a-4c75-91d1-6f9b00def09d",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Search Atlas",
+        "productId": "17830658-e09a-4c75-91d1-6f9b00def09d",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -127,9 +330,51 @@
         "hasFinalCopy": true
       },
       {
+        "product": "SignEasy",
+        "productId": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "SignEasy",
+        "productId": "e91c6c5f-4791-4a10-859d-32c2c8228d75",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "Synthesia",
         "productId": "290322bd-8b78-4ca3-97c1-1a869f17c747",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Synthesia",
+        "productId": "290322bd-8b78-4ca3-97c1-1a869f17c747",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Synthesia",
+        "productId": "290322bd-8b78-4ca3-97c1-1a869f17c747",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Systeme.io",
+        "productId": "4564c6df-65d8-4c2b-9797-c8a64944c6c5",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Systeme.io",
+        "productId": "4564c6df-65d8-4c2b-9797-c8a64944c6c5",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -141,9 +386,51 @@
         "hasFinalCopy": true
       },
       {
+        "product": "UptimeRobot",
+        "productId": "eff480cb-2bcb-48dc-9539-b742ff01a130",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "UptimeRobot",
+        "productId": "eff480cb-2bcb-48dc-9539-b742ff01a130",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "Warmup Inbox",
         "productId": "22029272-dbbb-4904-a6f6-4b714f405664",
         "platform": "linkedin",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Warmup Inbox",
+        "productId": "22029272-dbbb-4904-a6f6-4b714f405664",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Warmup Inbox",
+        "productId": "22029272-dbbb-4904-a6f6-4b714f405664",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Willo",
+        "productId": "84114673-3c5f-4450-a60e-b7a8daf55e64",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Willo",
+        "productId": "84114673-3c5f-4450-a60e-b7a8daf55e64",
+        "platform": "instagram_professional",
         "hasMediaReady": true,
         "hasFinalCopy": true
       },
@@ -155,27 +442,42 @@
         "hasFinalCopy": true
       },
       {
+        "product": "Woodpecker",
+        "productId": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
+        "product": "Woodpecker",
+        "productId": "fe0349b6-16c5-4ace-82dc-9ed71407d683",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
+      },
+      {
         "product": "Writecream",
         "productId": "6d7e564a-a8c1-4d33-b3d8-2ba9d5898432",
         "platform": "linkedin",
         "hasMediaReady": true,
         "hasFinalCopy": true
-      }
-    ],
-    "needs_campaign_link": [
-      {
-        "product": "Shopify",
-        "platform": "linkedin"
       },
       {
-        "product": "Shopify",
-        "platform": "medium"
+        "product": "Writecream",
+        "productId": "6d7e564a-a8c1-4d33-b3d8-2ba9d5898432",
+        "platform": "facebook_page",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
       },
       {
-        "product": "Shopify",
-        "platform": "substack"
+        "product": "Writecream",
+        "productId": "6d7e564a-a8c1-4d33-b3d8-2ba9d5898432",
+        "platform": "instagram_professional",
+        "hasMediaReady": true,
+        "hasFinalCopy": true
       }
     ],
+    "needs_campaign_link": [],
     "missing_final_copy_by_platform": {}
   }
 }
