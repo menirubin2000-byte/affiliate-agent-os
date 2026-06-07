@@ -67,8 +67,12 @@ export type PlatformRouteState =
   | "running"
   | "waiting_url_verification"
   | "needs_system_fix"
+  | "needs_image"
+  | "needs_video"
+  | "needs_campaign_link"
   | "missing_final_copy"
   | "missing_affiliate_link"
+  | "manual_only_platform"
   | "platform_pending_setup"
   | "platform_disabled"
 
@@ -156,6 +160,12 @@ export interface ProductRoutingSummary {
   blockedCount: number
   approvalCount: number
   executorReadyCount: number
+  needsImageCount: number
+  needsVideoCount: number
+  needsCampaignLinkCount: number
+  needsSystemFixCount: number
+  manualOnlyCount: number
+  platformPendingSetupCount: number
   nextActionHe: string
 }
 
@@ -168,7 +178,20 @@ export interface PlatformRoutingOverview {
     publishedVerified: number
     waitingApproval: number
     readyForExecutor: number
+    /** All routes that genuinely block progress (system / executor / policy). */
     blocked: number
+    /** Routes missing an image asset for a platform that requires it. */
+    needsImage: number
+    /** Routes missing a video asset for a platform that requires it. */
+    needsVideo: number
+    /** Routes missing a UTM campaign_link. */
+    needsCampaignLink: number
+    /** Routes that need a code/data fix (validation, system bug). */
+    needsSystemFix: number
+    /** Routes on Quora/Reddit etc. that are intentionally manual-only. */
+    manualOnly: number
+    /** Routes on platforms still pending OAuth/API setup. */
+    platformPendingSetup: number
   }
 }
 
@@ -181,10 +204,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "פוסט מקצועי",
     publishMode: "official_api",
     approvalRequired: true,
-    status: "pending_setup",
+    status: "active",
     directAffiliateLinksAllowed: true,
-    policySummary: "נדרש חיבור API רשמי. אין אוטומציית דפדפן לא רשמית.",
-    setupBlocker: "linkedin_official_api_not_configured",
+    policySummary: "פרסום ידני ב-LinkedIn דרך MCP. ה-Official API חסום ע\"י LinkedIn עד 100+ חיבורים, אבל הפרסום דרך הדפדפן עובד.",
+    setupBlocker: null,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
   {
@@ -223,10 +246,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "תשובה חינוכית",
     publishMode: "manual_sensitive",
     approvalRequired: true,
-    status: "pending_setup",
+    status: "active",
     directAffiliateLinksAllowed: false,
-    policySummary: "אסור קישור אפיליאייט ישיר. רק תשובה מועילה וקישור חיצוני בטוח אם מתאים.",
-    setupBlocker: "quora_no_direct_affiliate_links",
+    policySummary: "ידני בלבד. אסור קישור אפיליאייט ישיר. תשובה מועילה ללא URL.",
+    setupBlocker: null,
     media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Quora לא READY אוטומטי ולא מקבל affiliate link ישיר." },
   },
   {
@@ -237,10 +260,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "דיון קהילתי",
     publishMode: "manual_sensitive",
     approvalRequired: true,
-    status: "pending_setup",
+    status: "active",
     directAffiliateLinksAllowed: false,
-    policySummary: "נדרש אימות חוקים לפי subreddit. לא מפרסמים affiliate-heavy.",
-    setupBlocker: "reddit_community_rules_not_verified",
+    policySummary: "ידני בלבד. תלוי חוקי subreddit. בלי affiliate link.",
+    setupBlocker: null,
     media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד: Reddit לא READY אוטומטי עד אימות חוקי subreddit." },
   },
   {
@@ -378,6 +401,12 @@ export function buildPlatformRoutingOverview(input: {
       waitingApproval: products.reduce((sum, product) => sum + product.approvalCount, 0),
       readyForExecutor: products.reduce((sum, product) => sum + product.executorReadyCount, 0),
       blocked: products.reduce((sum, product) => sum + product.blockedCount, 0),
+      needsImage: products.reduce((s, p) => s + p.needsImageCount, 0),
+      needsVideo: products.reduce((s, p) => s + p.needsVideoCount, 0),
+      needsCampaignLink: products.reduce((s, p) => s + p.needsCampaignLinkCount, 0),
+      needsSystemFix: products.reduce((s, p) => s + p.needsSystemFixCount, 0),
+      manualOnly: products.reduce((s, p) => s + p.manualOnlyCount, 0),
+      platformPendingSetup: products.reduce((s, p) => s + p.platformPendingSetupCount, 0),
     },
   }
 }
@@ -413,21 +442,24 @@ function buildProductRoutingSummary(
   )
 
   const publishedCount = routes.filter((route) => route.state === "published_verified").length
+  // "blocked" = ONLY genuine blockers (executor / policy / unsupported / data corruption).
+  // Missing media / missing link / missing copy / manual_only / pending_setup get
+  // their own counters so the dashboard can show actionable buckets.
   const blockedCount = routes.filter((route) =>
-    [
-      "executor_blocked",
-      "policy_blocked",
-      "needs_system_fix",
-      "missing_affiliate_link",
-      "platform_pending_setup",
-      "platform_disabled",
-      "missing_final_copy",
-    ].includes(route.state),
+    ["executor_blocked", "policy_blocked", "platform_disabled"].includes(route.state),
   ).length
   const approvalCount = routes.filter((route) => route.state === "pending_meni_approval").length
   const executorReadyCount = routes.filter((route) =>
     ["ready_for_executor", "requires_auth", "waiting_url_verification", "running"].includes(route.state),
   ).length
+  const needsImageCount = routes.filter((r) => r.state === "needs_image").length
+  const needsVideoCount = routes.filter((r) => r.state === "needs_video").length
+  const needsCampaignLinkCount = routes.filter((r) => r.state === "needs_campaign_link").length
+  const needsSystemFixCount = routes.filter(
+    (r) => r.state === "needs_system_fix" || r.state === "missing_final_copy",
+  ).length
+  const manualOnlyCount = routes.filter((r) => r.state === "manual_only_platform").length
+  const platformPendingSetupCount = routes.filter((r) => r.state === "platform_pending_setup").length
 
   return {
     product,
@@ -439,6 +471,12 @@ function buildProductRoutingSummary(
     blockedCount,
     approvalCount,
     executorReadyCount,
+    needsImageCount,
+    needsVideoCount,
+    needsCampaignLinkCount,
+    needsSystemFixCount,
+    manualOnlyCount,
+    platformPendingSetupCount,
     nextActionHe: buildProductNextAction({ affiliateReady, routes }),
   }
 }
@@ -510,6 +548,21 @@ function buildPlatformRoute(input: {
     })
   }
 
+  // Manual-only platforms (Quora, Reddit) get their own bucket so they don't
+  // pollute the "blocked" count. They never go through auto-READY.
+  const MANUAL_PLATFORMS = new Set<PlatformRoutingKey>(["quora", "reddit"])
+  if (MANUAL_PLATFORMS.has(input.platform.key)) {
+    return route(input, {
+      state: "manual_only_platform",
+      labelHe: "ידני בלבד",
+      blocker: "manual_platform_not_auto_ready",
+      finalCopy: latestFinalCopy,
+      publishJob,
+      publishedRecord: null,
+      nextActionHe: "פרסום ידני ע\"י MENI לפי חוקי הקהילה. אסור affiliate/campaign link.",
+    })
+  }
+
   if (!latestFinalCopy) {
     return route(input, {
       state: "missing_final_copy",
@@ -534,11 +587,15 @@ function buildPlatformRoute(input: {
     })
   }
 
+  // Split media readiness into distinct buckets so the dashboard can show
+  // "missing image" / "missing video" separately from "system fix".
   const media = evaluatePlatformMediaReadiness(input.platform.key, input.product)
   if (!media.mediaReady) {
+    const needsImage = media.blockingReasons.includes("image_required_for_ready")
+    const needsVideo = media.blockingReasons.includes("video_required_for_ready")
     return route(input, {
-      state: "needs_system_fix",
-      labelHe: "חסר מדיה ל-READY",
+      state: needsImage ? "needs_image" : needsVideo ? "needs_video" : "needs_system_fix",
+      labelHe: needsImage ? "חסרה תמונה" : needsVideo ? "חסר וידאו" : "חסר נכס מדיה",
       blocker: media.blockingReasons.join(", ") || "media_not_ready",
       finalCopy: latestFinalCopy,
       publishJob,

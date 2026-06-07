@@ -81,24 +81,16 @@ export default async function HebrewDashboardPage() {
         <NextActionCard
           title="ממתינים לאישור MENI"
           count={totals.waitingApproval}
-          description="פוסטים מאושרים לוויזואל אבל ממתינים שמני ילחץ אשר / דחה / דרוש תיקון."
+          description="פוסטים שעברו את כל הוולידציה (validation valid + מדיה + campaign_link). מני לוחץ אשר/דחה/תיקון."
           href="/dashboard/he/approve"
           ctaLabel="פתח תור אישור"
         />
         <NextActionCard
-          title="מוכן למנוע פרסום"
+          title="אושר ומוכן לפרסום"
           count={totals.readyForExecutor}
           description="כבר אושר ע״י מני. ממתין למנוע הפרסום לבצע ולהחזיר URL מאומת."
           href="/dashboard/he/publish-ready"
           ctaLabel="פתח מצב פרסום"
-        />
-        <NextActionCard
-          title="חסומים"
-          count={totals.blocked}
-          description="חסימה של מדיניות, executor, קישור שותף או Final Copy. נדרש תיקון במערכת — לא משימה למני."
-          href="/dashboard/he/content-review"
-          ctaLabel="פתח בדיקת קופי"
-          variant={totals.blocked > 0 ? "destructive" : "outline"}
         />
         <NextActionCard
           title="פורסם ואומת"
@@ -106,6 +98,50 @@ export default async function HebrewDashboardPage() {
           description="רק רשומות עם URL חי מאומת. כל פוסט שלא כאן עדיין לא פורסם."
           href="/dashboard/he/operator"
           ctaLabel="צפה בדשבורד המלא"
+        />
+        <NextActionCard
+          title="צריך תיקון מערכת"
+          count={totals.needsSystemFix}
+          description="ולידציה נכשלה / חסר Final Copy / blocking_reasons. תיקון קוד או דאטה - לא משימה למני."
+          href="/dashboard/he/content-review"
+          ctaLabel="פתח בדיקת קופי"
+          variant={totals.needsSystemFix > 0 ? "destructive" : "outline"}
+        />
+        <NextActionCard
+          title="חסר תמונה"
+          count={totals.needsImage}
+          description="פוסטים שדורשים תמונה ל-READY ועוד לא קיבלו (LinkedIn / Medium / Substack / Facebook / Instagram / Pinterest / X)."
+          href="/dashboard/products"
+          ctaLabel="פתח רשימת מוצרים"
+        />
+        <NextActionCard
+          title="חסר וידאו"
+          count={totals.needsVideo}
+          description="פוסטים שדורשים וידאו (TikTok / YouTube) ועוד לא קיבלו אסט."
+          href="/dashboard/products"
+          ctaLabel="פתח רשימת מוצרים"
+        />
+        <NextActionCard
+          title="ידני בלבד (Quora/Reddit)"
+          count={totals.manualOnly}
+          description="פוסטים שצריך לפרסם ידנית לפי חוקי הקהילה. אסור affiliate / campaign link בגוף הפוסט."
+          href="/dashboard/he/operator"
+          ctaLabel="פתח לפירוט"
+        />
+        <NextActionCard
+          title="ממתין להגדרת פלטפורמה"
+          count={totals.platformPendingSetup}
+          description="X / YouTube וכדומה. נדרש OAuth או הגדרה. לא משימה לתור האישור היום."
+          href="/dashboard/he/platform-capabilities"
+          ctaLabel="פתח יכולות"
+        />
+        <NextActionCard
+          title="חסומים אמיתיים"
+          count={totals.blocked}
+          description="חסימת מדיניות, executor לא מחובר, או פלטפורמה מבוטלת. נדרש תיקון תפעולי."
+          href="/dashboard/he/content-review"
+          ctaLabel="פתח בדיקה"
+          variant={totals.blocked > 0 ? "destructive" : "outline"}
         />
         <NextActionCard
           title="מוכנים שותפים"
@@ -117,7 +153,7 @@ export default async function HebrewDashboardPage() {
         <NextActionCard
           title="מוצרים במערכת"
           count={totals.products}
-          description="כל המוצרים. אם המספר 0 — אין שום נתון תפעולי לבחון כרגע."
+          description="כל המוצרים פעילים עם affiliate link."
           href="/dashboard/products"
           ctaLabel="פתח רשימת מוצרים"
         />

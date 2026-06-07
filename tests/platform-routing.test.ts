@@ -149,7 +149,7 @@ test("business READY blocks image-required platforms without a product image", (
 
   const medium = overview.products[0]?.routes.find((route) => route.platform.key === "medium")
 
-  assert.equal(medium?.state, "needs_system_fix")
+  assert.equal(medium?.state, "needs_image")
   assert.equal(medium?.mediaRequired, true)
   assert.equal(medium?.mediaReady, false)
   assert.equal(medium?.imageRequired, true)
