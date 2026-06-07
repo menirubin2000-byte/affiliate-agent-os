@@ -15,12 +15,19 @@ const ALL_PLATFORMS = [
   "youtube", "quora", "reddit", "tiktok",
 ]
 
-const c = new Client({
-  host: "db.gbkwydsodondarccqyet.supabase.co",
-  port: 5432, database: "postgres", user: "postgres",
-  password: process.env.SUPABASE_DB_PASSWORD,
-  ssl: { rejectUnauthorized: false },
-})
+// Direct db.* host is IPv6-only; some environments can't route to it.
+// Fall back to the Supabase Session Pooler on aws-1-eu-central-1 (IPv4) so
+// the audit works from any developer machine.
+const c = process.env.SUPABASE_DB_URL
+  ? new Client({ connectionString: process.env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false } })
+  : new Client({
+      host: "aws-1-eu-central-1.pooler.supabase.com",
+      port: 5432,
+      database: "postgres",
+      user: "postgres.gbkwydsodondarccqyet",
+      password: process.env.SUPABASE_DB_PASSWORD,
+      ssl: { rejectUnauthorized: false },
+    })
 
 function section(title) {
   console.log(`\n=== ${title} ===`)
