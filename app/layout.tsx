@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "A local-first affiliate workflow MVP for product intake, draft generation, manual approval, performance tracking, and recommendations.",
   applicationName: "Affiliate Agent OS",
   other: {
-    "p:domain_verify": "4f839db2e801bd55a198917583ba3cc1",
+    "p:domain_verify": "99e920bad6ba0cddb8979d98c2efa9f0",
   },
   robots: {
     index: false,
