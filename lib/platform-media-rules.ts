@@ -1,3 +1,5 @@
+import { evaluatePostMediaGate } from "@/lib/post-media-policy"
+
 export type PublishMediaMode = "image" | "video" | "bridge_url_only"
 
 export type ProductMediaInput = {
@@ -10,6 +12,9 @@ export type ProductMediaInput = {
   image_url?: string | null
   image_url_he?: string | null
   image_status?: "ready" | "missing" | string | null
+  media_asset_url?: string | null
+  image_asset_path?: string | null
+  video_asset_path?: string | null
   video_url?: string | null
   video_status?: "ready" | "missing" | string | null
   video_suitable_for?: string[] | null
@@ -68,18 +73,19 @@ export function evaluatePlatformMediaReadiness(
   product: ProductMediaInput | null | undefined,
 ): PlatformMediaReadiness {
   const rule = getPlatformMediaRule(platform)
+  const gate = evaluatePostMediaGate({
+    platform,
+    finalCopy: product,
+    product,
+  })
   const hasImage =
+    gate.imageUrl !== null ||
     product?.imageStatus === "ready" ||
-    product?.image_status === "ready" ||
-    Boolean(product?.imageUrl?.trim()) ||
-    Boolean(product?.imageUrlHe?.trim()) ||
-    Boolean(product?.image_url?.trim()) ||
-    Boolean(product?.image_url_he?.trim())
+    product?.image_status === "ready"
   const hasVideo =
+    gate.videoUrl !== null ||
     product?.videoStatus === "ready" ||
     product?.video_status === "ready" ||
-    Boolean(product?.videoUrl?.trim()) ||
-    Boolean(product?.video_url?.trim()) ||
     Boolean(product?.videoSuitableFor?.includes(platform)) ||
     Boolean(product?.video_suitable_for?.includes(platform))
 

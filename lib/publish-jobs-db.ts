@@ -61,6 +61,11 @@ type FinalCopyExecutionRow = {
   validation_status: string
   title: string
   body?: string
+  language?: string | null
+  image_url?: string | null
+  media_asset_url?: string | null
+  image_asset_path?: string | null
+  video_asset_path?: string | null
   source_content_id: string
   platform_adaptation_id?: string
   affiliate_link?: string | null
@@ -81,6 +86,11 @@ type PublishExecutorFinalCopyRelation = {
   source_content_id: string
   platform_adaptation_id: string
   affiliate_link: string | null
+  language?: string | null
+  image_url?: string | null
+  media_asset_url?: string | null
+  image_asset_path?: string | null
+  video_asset_path?: string | null
 }
 
 type PublishExecutorProductRelation = {
@@ -104,6 +114,9 @@ export type PublishExecutorJob = PublishJob & {
   title: string
   content: string
   affiliateLink: string | null
+  mediaAssetUrl: string | null
+  imageAssetPath: string | null
+  videoAssetPath: string | null
   mediaRequired: boolean
   mediaReady: boolean
   publishMediaMode: "image" | "video" | "bridge_url_only"
@@ -136,7 +149,7 @@ const PUBLISH_JOB_SELECT =
   "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name), final_copies(title)"
 
 const PUBLISH_EXECUTOR_JOB_SELECT =
-  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link)"
+  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link, language, image_url, media_asset_url, image_asset_path, video_asset_path)"
 
 function relatedName<T extends { name?: string }>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) return value[0]?.name ?? null
@@ -196,7 +209,23 @@ function mapPublishJob(row: PublishJobRow): PublishJob {
 function mapPublishExecutorJob(row: PublishExecutorJobRow): PublishExecutorJob {
   const job = mapPublishJob(row)
   const finalCopy = relatedFinalCopy(row.final_copies as PublishExecutorJobRow["final_copies"])
-  const media = evaluatePlatformMediaReadiness(row.platform, relatedProductMedia(row.products))
+  const productMedia = relatedProductMedia(row.products)
+  const media = evaluatePlatformMediaReadiness(row.platform, {
+    ...productMedia,
+    image_url: finalCopy?.image_url ?? productMedia?.image_url ?? null,
+    media_asset_url: finalCopy?.media_asset_url ?? null,
+    image_asset_path: finalCopy?.image_asset_path ?? null,
+    video_asset_path: finalCopy?.video_asset_path ?? null,
+  })
+  const mediaAssetUrl =
+    media.publishMediaMode === "video"
+      ? finalCopy?.video_asset_path ?? productMedia?.video_url ?? null
+      : finalCopy?.media_asset_url ??
+        finalCopy?.image_url ??
+        finalCopy?.image_asset_path ??
+        productMedia?.image_url_he ??
+        productMedia?.image_url ??
+        null
   const publishConfirmed = row.status === "running" && row.blocking_reason === "operator_final_confirmation_granted"
 
   return {
@@ -206,6 +235,9 @@ function mapPublishExecutorJob(row: PublishExecutorJobRow): PublishExecutorJob {
     title: finalCopy?.title ?? job.finalCopyTitle ?? "Approved post",
     content: finalCopy?.body ?? "",
     affiliateLink: finalCopy?.affiliate_link ?? null,
+    mediaAssetUrl,
+    imageAssetPath: media.publishMediaMode === "image" ? mediaAssetUrl : null,
+    videoAssetPath: media.publishMediaMode === "video" ? mediaAssetUrl : null,
     mediaRequired: media.mediaRequired,
     mediaReady: media.mediaReady,
     publishMediaMode: media.publishMediaMode,
@@ -326,12 +358,24 @@ export async function refreshPublishJobsForExecutorConnection() {
   const session = await getActiveExecutorSession()
   const { data: jobs, error } = await supabase
     .from("publish_jobs")
-    .select("id, platform, status")
-    .in("status", ["blocked_executor_not_connected", "approved_waiting_executor", "requires_auth"])
+    .select(PUBLISH_EXECUTOR_JOB_SELECT)
+    .in("status", ["blocked_executor_not_connected", "approved_waiting_executor", "requires_auth", "waiting_media", "pending_operator_confirmation"])
 
   if (error || !jobs?.length) return
 
-  for (const job of jobs as Array<{ id: string; platform: CampaignPlatform; status: PublishJobStatus }>) {
+  for (const row of jobs as PublishExecutorJobRow[]) {
+    const job = mapPublishExecutorJob(row)
+    if (!job.mediaReady) {
+      await supabase
+        .from("publish_jobs")
+        .update({
+          status: "waiting_media",
+          executor_type: executorTypeForPlatform(job.platform),
+          blocking_reason: job.blockingReasons.join(", ") || "media_not_ready",
+        })
+        .eq("id", job.id)
+      continue
+    }
     const next = getExecutorStateForPlatform(job.platform, session)
     await supabase
       .from("publish_jobs")
@@ -359,13 +403,26 @@ async function getCampaignApprovalId(sourceContentId: string, platform: Campaign
   return (data as { id: string } | null)?.id ?? null
 }
 
+async function markPublishJobWaitingMedia(jobId: string, blockingReason: string) {
+  const supabase = getServiceRoleSupabase()
+  await supabase
+    .from("publish_jobs")
+    .update({
+      status: "waiting_media",
+      blocking_reason: blockingReason,
+      live_url: null,
+      verified_at: null,
+    })
+    .eq("id", jobId)
+}
+
 export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string): Promise<PublishJob | null> {
   if (!isSupabaseConfigured()) return null
   const supabase = getServiceRoleSupabase()
 
   const { data: finalCopy, error: finalCopyError } = await supabase
     .from("final_copies")
-    .select("id, product_id, platform, status, validation_status, title, source_content_id")
+    .select("id, product_id, platform, status, validation_status, title, source_content_id, language, image_url, media_asset_url, image_asset_path, video_asset_path")
     .eq("id", finalCopyId)
     .single()
 
@@ -380,9 +437,31 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
   }
 
   const productMedia = await getProductMedia(copy.product_id)
-  const media = evaluatePlatformMediaReadiness(copy.platform, productMedia)
+  const media = evaluatePlatformMediaReadiness(copy.platform, {
+    ...productMedia,
+    image_url: copy.image_url ?? productMedia?.image_url ?? null,
+    media_asset_url: copy.media_asset_url ?? null,
+    image_asset_path: copy.image_asset_path ?? null,
+    video_asset_path: copy.video_asset_path ?? null,
+  })
   if (!media.mediaReady) {
-    throw new Error(`Publish job requires media READY: ${media.blockingReasons.join(", ")}`)
+    const { data, error } = await supabase
+      .from("publish_jobs")
+      .upsert({
+        final_copy_id: copy.id,
+        product_id: copy.product_id,
+        platform: copy.platform,
+        status: "waiting_media",
+        executor_type: executorTypeForPlatform(copy.platform),
+        blocking_reason: media.blockingReasons.join(", ") || "media_not_ready",
+        live_url: null,
+        verified_at: null,
+      }, { onConflict: "final_copy_id" })
+      .select(PUBLISH_JOB_SELECT)
+      .single()
+
+    if (error) throw new Error(`Unable to mark publish job waiting_media: ${error.message}`)
+    return mapPublishJob(data as PublishJobRow)
   }
 
   const executorState = getExecutorStateForPlatform(copy.platform, await getActiveExecutorSession())
@@ -503,12 +582,7 @@ export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob
   if (!confirmedError && confirmed) {
     const job = mapPublishExecutorJob(confirmed as PublishExecutorJobRow)
     if (!job.mediaReady) {
-      await updatePublishJobFromExecutor({
-        jobId: job.id,
-        status: "failed_needs_system_fix",
-        blockerReason: job.blockingReasons.join(", ") || "media_not_ready",
-        message: "Executor blocked because the product is missing required READY media.",
-      })
+      await markPublishJobWaitingMedia(job.id, job.blockingReasons.join(", ") || "media_not_ready")
       return null
     }
     return job
@@ -550,12 +624,7 @@ export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob
   }
 
   if (!job.mediaReady) {
-    await updatePublishJobFromExecutor({
-      jobId: job.id,
-      status: "failed_needs_system_fix",
-      blockerReason: job.blockingReasons.join(", ") || "media_not_ready",
-      message: "Executor blocked because the product is missing required READY media.",
-    })
+    await markPublishJobWaitingMedia(job.id, job.blockingReasons.join(", ") || "media_not_ready")
     return null
   }
 
@@ -568,11 +637,12 @@ export async function confirmPreparedPublishJobForExecution(jobId: string): Prom
 
   const { data: current, error: currentError } = await supabase
     .from("publish_jobs")
-    .select(PUBLISH_JOB_SELECT)
+    .select(PUBLISH_EXECUTOR_JOB_SELECT)
     .eq("id", jobId)
     .single()
 
   if (currentError || !current) throw new Error("Publish job was not found.")
+  const executorJob = mapPublishExecutorJob(current as PublishExecutorJobRow)
   const job = mapPublishJob(current as PublishJobRow)
 
   if (job.platform !== "medium" && job.platform !== "substack") {
@@ -582,6 +652,10 @@ export async function confirmPreparedPublishJobForExecution(jobId: string): Prom
     throw new Error("Only a job waiting for final confirmation can be confirmed.")
   }
   assertPublishJobScheduleIsDue(job)
+  if (!executorJob.mediaReady) {
+    await markPublishJobWaitingMedia(job.id, executorJob.blockingReasons.join(", ") || "media_not_ready")
+    throw new Error("Publish job is waiting for required image/media before final confirmation.")
+  }
   if (!job.executorUrl || detectBrowserPlatform(job.executorUrl) !== job.platform) {
     throw new Error(`Prepared ${job.platform} executor draft URL is missing.`)
   }
@@ -626,6 +700,11 @@ export async function updatePublishJobFromExecutor(input: {
   const job = mapPublishExecutorJob(current as PublishExecutorJobRow)
 
   if (input.status === "published" || input.status === "verified") {
+    if (!job.mediaReady) {
+      await markPublishJobWaitingMedia(job.id, job.blockingReasons.join(", ") || "media_not_ready")
+      throw new Error("Verified publishing is blocked until required image/media is attached.")
+    }
+
     const postUrl = input.postUrl?.trim()
     if (!postUrl || !isValidPublishedPostUrl(postUrl, job.platform)) {
       throw new Error("A verified live URL on the expected platform is required.")
@@ -648,6 +727,9 @@ export async function updatePublishJobFromExecutor(input: {
         verified_at: new Date().toISOString(),
         final_copy_id: job.finalCopyId,
         campaign_approval_id: job.approvalId,
+        media_asset_url: job.mediaAssetUrl,
+        media_status: job.mediaRequired ? "ready" : "not_required",
+        needs_media_repair: false,
       }, { onConflict: "platform,live_url" })
       .select("id")
       .single()

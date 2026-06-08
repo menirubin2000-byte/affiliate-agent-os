@@ -62,6 +62,9 @@ type PublishedRecordRow = {
   live_url: string | null
   verification_status: string
   verified_at: string | null
+  media_asset_url?: string | null
+  media_status?: string | null
+  needs_media_repair?: boolean | null
 }
 
 type CampaignLinkRow = {
@@ -113,7 +116,7 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
     safeSelect<PublishedRecordRow>("published_records", () =>
       supabase
         .from("published_records")
-        .select("id, final_copy_id, product_id, platform, live_url, verification_status, verified_at")
+        .select("id, final_copy_id, product_id, platform, live_url, verification_status, verified_at, media_asset_url, media_status, needs_media_repair")
         .order("verified_at", { ascending: false }),
     ),
     safeSelect<CampaignLinkRow>("campaign_links", () =>
@@ -235,6 +238,9 @@ function mapPublishedRecord(row: PublishedRecordRow): RoutingPublishedRecordInpu
     liveUrl: row.live_url,
     verificationStatus: row.verification_status,
     verifiedAt: row.verified_at,
+    mediaAssetUrl: row.media_asset_url ?? null,
+    mediaStatus: row.media_status ?? null,
+    needsMediaRepair: row.needs_media_repair ?? false,
   }
 }
 

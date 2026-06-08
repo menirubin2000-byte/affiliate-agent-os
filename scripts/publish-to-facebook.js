@@ -29,25 +29,9 @@ async function pageInfo() {
  * @returns {Promise<{id: string, permalink_url?: string}>}
  */
 async function publishTextPost({ message, link }) {
-  if (!message) throw new Error("message is required")
-
-  const url = new URL(`${GRAPH}/${PAGE_ID}/feed`)
-  const body = new URLSearchParams()
-  body.set("message", message)
-  if (link) body.set("link", link)
-  body.set("access_token", TOKEN)
-
-  const res = await fetch(url, { method: "POST", body })
-  const data = await res.json()
-  if (!res.ok || !data.id) throw new Error(`feed publish failed: ${JSON.stringify(data)}`)
-
-  // fetch permalink
-  const permaUrl = new URL(`${GRAPH}/${data.id}`)
-  permaUrl.searchParams.set("fields", "permalink_url")
-  permaUrl.searchParams.set("access_token", TOKEN)
-  const pRes = await fetch(permaUrl)
-  const pBody = await pRes.json()
-  return { id: data.id, permalink_url: pBody.permalink_url }
+  void message
+  void link
+  throw new Error("Text-only Facebook publishing is blocked. Use publishPhotoPost with a public image URL.")
 }
 
 /**
@@ -80,16 +64,7 @@ async function main() {
 
   if (cmd === "text") {
     requireDirectPublishOverride("scripts/publish-to-facebook.js text")
-    const messagePath = process.argv[3]
-    const link = process.argv[4]
-    if (!messagePath) {
-      console.error("usage: node scripts/publish-to-facebook.js text <messageFile> [link]")
-      process.exit(1)
-    }
-    const message = require("fs").readFileSync(messagePath, "utf8").trim()
-    const result = await publishTextPost({ message, link })
-    console.log("PUBLISHED:", JSON.stringify(result, null, 2))
-    return
+    throw new Error("Text-only Facebook publishing is blocked. Use: photo <imageUrl> <captionFile>")
   }
 
   if (cmd === "photo") {

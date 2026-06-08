@@ -3,6 +3,7 @@ import "server-only"
 import { buildFullPostText, detectBrowserPlatform, getPlatformPublishTarget, isValidPublishedPostUrl, VALID_BROWSER_JOB_STATUSES } from "@/lib/browser-control"
 import { buildPostApprovalFingerprint, isPublishApprovalType } from "@/lib/approval-identity"
 import { refreshPublishJobsForExecutorConnection } from "@/lib/publish-jobs-db"
+import { evaluatePostMediaGate } from "@/lib/post-media-policy"
 import { isSupabaseConfigured, getServiceRoleSupabase } from "@/lib/supabase/server"
 import type { ApprovalItem } from "@/types/approval-item"
 import type {
@@ -208,7 +209,7 @@ export async function approvePublishApprovalItem(approvalItemId: string): Promis
   const supabase = getServiceRoleSupabase()
   const { data: item, error } = await supabase
     .from("approval_items")
-    .select("id, product_id, platform, title, content_preview, campaign_link_url, disclosure_present, status, approval_type")
+    .select("id, product_id, platform, title, content_preview, campaign_link_url, disclosure_present, status, approval_type, products(image_url, image_url_he)")
     .eq("id", approvalItemId)
     .single()
 
@@ -218,6 +219,12 @@ export async function approvePublishApprovalItem(approvalItemId: string): Promis
   if (!item.content_preview?.trim()) throw new Error("Cannot approve a post without content.")
   if (!item.campaign_link_url?.trim()) throw new Error("Cannot approve a post without a campaign link.")
   if (!item.disclosure_present) throw new Error("Cannot approve a post without affiliate disclosure.")
+  const product = Array.isArray(item.products) ? item.products[0] ?? null : item.products ?? null
+  const media = evaluatePostMediaGate({
+    platform: item.platform ?? "",
+    product,
+  })
+  if (!media.mediaReady) throw new Error("Cannot approve a visual-platform post without an image/media asset.")
 
   const fingerprint = buildPostApprovalFingerprint({
     productId: item.product_id,
@@ -369,7 +376,7 @@ export async function createBrowserJobForApprovalItem(approvalItemId: string): P
   const supabase = getServiceRoleSupabase()
   const { data: item, error: itemError } = await supabase
     .from("approval_items")
-    .select("id, product_id, platform, title, content_preview, campaign_link_url, disclosure_present, status, approval_type")
+    .select("id, product_id, platform, title, content_preview, campaign_link_url, disclosure_present, status, approval_type, products(image_url, image_url_he)")
     .eq("id", approvalItemId)
     .single()
 
@@ -379,6 +386,12 @@ export async function createBrowserJobForApprovalItem(approvalItemId: string): P
     throw new Error("Only publish approval items can be queued for browser publishing.")
   }
   if (!item.content_preview?.trim()) throw new Error("Approval item has no content to publish.")
+  const product = Array.isArray(item.products) ? item.products[0] ?? null : item.products ?? null
+  const media = evaluatePostMediaGate({
+    platform: item.platform ?? "",
+    product,
+  })
+  if (!media.mediaReady) throw new Error("Browser job requires an image/media asset before queueing.")
 
   const existing = await supabase
     .from("browser_jobs")

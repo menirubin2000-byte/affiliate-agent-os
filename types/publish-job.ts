@@ -9,6 +9,7 @@ export type PublishJobStatus =
   | "pending_operator_confirmation"
   | "running"
   | "waiting_url_verification"
+  | "waiting_media"
   | "verified"
   | "needs_system_fix"
   | "failed_needs_system_fix"

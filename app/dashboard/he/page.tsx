@@ -38,6 +38,15 @@ export default async function HebrewDashboardPage() {
     listPlatformConnections(),
   ])
   const totals = overview.counts
+  const publishedMissingImage = overview.products.flatMap((product) =>
+    product.routes
+      .filter((route) => route.state === "published_verified" && route.publishedNeedsMediaRepair)
+      .map((route) => ({
+        productName: product.product.name,
+        platform: route.platform.hebrewName,
+        liveUrl: route.liveUrl,
+      })),
+  )
   const nothingConnected =
     totals.products === 0 && totals.publishedVerified === 0 && totals.waitingApproval === 0
 
@@ -129,6 +138,14 @@ export default async function HebrewDashboardPage() {
           ctaLabel="פתח רשימת מוצרים"
         />
         <NextActionCard
+          title="פורסם בלי תמונה — דורש תיקון"
+          count={totals.publishedMissingImage}
+          description="רשומות Published בפלטפורמות ויזואליות שדורשות תמונה. צריך להצמיד תמונה ולעדכן/לפרסם מחדש רק אחרי אישור MENI."
+          href="/dashboard/he"
+          ctaLabel="צפה ברשימה"
+          variant={totals.publishedMissingImage > 0 ? "destructive" : "outline"}
+        />
+        <NextActionCard
           title="חסר וידאו"
           count={totals.needsVideo}
           description="פוסטים שדורשים וידאו (TikTok / YouTube) ועוד לא קיבלו אסט."
@@ -172,6 +189,31 @@ export default async function HebrewDashboardPage() {
           ctaLabel="פתח רשימת מוצרים"
         />
       </section>
+
+      {publishedMissingImage.length ? (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardHeader>
+            <CardTitle>פוסטים חסרי תמונה</CardTitle>
+            <CardDescription>דורש תמונה לפני פרסום. תיקון או repost יתבצעו רק אחרי אישור MENI.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm">
+              {publishedMissingImage.map((item) => (
+                <li key={`${item.productName}-${item.platform}`} className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-background p-3">
+                  <span>
+                    {item.productName} · {item.platform}
+                  </span>
+                  {item.liveUrl ? (
+                    <Link href={item.liveUrl} className="text-primary underline" target="_blank">
+                      URL
+                    </Link>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>

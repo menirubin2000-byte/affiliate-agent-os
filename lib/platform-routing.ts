@@ -132,6 +132,9 @@ export interface RoutingPublishedRecordInput {
   liveUrl: string | null
   verificationStatus: string
   verifiedAt: string | null
+  mediaAssetUrl?: string | null
+  mediaStatus?: string | null
+  needsMediaRepair?: boolean | null
 }
 
 export interface RoutingCampaignLinkInput {
@@ -162,6 +165,7 @@ export interface PlatformRoute {
   videoRequired: boolean
   mediaBlockingReasons: string[]
   mediaNextAction: string
+  publishedNeedsMediaRepair: boolean
 }
 
 export interface ProductRoutingSummary {
@@ -182,6 +186,7 @@ export interface ProductRoutingSummary {
   needsFinalCopyCount: number
   manualOnlyCount: number
   platformPendingSetupCount: number
+  publishedMissingImageCount: number
   nextActionHe: string
 }
 
@@ -210,6 +215,8 @@ export interface PlatformRoutingOverview {
     manualOnly: number
     /** Routes on platforms still pending OAuth/API setup. */
     platformPendingSetup: number
+    /** Already published visual-platform records whose product/copy media is missing. */
+    publishedMissingImage: number
   }
 }
 
@@ -459,6 +466,7 @@ export function buildPlatformRoutingOverview(input: {
       needsFinalCopy: products.reduce((s, p) => s + p.needsFinalCopyCount, 0),
       manualOnly: products.reduce((s, p) => s + p.manualOnlyCount, 0),
       platformPendingSetup: products.reduce((s, p) => s + p.platformPendingSetupCount, 0),
+      publishedMissingImage: products.reduce((s, p) => s + p.publishedMissingImageCount, 0),
     },
   }
 }
@@ -518,6 +526,9 @@ function buildProductRoutingSummary(
   const needsFinalCopyCount = routes.filter((r) => r.state === "missing_final_copy").length
   const manualOnlyCount = routes.filter((r) => r.state === "bridge_url_platform").length
   const platformPendingSetupCount = routes.filter((r) => r.state === "platform_pending_setup").length
+  const publishedMissingImageCount = routes.filter(
+    (r) => r.state === "published_verified" && r.publishedNeedsMediaRepair,
+  ).length
 
   return {
     product,
@@ -536,6 +547,7 @@ function buildProductRoutingSummary(
     needsFinalCopyCount,
     manualOnlyCount,
     platformPendingSetupCount,
+    publishedMissingImageCount,
     nextActionHe: buildProductNextAction({ affiliateReady, routes }),
   }
 }
@@ -778,6 +790,11 @@ function routeFromPublishJob(
       labelHe: "נדרש חיבור חשבון",
       nextActionHe: "MENI מחבר חשבון בלבד",
     },
+    waiting_media: {
+      state: "needs_image",
+      labelHe: "דורש תמונה לפני פרסום",
+      nextActionHe: "להצמיד תמונה ורק אז להחזיר לתור",
+    },
     pending_operator_confirmation: {
       state: "ready_for_executor",
       labelHe: "ממתין לאישור פעולה סופית",
@@ -860,6 +877,14 @@ function route(
     videoRequired: media.videoRequired,
     mediaBlockingReasons: media.blockingReasons,
     mediaNextAction: media.nextAction,
+    publishedNeedsMediaRepair: Boolean(
+      state.publishedRecord &&
+        state.publishedRecord.platform !== "quora" &&
+        state.publishedRecord.platform !== "reddit" &&
+        (state.publishedRecord.needsMediaRepair ||
+          state.publishedRecord.mediaStatus === "missing_image" ||
+          (!state.publishedRecord.mediaAssetUrl && media.imageRequired)),
+    ),
   }
 }
 

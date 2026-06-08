@@ -3,7 +3,7 @@
 
 require("dotenv").config({ path: ".env.local" })
 const { Client } = require("pg")
-const { publishTextPost } = require("./publish-to-facebook")
+const { publishPhotoPost } = require("./publish-to-facebook")
 const { requireDirectPublishOverride } = require("./safety-guard")
 
 const c = new Client({
@@ -28,7 +28,8 @@ async function main() {
 
   const r = await c.query(
     `select fc.id, fc.title, fc.body, fc.affiliate_link, fc.product_id,
-            fc.source_content_id, fc.platform_adaptation_id
+            fc.source_content_id, fc.platform_adaptation_id,
+            coalesce(fc.media_asset_url, fc.image_url, fc.image_asset_path, p.image_url_he, p.image_url) as image_url
        from final_copies fc
        join products p on p.id = fc.product_id
       where p.name = $1 and fc.platform = $2 and fc.status = 'operator_approved'
@@ -43,6 +44,9 @@ async function main() {
   }
 
   const fc = r.rows[0]
+  if (!fc.image_url || !String(fc.image_url).startsWith("https://")) {
+    throw new Error("Facebook final_copy publish requires a public HTTPS image_url/media_asset_url.")
+  }
 
   // Strip markdown headers/bold for FB-friendly plain text
   let message = fc.body
@@ -59,9 +63,9 @@ async function main() {
   console.log("affiliate link:", fc.affiliate_link)
   console.log("")
 
-  const result = await publishTextPost({
-    message,
-    link: fc.affiliate_link || undefined,
+  const result = await publishPhotoPost({
+    imageUrl: fc.image_url,
+    caption: message,
   })
 
   console.log("PUBLISHED:", JSON.stringify(result, null, 2))
@@ -71,8 +75,8 @@ async function main() {
     await c.query(
       `insert into published_records
          (product_id, source_content_id, platform_adaptation_id, platform, live_url,
-          verification_status, verified_at, final_copy_id)
-       values ($1,$2,$3,'facebook',$4,'verified',now(),$5)
+          verification_status, verified_at, final_copy_id, media_asset_url, media_status, needs_media_repair)
+       values ($1,$2,$3,'facebook_page',$4,'verified',now(),$5,$6,'ready',false)
        on conflict (platform, live_url) do nothing`,
       [
         fc.product_id,
@@ -80,6 +84,7 @@ async function main() {
         fc.platform_adaptation_id,
         result.permalink_url || `https://www.facebook.com/${result.id}`,
         fc.id,
+        fc.image_url,
       ],
     )
     console.log("Recorded in published_records.")

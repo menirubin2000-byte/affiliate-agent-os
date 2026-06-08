@@ -24,6 +24,9 @@ type MetaPublishJobRow = {
         status: string
         validation_status: string
         language: string | null
+        image_url: string | null
+        media_asset_url: string | null
+        image_asset_path: string | null
       }
     | Array<{
         title: string
@@ -31,6 +34,9 @@ type MetaPublishJobRow = {
         status: string
         validation_status: string
         language: string | null
+        image_url: string | null
+        media_asset_url: string | null
+        image_asset_path: string | null
       }>
     | null
   products:
@@ -58,15 +64,23 @@ function requiredEnv(name: string) {
   return result
 }
 
-async function setFailedState(jobId: string, blockingReason: string) {
+async function setJobState(jobId: string, status: "needs_system_fix" | "waiting_media", blockingReason: string) {
   const supabase = getServiceRoleSupabase()
   await supabase
     .from("publish_jobs")
     .update({
-      status: "needs_system_fix",
+      status,
       blocking_reason: blockingReason,
     })
     .eq("id", jobId)
+}
+
+async function setFailedState(jobId: string, blockingReason: string) {
+  await setJobState(jobId, "needs_system_fix", blockingReason)
+}
+
+async function setWaitingMedia(jobId: string, blockingReason = "image_required_for_ready") {
+  await setJobState(jobId, "waiting_media", blockingReason)
 }
 
 async function loadMetaJob(jobId: string) {
@@ -75,7 +89,7 @@ async function loadMetaJob(jobId: string) {
   const { data, error } = await supabase
     .from("publish_jobs")
     .select(
-      "id, final_copy_id, product_id, platform, status, approval_id, scheduled_at, final_copies(title, body, status, validation_status, language), products(image_url, image_url_he)",
+      "id, final_copy_id, product_id, platform, status, approval_id, scheduled_at, final_copies(title, body, status, validation_status, language, image_url, media_asset_url, image_asset_path), products(image_url, image_url_he)",
     )
     .eq("id", jobId)
     .single()
@@ -115,17 +129,23 @@ export async function publishFacebookPageJobViaOfficialApi(jobId: string) {
   const capability = getFacebookPageOfficialApiCapability()
   if (!capability.configured) throw new Error("Facebook Page official API is not configured.")
 
-  const { job, finalCopy } = await loadMetaJob(jobId)
+  const { job, finalCopy, product } = await loadMetaJob(jobId)
   if (job.platform !== "facebook_page") throw new Error("Publish job is not a Facebook Page job.")
+  const imageUrl = pickImageUrl(finalCopy, product)
+  if (!imageUrl?.startsWith("https://")) {
+    await setWaitingMedia(job.id)
+    throw new Error("Facebook Page publishing requires a public HTTPS image asset.")
+  }
 
   await markRunning(job.id, "meta_pages_api")
 
   try {
     const pageId = requiredEnv("FB_PAGE_ID")
     const token = requiredEnv("FB_PAGE_ACCESS_TOKEN")
-    const url = new URL(`https://graph.facebook.com/${GRAPH_VERSION}/${pageId}/feed`)
+    const url = new URL(`https://graph.facebook.com/${GRAPH_VERSION}/${pageId}/photos`)
     const body = new URLSearchParams()
-    body.set("message", finalCopy.body)
+    body.set("url", imageUrl)
+    body.set("caption", finalCopy.body)
     body.set("access_token", token)
 
     const response = await fetch(url, { method: "POST", body, cache: "no-store" })
@@ -193,9 +213,9 @@ export async function publishInstagramJobViaOfficialApi(jobId: string) {
   const { job, finalCopy, product } = await loadMetaJob(jobId)
   if (job.platform !== "instagram_professional") throw new Error("Publish job is not an Instagram job.")
 
-  const imageUrl = finalCopy.language === "he" ? product?.image_url_he || product?.image_url : product?.image_url
+  const imageUrl = pickImageUrl(finalCopy, product)
   if (!imageUrl?.startsWith("https://")) {
-    await setFailedState(job.id, "instagram_media_asset_required")
+    await setWaitingMedia(job.id, "instagram_media_asset_required")
     throw new Error("Instagram publishing requires a public HTTPS image asset.")
   }
   if (finalCopy.body.length > 2200) {
@@ -231,6 +251,20 @@ export async function publishInstagramJobViaOfficialApi(jobId: string) {
     await setFailedState(job.id, "instagram_graph_api_publish_failed")
     throw error
   }
+}
+
+function pickImageUrl(
+  finalCopy: { language: string | null; image_url?: string | null; media_asset_url?: string | null; image_asset_path?: string | null },
+  product: { image_url: string | null; image_url_he: string | null } | null,
+) {
+  return (
+    finalCopy.media_asset_url?.trim() ||
+    finalCopy.image_url?.trim() ||
+    finalCopy.image_asset_path?.trim() ||
+    (finalCopy.language === "he" ? product?.image_url_he?.trim() || product?.image_url?.trim() : product?.image_url?.trim()) ||
+    product?.image_url_he?.trim() ||
+    null
+  )
 }
 
 async function createInstagramMediaContainer(input: {

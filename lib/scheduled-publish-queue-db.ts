@@ -47,6 +47,10 @@ type FinalCopyScheduleRow = {
   validation_status: string
   affiliate_link: string | null
   public_review_url: string | null
+  media_asset_url?: string | null
+  image_url?: string | null
+  image_asset_path?: string | null
+  video_asset_path?: string | null
   source_content_id: string
   platform_adaptation_id: string
   title: string
@@ -103,7 +107,7 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("final_copies")
-    .select("id, product_id, platform, language, status, validation_status, affiliate_link, public_review_url, source_content_id, platform_adaptation_id, title, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for)")
+    .select("id, product_id, platform, language, status, validation_status, affiliate_link, public_review_url, media_asset_url, image_url, image_asset_path, video_asset_path, source_content_id, platform_adaptation_id, title, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for)")
     .eq("id", finalCopyId)
     .single()
 
@@ -119,7 +123,21 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
     .eq("final_copy_id", finalCopy.id)
     .maybeSingle()
   const productMedia = related(finalCopy.products)
-  const media = evaluatePlatformMediaReadiness(finalCopy.platform, productMedia)
+  const media = evaluatePlatformMediaReadiness(finalCopy.platform, {
+    ...productMedia,
+    image_url: finalCopy.image_url ?? productMedia?.image_url ?? null,
+    media_asset_url: finalCopy.media_asset_url ?? null,
+    image_asset_path: finalCopy.image_asset_path ?? null,
+    video_asset_path: finalCopy.video_asset_path ?? null,
+  })
+  const imageAsset =
+    finalCopy.media_asset_url ??
+    finalCopy.image_url ??
+    finalCopy.image_asset_path ??
+    productMedia?.image_url_he ??
+    productMedia?.image_url ??
+    null
+  const videoAsset = finalCopy.video_asset_path ?? productMedia?.video_url ?? null
   const approvalId = await getCampaignApprovalId(finalCopy.source_content_id, finalCopy.platform)
   const existingPublishAt = (existingQueue as { publish_at?: string } | null)?.publish_at ?? null
   const publishAt = existingPublishAt && !options.forceReschedule
@@ -149,9 +167,9 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
       campaign_link: finalCopy.platform === "quora" || finalCopy.platform === "reddit"
         ? finalCopy.public_review_url
         : finalCopy.affiliate_link,
-      media_asset_url: media.publishMediaMode === "video" ? productMedia?.video_url ?? null : productMedia?.image_url_he ?? productMedia?.image_url ?? null,
-      image_asset_path: productMedia?.image_url_he ?? productMedia?.image_url ?? null,
-      video_asset_path: productMedia?.video_url ?? null,
+      media_asset_url: media.publishMediaMode === "video" ? videoAsset : imageAsset,
+      image_asset_path: imageAsset,
+      video_asset_path: videoAsset,
       approval_id: approvalId,
       status: nextStatus,
       publish_at: publishAt,
@@ -280,6 +298,17 @@ async function refreshScheduledPublishItem(finalCopyId: string) {
 
 async function createPublishJobForScheduledItem(item: ScheduledPublishItem) {
   const supabase = getServiceRoleSupabase()
+  if (requiresMediaButMissing(item)) {
+    await supabase
+      .from("scheduled_publish_queue")
+      .update({
+        status: "waiting_media",
+        last_error: "image_required_for_ready",
+      })
+      .eq("id", item.id)
+    return null
+  }
+
   const { data: existing } = await supabase
     .from("publish_jobs")
     .select("id")
@@ -314,6 +343,20 @@ async function createPublishJobForScheduledItem(item: ScheduledPublishItem) {
   }
   await updateQueueStatus(item.id, "publishing")
   return data
+}
+
+function requiresMediaButMissing(item: ScheduledPublishItem) {
+  if (
+    ["facebook_page", "instagram_professional", "pinterest", "linkedin", "medium", "substack", "x_twitter"].includes(
+      item.platform,
+    )
+  ) {
+    return !item.mediaAssetUrl && !item.imageAssetPath
+  }
+  if (item.platform === "tiktok" || item.platform === "youtube") {
+    return !item.videoAssetPath
+  }
+  return false
 }
 
 async function planPublishAt(finalCopy: Pick<FinalCopyScheduleRow, "id" | "product_id" | "platform">) {

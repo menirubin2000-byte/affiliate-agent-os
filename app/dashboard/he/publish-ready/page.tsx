@@ -39,6 +39,7 @@ const statusLabels: Record<PublishJobStatus, string> = {
   blocked_policy: "חסום - מדיניות פלטפורמה",
   requires_auth: "דרוש חיבור חשבון",
   pending_operator_confirmation: "ממתין לאישור פעולה סופית",
+  waiting_media: "דורש תמונה לפני פרסום",
   running: "בביצוע",
   waiting_url_verification: "ממתין לאימות URL",
   verified: "פורסם ואומת",
