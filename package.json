@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "tsx --test tests/**/*.test.ts",
     "verify": "npm run lint && npm run test && npm run build",
+    "impact:import": "tsx scripts/import-impact-products.mjs",
     "preflight:staging": "node scripts/preflight-staging.mjs",
     "generate:access-secret": "node scripts/generate-access-secret.mjs",
     "sync:publish": "node scripts/backfill-fb-ig-published.js",
