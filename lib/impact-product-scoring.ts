@@ -21,6 +21,8 @@ export type ImpactProductCandidateInput = {
   availability?: string | null
   inStock?: boolean | null
   imageUrl?: string | null
+  productUrl?: string | null
+  trackingLink?: string | null
   landingPage?: string | null
   category?: string | null
   labels?: string[]
@@ -31,6 +33,7 @@ export type ImpactProductCandidateInput = {
 export type ImpactProductCandidateScoring = ImpactProductScores & {
   status: ImpactCandidateStatus
   rejectReasons: string[]
+  scoreReasons: string[]
   whyGood: string[]
   missingApproval: string | null
   platformFit: string[]
@@ -59,13 +62,15 @@ export function scoreImpactProductCandidate(
   const epc = input.epc ?? null
   const conversionRate = input.conversionRate ?? null
   const hasImage = Boolean(input.imageUrl?.trim())
-  const hasLandingPage = Boolean(input.landingPage?.trim())
+  const hasLandingPage = Boolean(input.productUrl?.trim() || input.landingPage?.trim())
+  const hasTrackingLink = Boolean(input.trackingLink?.trim())
   const relationshipStatus = input.relationshipStatus ?? "unknown"
   const shippingKnown = Boolean(input.shippingGeo?.trim()) || input.inStock !== null
   const inStock = input.inStock ?? null
 
   if ((payout ?? 0) <= 0) rejectReasons.push("payout_0_do_not_promote")
   if (!hasImage) rejectReasons.push("missing_image")
+  if (!hasTrackingLink) rejectReasons.push("missing_tracking_link_do_not_promote")
   if (!hasLandingPage) rejectReasons.push("missing_landing_page")
   if (relationshipStatus !== "approved") rejectReasons.push("needs_brand_approval")
   if (epc !== null && epc < 0.5) rejectReasons.push("bad_epc")
@@ -76,20 +81,19 @@ export function scoreImpactProductCandidate(
   const epcScore = epc === null ? 35 : clampScore(epc * 10)
   const conversionScore = conversionRate === null ? 35 : clampScore(conversionRate * 12)
   const demandScore = scoreDemand(input, whyGood)
-  const imageQualityScore = hasImage ? 85 : 0
+  const imageQualityScore = hasImage && hasLandingPage && hasTrackingLink ? 90 : hasImage ? 55 : 0
   const platformFitScore = clampScore(platformFit.length * 18 + scoreCategory(input.category) * 0.35)
   const shippingScore = inStock === false ? 0 : shippingKnown ? 80 : 35
   const riskScore = scoreRisk({ relationshipStatus, hasLandingPage, hasImage, epc, shippingKnown, inStock })
 
   const finalProductScore = Math.round(
-    commissionScore * 0.2 +
-      demandScore * 0.16 +
-      epcScore * 0.16 +
-      conversionScore * 0.14 +
+    commissionScore * 0.3 +
+      demandScore * 0.2 +
+      ((epcScore + conversionScore) / 2) * 0.15 +
       imageQualityScore * 0.1 +
+      shippingScore * 0.1 +
       platformFitScore * 0.1 +
-      shippingScore * 0.08 +
-      riskScore * 0.06,
+      riskScore * 0.05,
   )
 
   if ((payout ?? 0) > 0) whyGood.push(`Expected commission: ${formatCommission(payout, input.payoutType)}`)
@@ -98,15 +102,28 @@ export function scoreImpactProductCandidate(
   if (platformFit.length > 0) whyGood.push(`Platform fit: ${platformFit.join(", ")}`)
 
   const hardReject = rejectReasons.some((reason) =>
-    ["payout_0_do_not_promote", "missing_landing_page", "bad_epc", "not_in_stock"].includes(reason),
+    ["payout_0_do_not_promote", "missing_image", "missing_tracking_link_do_not_promote", "missing_landing_page", "bad_epc", "not_in_stock"].includes(reason),
   )
   const status = deriveStatus({
     finalProductScore,
     hardReject,
     hasImage,
+    hasTrackingLink,
+    hasLandingPage,
     relationshipStatus,
     shippingKnown,
   })
+  const scoreReasons = [
+    (payout ?? 0) > 0 ? `commission is ${formatCommission(payout, input.payoutType)}` : "payout is 0, do not promote",
+    epc !== null ? `EPC is ${epc}` : "EPC unknown",
+    conversionRate !== null ? `conversion rate is ${conversionRate}%` : "conversion rate unknown",
+    hasImage ? "image exists" : "missing image",
+    hasTrackingLink ? "tracking link exists" : "missing tracking link",
+    hasLandingPage ? "landing page exists" : "missing landing page",
+    shippingKnown ? "shipping/geo signal exists" : "shipping unknown",
+    relationshipStatus === "approved" ? "Impact relationship approved" : "brand approval missing",
+    platformFit.length > 0 ? `platform fit: ${platformFit.join(", ")}` : "platform fit unclear",
+  ]
 
   return {
     commissionScore,
@@ -120,6 +137,7 @@ export function scoreImpactProductCandidate(
     finalProductScore,
     status,
     rejectReasons,
+    scoreReasons,
     whyGood,
     missingApproval: relationshipStatus === "approved" ? null : "Impact relationship is not approved yet.",
     platformFit,
@@ -146,11 +164,12 @@ function deriveStatus(input: {
   finalProductScore: number
   hardReject: boolean
   hasImage: boolean
+  hasTrackingLink: boolean
+  hasLandingPage: boolean
   relationshipStatus: ImpactRelationshipStatus
   shippingKnown: boolean
 }): ImpactCandidateStatus {
   if (input.hardReject || input.finalProductScore < 60) return "reject"
-  if (!input.hasImage) return "needs_image"
   if (input.relationshipStatus !== "approved") return "needs_brand_approval"
   if (!input.shippingKnown) return "needs_geo_check"
   if (input.finalProductScore >= 80) return "recommended"

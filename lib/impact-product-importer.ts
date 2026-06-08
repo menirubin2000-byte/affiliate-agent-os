@@ -69,15 +69,22 @@ function mapImpactRecord(record: UnknownRecord, index: number): (ImpactProductCa
     "catalogitemname",
     "product",
   ])
-  const landingPage = firstText(record, [
+  const productUrl = firstText(record, [
     "landingpage",
     "landingpageurl",
     "url",
     "producturl",
-    "clickurl",
-    "trackinglink",
     "uri",
   ])
+  const trackingLink = firstText(record, [
+    "trackinglink",
+    "trackingurl",
+    "clickurl",
+    "deeplink",
+    "affiliateurl",
+    "campaignlink",
+  ])
+  const landingPage = productUrl || trackingLink
   const externalId = firstText(record, [
     "id",
     "productid",
@@ -116,6 +123,8 @@ function mapImpactRecord(record: UnknownRecord, index: number): (ImpactProductCa
     availability,
     inStock: inferInStock(availability, record),
     imageUrl: firstText(record, ["imageurl", "image", "thumbnail", "thumbnailurl", "pictureurl"]),
+    productUrl,
+    trackingLink,
     landingPage,
     category: firstText(record, ["category", "categoryname", "vertical", "productcategory"]),
     labels: firstList(record, ["labels", "tags", "keywords"]),

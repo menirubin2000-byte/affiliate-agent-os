@@ -22,8 +22,8 @@ export const dynamic = "force-dynamic"
 
 const bucketOptions: Array<{ key: ImpactCandidateBucket; label: string; description: string }> = [
   { key: "all", label: "כל המועמדים", description: "כל מוצרי Impact שיובאו כמועמדים לקידום." },
-  { key: "top50", label: "Top 50", description: "50 המועמדים עם הציון הגבוה ביותר." },
-  { key: "recommended20", label: "20 מומלצים", description: "מועמדים בציון 80+ שעברו את שערי הסינון." },
+  { key: "top50", label: "Top 50", description: "50 המועמדים החזקים ביותר אחרי סינון דחייה." },
+  { key: "recommended20", label: "Top 20 להכניס למערכת", description: "מועמדים בציון 80+ שעברו את שערי הסינון." },
   { key: "launch10", label: "10 להשקה", description: "המועמדים החזקים ביותר עם אישור Impact." },
   { key: "rejected", label: "נדחו", description: "מוצרים שלא כדאי לקדם לפי החוקים." },
   { key: "needsApproval", label: "צריך אישור מותג", description: "מועמדים טובים שעדיין חסר להם approval." },
@@ -76,7 +76,7 @@ export default async function HebrewImpactProductsPage(props: {
       <PageHeader
         eyebrow="Impact Product Scanner"
         title="מועמדים לקידום מ-Impact"
-        description="ייבוא וסינון אוטומטי של מוצרי Impact כמועמדים בלבד. שום דבר כאן לא מפרסם ולא הופך מוצר לפעיל בלי פעולה מפורשת."
+        description="ייבוא וסינון אוטומטי של מוצרי Impact כמועמדים לקידום בלבד. שום דבר כאן לא מפרסם, לא יוצר פוסטים ולא מאשר תוכן."
       />
 
       {pageError ? (
@@ -93,18 +93,20 @@ export default async function HebrewImpactProductsPage(props: {
           <CardHeader>
             <CardTitle>המועמד נוסף למערכת</CardTitle>
             <CardDescription>
-              המוצר נשמר כ- inactive ותוכנית השותפים נשמרה לבדיקה. לא נוצר פרסום.
+              המועמד נשמר כ- inactive ותוכנית השותפים נשמרה לבדיקה. לא נוצרו פוסטים ולא נוצר פרסום.
             </CardDescription>
           </CardHeader>
         </Card>
       ) : null}
 
-      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
+      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-9">
         <MetricCard title="כל המועמדים" value={summary.total} />
         <MetricCard title="Top 50" value={summary.top50} />
-        <MetricCard title="20 מומלצים" value={summary.recommended20} />
+        <MetricCard title="Top 20 למערכת" value={summary.recommended20} />
         <MetricCard title="10 להשקה" value={summary.launch10} />
         <MetricCard title="נדחו" value={summary.rejected} tone="danger" />
+        <MetricCard title="חסר tracking" value={summary.missingTracking} tone="danger" />
+        <MetricCard title="חסר תמונה" value={summary.missingImage} tone="danger" />
         <MetricCard title="צריך אישור" value={summary.needsApproval} tone="warning" />
         <MetricCard title="בדיקת משלוח" value={summary.needsShippingCheck} tone="warning" />
       </section>
@@ -113,7 +115,7 @@ export default async function HebrewImpactProductsPage(props: {
         <CardHeader>
           <CardTitle>חוקי סינון</CardTitle>
           <CardDescription>
-            payout 0 = לא לקדם. חסר image = צריך תמונה. חסר landing page = דחייה.
+            payout 0 = לא לקדם. חסר image = לא לקדם. חסר tracking link = לא לקדם. חסר landing page = דחייה.
             לא approved = צריך אישור מותג. shipping לא ידוע = צריך Geo check.
             ציון 80+ מומלץ, 60-79 אולי, מתחת 60 נדחה.
           </CardDescription>
@@ -168,7 +170,8 @@ function ImpactCandidateCard({ candidate, rank }: { candidate: ImpactProductCand
   const canAdd =
     candidate.status !== "reject" &&
     candidate.status !== "added_to_system" &&
-    Boolean(candidate.landingPage)
+    Boolean(candidate.landingPage) &&
+    Boolean(candidate.trackingLink)
 
   return (
     <Card className="overflow-hidden">
@@ -196,14 +199,14 @@ function ImpactCandidateCard({ candidate, rank }: { candidate: ImpactProductCand
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {candidate.landingPage ? (
+            {candidate.productUrl ? (
               <Link
-                href={candidate.landingPage}
+                href={candidate.productUrl}
                 target="_blank"
                 className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
               >
                 <ExternalLink className="size-4" />
-                Landing page
+                Product page
               </Link>
             ) : null}
             {canAdd ? (
@@ -224,6 +227,7 @@ function ImpactCandidateCard({ candidate, rank }: { candidate: ImpactProductCand
           <Signal title="EPC" value={formatNullable(candidate.epc)} />
           <Signal title="Conversion" value={candidate.conversionRate !== null ? `${candidate.conversionRate}%` : "לא ידוע"} />
           <Signal title="Shipping / Geo" value={candidate.shippingGeo ?? "צריך בדיקה"} />
+          <Signal title="Tracking" value={candidate.trackingLink ? "קיים" : "חסר - לא לקדם"} />
         </div>
 
         <div className="grid gap-3 md:grid-cols-4">
@@ -240,8 +244,8 @@ function ImpactCandidateCard({ candidate, rank }: { candidate: ImpactProductCand
         <div className="grid gap-4 md:grid-cols-3">
           <InfoBlock
             icon={<CheckCircle2 className="size-4" />}
-            title="למה זה טוב"
-            items={candidate.whyGood.length > 0 ? candidate.whyGood : ["אין מספיק אותות חיוביים עדיין."]}
+            title="סיבות ציון"
+            items={candidate.scoreReasons.length > 0 ? candidate.scoreReasons : candidate.whyGood.length > 0 ? candidate.whyGood : ["אין מספיק אותות חיוביים עדיין."]}
           />
           <InfoBlock
             icon={<Search className="size-4" />}

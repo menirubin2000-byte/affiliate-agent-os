@@ -26,6 +26,8 @@ type ImpactCandidateRow = {
   availability: string | null
   in_stock: boolean | null
   image_url: string | null
+  product_url: string | null
+  tracking_link: string | null
   landing_page: string | null
   category: string | null
   labels: string[] | null
@@ -43,6 +45,7 @@ type ImpactCandidateRow = {
   final_product_score: number
   status: ImpactCandidateStatus
   reject_reasons: string[] | null
+  score_reasons: string[] | null
   why_good: string[] | null
   missing_approval: string | null
   added_product_id: string | null
@@ -61,6 +64,8 @@ export type ImpactCandidateSummary = {
   needsApproval: number
   needsShippingCheck: number
   addedToSystem: number
+  missingTracking: number
+  missingImage: number
 }
 
 export type ImpactImportResult = {
@@ -85,13 +90,15 @@ export async function listImpactProductCandidates(): Promise<ImpactProductCandid
 export function summarizeImpactCandidates(candidates: ImpactProductCandidate[]): ImpactCandidateSummary {
   return {
     total: candidates.length,
-    top50: candidates.slice(0, 50).length,
+    top50: getTop50Candidates(candidates).length,
     recommended20: candidates.filter((candidate) => candidate.status === "recommended").slice(0, 20).length,
     launch10: getLaunchCandidates(candidates).length,
     rejected: candidates.filter((candidate) => candidate.status === "reject").length,
     needsApproval: candidates.filter((candidate) => candidate.status === "needs_brand_approval").length,
     needsShippingCheck: candidates.filter((candidate) => candidate.status === "needs_geo_check").length,
     addedToSystem: candidates.filter((candidate) => candidate.status === "added_to_system").length,
+    missingTracking: candidates.filter((candidate) => candidate.rejectReasons.includes("missing_tracking_link_do_not_promote")).length,
+    missingImage: candidates.filter((candidate) => candidate.rejectReasons.includes("missing_image")).length,
   }
 }
 
@@ -101,7 +108,7 @@ export function getImpactCandidateBucket(
 ) {
   switch (bucket) {
     case "top50":
-      return candidates.slice(0, 50)
+      return getTop50Candidates(candidates)
     case "recommended20":
       return candidates.filter((candidate) => candidate.status === "recommended").slice(0, 20)
     case "launch10":
@@ -152,6 +159,8 @@ export async function upsertImpactProductCandidates(
           availability: input.availability?.trim() || null,
           in_stock: input.inStock ?? null,
           image_url: input.imageUrl?.trim() || null,
+          product_url: input.productUrl?.trim() || input.landingPage?.trim() || null,
+          tracking_link: input.trackingLink?.trim() || null,
           landing_page: input.landingPage?.trim() || null,
           category: input.category?.trim() || null,
           labels: input.labels ?? [],
@@ -169,6 +178,7 @@ export async function upsertImpactProductCandidates(
           final_product_score: scoring.finalProductScore,
           status: scoring.status,
           reject_reasons: scoring.rejectReasons,
+          score_reasons: scoring.scoreReasons,
           why_good: scoring.whyGood,
           missing_approval: scoring.missingApproval,
           raw_data: input.rawData ?? {},
@@ -203,13 +213,16 @@ export async function addImpactCandidateToSystem(candidateId: string) {
   if (!candidate.landingPage) {
     throw new Error("Candidate has no landing page.")
   }
+  if (!candidate.trackingLink) {
+    throw new Error("Candidate has no Impact tracking link.")
+  }
 
   const product = await createProduct({
     name: candidate.productName,
     slug: await buildUniqueProductSlug(candidate.productName),
     brand: candidate.brand ?? candidate.advertiser,
     category: candidate.category,
-    affiliateUrl: candidate.landingPage,
+    affiliateUrl: candidate.trackingLink,
     price: candidate.price,
     commissionRate: candidate.payoutType === "percent" ? candidate.payout : null,
     notes: [
@@ -228,13 +241,13 @@ export async function addImpactCandidateToSystem(candidateId: string) {
   await createAffiliateProgram({
     productId: product.id,
     programName: `${candidate.advertiser ?? candidate.brand ?? candidate.productName} - Impact`,
-    programUrl: candidate.landingPage,
-    signupUrl: candidate.landingPage,
+    programUrl: candidate.productUrl ?? candidate.landingPage,
+    signupUrl: candidate.productUrl ?? candidate.landingPage,
     network: "Impact",
     commissionSummary: candidate.commissionSummary || (candidate.payout ? `${candidate.payout}${candidate.payoutType === "amount" ? " fixed" : "%"}` : null),
     approvalType: candidate.relationshipStatus === "approved" ? "instant" : "manual_review",
     status: candidate.relationshipStatus === "approved" ? "approved" : "awaiting_human_approval",
-    affiliateLink: null,
+    affiliateLink: candidate.trackingLink,
     notes: summarizeImpactCandidate(candidate),
   })
 
@@ -253,8 +266,14 @@ export async function addImpactCandidateToSystem(candidateId: string) {
 
 function getLaunchCandidates(candidates: ImpactProductCandidate[]) {
   return candidates
-    .filter((candidate) => candidate.status === "recommended" && candidate.relationshipStatus === "approved")
+    .filter((candidate) => candidate.status === "recommended" && candidate.relationshipStatus === "approved" && Boolean(candidate.trackingLink))
     .slice(0, 10)
+}
+
+function getTop50Candidates(candidates: ImpactProductCandidate[]) {
+  return candidates
+    .filter((candidate) => candidate.status !== "reject" && candidate.status !== "added_to_system")
+    .slice(0, 50)
 }
 
 async function buildUniqueProductSlug(productName: string) {
@@ -296,7 +315,9 @@ function mapImpactCandidate(row: ImpactCandidateRow): ImpactProductCandidate {
     availability: row.availability,
     inStock: row.in_stock,
     imageUrl: row.image_url,
-    landingPage: row.landing_page,
+    productUrl: row.product_url ?? row.landing_page,
+    trackingLink: row.tracking_link,
+    landingPage: row.product_url ?? row.landing_page,
     category: row.category,
     labels: row.labels ?? [],
     relationshipStatus: row.relationship_status,
@@ -313,6 +334,7 @@ function mapImpactCandidate(row: ImpactCandidateRow): ImpactProductCandidate {
     finalProductScore: row.final_product_score,
     status: row.status,
     rejectReasons: row.reject_reasons ?? [],
+    scoreReasons: row.score_reasons ?? [],
     whyGood: row.why_good ?? [],
     missingApproval: row.missing_approval,
     addedProductId: row.added_product_id,

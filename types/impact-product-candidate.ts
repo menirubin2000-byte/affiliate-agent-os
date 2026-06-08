@@ -43,6 +43,8 @@ export interface ImpactProductCandidate extends ImpactProductScores {
   availability: string | null
   inStock: boolean | null
   imageUrl: string | null
+  productUrl: string | null
+  trackingLink: string | null
   landingPage: string | null
   category: string | null
   labels: string[]
@@ -51,6 +53,7 @@ export interface ImpactProductCandidate extends ImpactProductScores {
   platformFit: string[]
   status: ImpactCandidateStatus
   rejectReasons: string[]
+  scoreReasons: string[]
   whyGood: string[]
   missingApproval: string | null
   addedProductId: string | null

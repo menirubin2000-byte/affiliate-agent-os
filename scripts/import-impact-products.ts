@@ -4,10 +4,14 @@ import process from "node:process"
 
 import { config } from "dotenv"
 
-config({ path: ".env.local" })
+import { upsertImpactProductCandidates } from "@/lib/impact-product-candidates-db"
+import {
+  fetchImpactProductsFromApi,
+  parseImpactProductsCsv,
+  parseImpactProductsPayload,
+} from "@/lib/impact-product-importer"
 
-const { parseImpactProductsCsv, parseImpactProductsPayload, fetchImpactProductsFromApi } = await import("../lib/impact-product-importer.ts")
-const { upsertImpactProductCandidates } = await import("../lib/impact-product-candidates-db.ts")
+config({ path: ".env.local", quiet: true })
 
 async function main() {
   const sourceFile = process.argv[2] || process.env.IMPACT_PRODUCTS_SOURCE_FILE

@@ -16,6 +16,7 @@ test("Impact scanner recommends approved candidates with good economics", () => 
     conversionRate: 4,
     recentSales: 30,
     imageUrl: "https://example.com/image.jpg",
+    trackingLink: "https://impact.com/click/acme",
     landingPage: "https://example.com/product",
     relationshipStatus: "approved",
     shippingGeo: "US, CA, UK",
@@ -35,6 +36,7 @@ test("Impact scanner rejects zero-payout products", () => {
     epc: 10,
     conversionRate: 5,
     imageUrl: "https://example.com/image.jpg",
+    trackingLink: "https://impact.com/click/free",
     landingPage: "https://example.com/product",
     relationshipStatus: "approved",
     shippingGeo: "US",
@@ -44,7 +46,7 @@ test("Impact scanner rejects zero-payout products", () => {
   assert.equal(result.rejectReasons.includes("payout_0_do_not_promote"), true)
 })
 
-test("Impact scanner routes missing image to needs_image when otherwise viable", () => {
+test("Impact scanner rejects missing image even when otherwise viable", () => {
   const result = scoreImpactProductCandidate({
     externalId: "impact-3",
     productName: "Business Automation SaaS",
@@ -54,19 +56,40 @@ test("Impact scanner routes missing image to needs_image when otherwise viable",
     epc: 9,
     conversionRate: 5,
     recentSales: 50,
+    trackingLink: "https://impact.com/click/business",
     landingPage: "https://example.com/product",
     relationshipStatus: "approved",
     shippingGeo: "Worldwide",
   })
 
-  assert.equal(result.status, "needs_image")
+  assert.equal(result.status, "reject")
   assert.equal(result.rejectReasons.includes("missing_image"), true)
+})
+
+test("Impact scanner rejects missing tracking links", () => {
+  const result = scoreImpactProductCandidate({
+    externalId: "impact-4",
+    productName: "Visual SaaS Tool",
+    category: "Business software",
+    payout: 35,
+    payoutType: "percent",
+    epc: 9,
+    conversionRate: 5,
+    recentSales: 50,
+    imageUrl: "https://example.com/image.jpg",
+    landingPage: "https://example.com/product",
+    relationshipStatus: "approved",
+    shippingGeo: "Worldwide",
+  })
+
+  assert.equal(result.status, "reject")
+  assert.equal(result.rejectReasons.includes("missing_tracking_link_do_not_promote"), true)
 })
 
 test("Impact CSV parser maps common export fields", () => {
   const csv = [
-    "Product Name,Advertiser,Price,Currency,Commission Rate,EPC,Conversion Rate,Image URL,Landing Page,Category,Relationship Status,Shipping",
-    "Guideflow,Guideflow,99,USD,25%,7.5,3.2,https://example.com/img.jpg,https://example.com,Software,Approved,Worldwide",
+    "Product Name,Advertiser,Price,Currency,Commission Rate,EPC,Conversion Rate,Image URL,Landing Page,Tracking Link,Category,Relationship Status,Shipping",
+    "Guideflow,Guideflow,99,USD,25%,7.5,3.2,https://example.com/img.jpg,https://example.com,https://impact.com/click/guideflow,Software,Approved,Worldwide",
   ].join("\n")
 
   const [candidate] = parseImpactProductsCsv(csv)
@@ -74,6 +97,7 @@ test("Impact CSV parser maps common export fields", () => {
   assert.equal(candidate.productName, "Guideflow")
   assert.equal(candidate.advertiser, "Guideflow")
   assert.equal(candidate.payout, 25)
+  assert.equal(candidate.trackingLink, "https://impact.com/click/guideflow")
   assert.equal(candidate.relationshipStatus, "approved")
 })
 
@@ -87,6 +111,7 @@ test("Impact JSON parser supports Impact-style Items payloads", () => {
         DefaultPayout: "12%",
         ImageUrl: "https://example.com/shop.jpg",
         ProductUrl: "https://example.com/shop",
+        TrackingLink: "https://impact.com/click/shop",
         Category: "Retail",
         Status: "Pending Approval",
       },
@@ -95,5 +120,6 @@ test("Impact JSON parser supports Impact-style Items payloads", () => {
 
   assert.equal(candidate.externalId, "123")
   assert.equal(candidate.payout, 12)
+  assert.equal(candidate.trackingLink, "https://impact.com/click/shop")
   assert.equal(candidate.relationshipStatus, "needs_brand_approval")
 })
