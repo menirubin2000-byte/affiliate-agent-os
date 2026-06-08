@@ -18,6 +18,7 @@ export interface FinalCopy {
   productName: string | null
   affiliateProgramId: string | null
   affiliateLink: string | null
+  publicReviewUrl: string | null
   sourceContentId: string
   platformAdaptationId: string
   platform: CampaignPlatform

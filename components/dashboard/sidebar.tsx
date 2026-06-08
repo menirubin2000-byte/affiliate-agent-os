@@ -21,6 +21,7 @@ import {
   LogOut,
   Package2,
   Send,
+  Settings,
   Share2,
   Shield,
 } from "lucide-react"
@@ -45,11 +46,13 @@ const englishNavigation = [
   { href: "/dashboard/reports", label: "Reports", icon: FileBarChart },
   { href: "/dashboard/data-quality", label: "Data Quality", icon: AlertTriangle },
   { href: "/dashboard/saved-views", label: "Saved Views", icon: Bookmark },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
   { href: "/dashboard/system", label: "System", icon: Shield },
 ]
 
 const hebrewNavigation = [
   { href: "/dashboard/he/platform-capabilities", label: "יכולות פלטפורמה", icon: Share2 },
+  { href: "/dashboard/settings", label: "הגדרות", icon: Settings },
   { href: "/dashboard/he", label: "בית", icon: LayoutDashboard },
   { href: "/dashboard/he/campaigns", label: "קמפיינים", icon: FolderKanban },
   { href: "/dashboard/he/content-review", label: "בדיקת קופי", icon: FileText },

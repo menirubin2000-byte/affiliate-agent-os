@@ -10,7 +10,7 @@ import {
 } from "@/lib/linkedin-official-api"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
-import { cn } from "@/lib/utils"
+import { cn, formatDateTime } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
 import { PlatformRegistryTable, PlatformRoutingStats, RoutingNavActions } from "../platform-routing-view"
@@ -58,6 +58,10 @@ function statusVariant(status: PublishJobStatus) {
     return "destructive" as const
   }
   return "secondary" as const
+}
+
+function isScheduledJobDue(job: { scheduledAt: string | null }) {
+  return !job.scheduledAt || Date.parse(job.scheduledAt) <= Date.now()
 }
 
 function jobStatusLabel(job: { status: PublishJobStatus; blockingReason: string | null }) {
@@ -184,6 +188,29 @@ export default async function HebrewPublishReadyPage() {
                   </div>
                 </div>
 
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                    <div className="text-muted-foreground">זמן פרסום מתוכנן</div>
+                    <div className="mt-1 font-medium">
+                      {job.scheduledAt ? formatDateTime(job.scheduledAt) : "לא נקבע"}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                    <div className="text-muted-foreground">מדיניות תזמון</div>
+                    <div className="mt-1 font-medium">{job.schedulePolicyVersion ?? "לא נקבעה"}</div>
+                  </div>
+                </div>
+
+                {job.scheduleNotes.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {job.scheduleNotes.map((note) => (
+                      <Badge key={note} variant="outline">
+                        {note}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null}
+
                 {job.blockingReason ? (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
                     חסימה: {blockerLabel(job.blockingReason)}
@@ -199,15 +226,17 @@ export default async function HebrewPublishReadyPage() {
                 {job.status === "pending_operator_confirmation" ? (
                   <div className="space-y-3 rounded-lg border bg-muted/20 p-3 text-sm">
                     <p>
-                      מנוע הפרסום מוכן לפעולה סופית. MENI מאשר פעולה בלבד; אין העתקה, אין הדבקה ואין טיפול URL.
+                      {isScheduledJobDue(job)
+                        ? "מנוע הפרסום מוכן לפעולה סופית. MENI מאשר פעולה בלבד; אין העתקה, אין הדבקה ואין טיפול URL."
+                        : "הפריט מאושר אך עוד לא הגיע זמן הפרסום לפי מדיניות התזמון."}
                     </p>
-                    {job.platform === "medium" || job.platform === "substack" ? (
+                    {isScheduledJobDue(job) && (job.platform === "medium" || job.platform === "substack") ? (
                       <form action={confirmPreparedPublishJobAction}>
                         <input type="hidden" name="jobId" value={job.id} />
                         <Button type="submit">אשר פעולה סופית</Button>
                       </form>
                     ) : null}
-                    {job.platform === "linkedin" && linkedinCapability.configured ? (
+                    {isScheduledJobDue(job) && job.platform === "linkedin" && linkedinCapability.configured ? (
                       <form action={confirmLinkedInOfficialPublishAction}>
                         <input type="hidden" name="jobId" value={job.id} />
                         <Button type="submit">אשר פעולה סופית</Button>

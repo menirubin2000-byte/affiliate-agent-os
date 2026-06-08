@@ -1,0 +1,191 @@
+import { notFound } from "next/navigation"
+
+import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
+
+export const dynamic = "force-dynamic"
+
+type ReviewProductRow = {
+  id: string
+  name: string
+  slug: string
+  brand: string | null
+  category: string | null
+  notes: string | null
+  target_keyword: string | null
+  content_angle: string | null
+  affiliate_link: string | null
+  affiliate_url: string | null
+  image_url: string | null
+  image_url_he: string | null
+}
+
+type AffiliateProgramRow = {
+  affiliate_link: string | null
+  network: string | null
+  commission_summary: string | null
+}
+
+type CampaignLinkRow = {
+  final_url: string | null
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const product = await getReviewProduct(slug)
+  if (!product) return { title: "Review not found" }
+  return {
+    title: `${product.name} Review - Affiliate Agent OS`,
+    description: `Short practical review of ${product.name}, including affiliate disclosure and product link.`,
+  }
+}
+
+export default async function PublicReviewPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const product = await getReviewProduct(slug)
+  if (!product) notFound()
+
+  const [program, campaignLink] = await Promise.all([
+    getAffiliateProgram(product.id),
+    getCampaignLink(product.id),
+  ])
+  const destinationUrl =
+    campaignLink?.final_url?.trim() ||
+    program?.affiliate_link?.trim() ||
+    product.affiliate_link?.trim() ||
+    product.affiliate_url?.trim()
+
+  if (!destinationUrl) notFound()
+
+  const imageUrl = product.image_url_he || product.image_url
+  const review = buildShortReview(product)
+
+  return (
+    <main className="min-h-screen bg-white text-slate-950">
+      <article className="mx-auto grid max-w-5xl gap-8 px-5 py-10 md:grid-cols-[minmax(0,1fr)_320px] md:px-8">
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+              Public review
+            </p>
+            <h1 className="text-4xl font-semibold tracking-normal">{product.name} Review</h1>
+            <p className="max-w-2xl text-lg leading-8 text-slate-700">
+              {review}
+            </p>
+          </div>
+
+          <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+            <h2 className="font-semibold">Affiliate disclosure</h2>
+            <p className="mt-1">
+              This page may contain an affiliate link. If you choose to sign up through the link,
+              the operator may earn a commission at no extra cost to you.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-2xl font-semibold">Quick take</h2>
+            <ul className="list-disc space-y-2 pl-5 text-slate-700">
+              <li>{product.name} is most relevant for teams evaluating {product.category ?? "software tools"}.</li>
+              <li>The main fit is practical: compare the workflow, pricing, and setup effort before committing.</li>
+              <li>This is a short bridge review, not a claim of personal results or guaranteed outcomes.</li>
+            </ul>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-2xl font-semibold">Who it may fit</h2>
+            <p className="leading-7 text-slate-700">
+              Consider {product.name} if the product category matches your current workflow and
+              you want to review the official offer before deciding. Always compare alternatives,
+              pricing, and terms directly on the product page.
+            </p>
+          </section>
+
+          <a
+            href={destinationUrl}
+            target="_blank"
+            rel="nofollow sponsored noreferrer"
+            className="inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Review {product.name}
+          </a>
+        </section>
+
+        <aside className="space-y-4">
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={`${product.name} product image`}
+              className="aspect-[4/3] w-full rounded-lg border object-cover"
+            />
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center rounded-lg border bg-slate-100 p-6 text-center text-lg font-semibold">
+              {product.name}
+            </div>
+          )}
+          <div className="rounded-lg border p-4 text-sm text-slate-700">
+            <div className="font-semibold text-slate-950">{product.name}</div>
+            {product.brand ? <div>Brand: {product.brand}</div> : null}
+            {product.category ? <div>Category: {product.category}</div> : null}
+            {program?.network ? <div>Network: {program.network}</div> : null}
+          </div>
+        </aside>
+      </article>
+    </main>
+  )
+}
+
+async function getReviewProduct(slug: string) {
+  if (!isSupabaseConfigured()) return null
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, slug, brand, category, notes, target_keyword, content_angle, affiliate_link, affiliate_url, image_url, image_url_he")
+    .eq("slug", slug)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data as ReviewProductRow
+}
+
+async function getAffiliateProgram(productId: string) {
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("affiliate_programs")
+    .select("affiliate_link, network, commission_summary")
+    .eq("product_id", productId)
+    .eq("status", "link_ready")
+    .not("affiliate_link", "is", null)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data as AffiliateProgramRow
+}
+
+async function getCampaignLink(productId: string) {
+  const supabase = getServiceRoleSupabase()
+  const { data, error } = await supabase
+    .from("campaign_links")
+    .select("final_url")
+    .eq("product_id", productId)
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data as CampaignLinkRow
+}
+
+function buildShortReview(product: ReviewProductRow) {
+  if (product.content_angle?.trim()) return product.content_angle.trim()
+  if (product.notes?.trim()) {
+    return product.notes
+      .trim()
+      .split(/\n+/)[0]
+      .replace(/\s+/g, " ")
+      .slice(0, 220)
+  }
+  return `${product.name} is a ${product.category ?? "software"} option worth reviewing if it matches your workflow, budget, and implementation needs.`
+}

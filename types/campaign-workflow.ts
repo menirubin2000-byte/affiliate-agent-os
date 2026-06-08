@@ -7,6 +7,9 @@ export type CampaignPlatform =
   | "reddit"
   | "facebook_page"
   | "instagram_professional"
+  | "pinterest"
+  | "x_twitter"
+  | "youtube"
 
 export type AutoQualityStatus = "pending" | "auto_quality_passed" | "blocked"
 

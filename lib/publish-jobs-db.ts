@@ -11,6 +11,11 @@ import {
   INSTAGRAM_CURRENT_BLOCKING_REASON,
 } from "@/lib/meta-official-api"
 import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
+import {
+  planNextPublishSlot,
+  type PublishedItem,
+  type ScheduledPublishItem,
+} from "@/lib/publishing-schedule-policy"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { BrowserPlatform } from "@/types/browser-control"
@@ -27,6 +32,9 @@ type PublishJobRow = {
   approval_id: string | null
   executor_url: string | null
   final_confirmed_at: string | null
+  scheduled_at: string | null
+  schedule_policy_version: string | null
+  schedule_notes: string[] | null
   live_url: string | null
   verified_at: string | null
   created_at: string
@@ -116,11 +124,18 @@ export type PublishExecutorStatus =
   | "pending_operator_confirmation"
   | "failed"
 
+export function assertPublishJobScheduleIsDue(job: { scheduledAt?: string | null; scheduled_at?: string | null }) {
+  const scheduledAt = job.scheduledAt ?? job.scheduled_at ?? null
+  if (scheduledAt && Date.parse(scheduledAt) > Date.now()) {
+    throw new Error(`Publish job is scheduled for ${scheduledAt}; publishing before schedule is blocked.`)
+  }
+}
+
 const PUBLISH_JOB_SELECT =
-  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, live_url, verified_at, created_at, updated_at, products(name), final_copies(title)"
+  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name), final_copies(title)"
 
 const PUBLISH_EXECUTOR_JOB_SELECT =
-  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, live_url, verified_at, created_at, updated_at, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link)"
+  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link)"
 
 function relatedName<T extends { name?: string }>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) return value[0]?.name ?? null
@@ -166,6 +181,9 @@ function mapPublishJob(row: PublishJobRow): PublishJob {
     approvalId: row.approval_id,
     executorUrl: row.executor_url,
     finalConfirmedAt: row.final_confirmed_at,
+    scheduledAt: row.scheduled_at,
+    schedulePolicyVersion: row.schedule_policy_version,
+    scheduleNotes: row.schedule_notes ?? [],
     liveUrl: row.live_url,
     verifiedAt: row.verified_at,
     finalCopyTitle: relatedTitle(row.final_copies),
@@ -368,6 +386,7 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
 
   const executorState = getExecutorStateForPlatform(copy.platform, await getActiveExecutorSession())
   const approvalId = await getCampaignApprovalId(copy.source_content_id, copy.platform)
+  const schedulePlan = await getPublishSchedulePlanForCopy(copy)
 
   const { data, error } = await supabase
     .from("publish_jobs")
@@ -379,6 +398,9 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
       executor_type: executorTypeForPlatform(copy.platform),
       blocking_reason: executorState.blockingReason,
       approval_id: approvalId,
+      scheduled_at: schedulePlan.scheduledAt,
+      schedule_policy_version: schedulePlan.policyVersion,
+      schedule_notes: schedulePlan.reasons,
       live_url: null,
       verified_at: null,
     }, { onConflict: "final_copy_id" })
@@ -387,6 +409,50 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
 
   if (error) throw new Error(`Unable to create publish job: ${error.message}`)
   return mapPublishJob(data as PublishJobRow)
+}
+
+async function getPublishSchedulePlanForCopy(copy: FinalCopyExecutionRow) {
+  const supabase = getServiceRoleSupabase()
+  const [{ data: existingJobs, error: jobsError }, { data: publishedRecords, error: recordsError }] =
+    await Promise.all([
+      supabase
+        .from("publish_jobs")
+        .select("product_id, platform, scheduled_at, status")
+        .not("scheduled_at", "is", null)
+        .neq("final_copy_id", copy.id),
+      supabase
+        .from("published_records")
+        .select("product_id, platform, verified_at")
+        .eq("verification_status", "verified"),
+    ])
+
+  if (jobsError) throw new Error(`Unable to load existing publish schedule: ${jobsError.message}`)
+  if (recordsError) throw new Error(`Unable to load published records for schedule: ${recordsError.message}`)
+
+  return planNextPublishSlot({
+    productId: copy.product_id,
+    platform: copy.platform,
+    existingJobs: ((existingJobs ?? []) as Array<{
+      product_id: string
+      platform: CampaignPlatform
+      scheduled_at: string | null
+      status: string | null
+    }>).map((job): ScheduledPublishItem => ({
+      productId: job.product_id,
+      platform: job.platform,
+      scheduledAt: job.scheduled_at,
+      status: job.status,
+    })),
+    publishedRecords: ((publishedRecords ?? []) as Array<{
+      product_id: string
+      platform: CampaignPlatform
+      verified_at: string | null
+    }>).map((record): PublishedItem => ({
+      productId: record.product_id,
+      platform: record.platform,
+      publishedAt: record.verified_at,
+    })),
+  })
 }
 
 async function getProductMedia(productId: string): Promise<ProductMediaRow | null> {
@@ -448,12 +514,16 @@ export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob
     .from("publish_jobs")
     .select(PUBLISH_EXECUTOR_JOB_SELECT)
     .eq("status", "approved_waiting_executor")
+    .order("scheduled_at", { ascending: true, nullsFirst: true })
     .order("updated_at", { ascending: true })
-    .limit(1)
-    .maybeSingle()
+    .limit(20)
 
-  if (error || !data) return null
-  const job = mapPublishExecutorJob(data as PublishExecutorJobRow)
+  if (error || !data?.length) return null
+  const dueRow = (data as PublishExecutorJobRow[]).find(
+    (row) => !row.scheduled_at || Date.parse(row.scheduled_at) <= Date.now(),
+  )
+  if (!dueRow) return null
+  const job = mapPublishExecutorJob(dueRow)
 
   if (!job.targetUrl) {
     await updatePublishJobFromExecutor({
@@ -507,6 +577,7 @@ export async function confirmPreparedPublishJobForExecution(jobId: string): Prom
   if (job.status !== "pending_operator_confirmation") {
     throw new Error("Only a job waiting for final confirmation can be confirmed.")
   }
+  assertPublishJobScheduleIsDue(job)
   if (!job.executorUrl || detectBrowserPlatform(job.executorUrl) !== job.platform) {
     throw new Error(`Prepared ${job.platform} executor draft URL is missing.`)
   }

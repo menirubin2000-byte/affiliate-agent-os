@@ -59,7 +59,7 @@ type ReadyCandidate = {
   imageUrl: string | null
   assetStatus: ProductAssetStatus | null
   selectionReason: string
-  selectionSource: "internal_traffic_engine" | "external_robin" | "fallback"
+  selectionSource: "aaos_signal" | "robin_traffic_engine" | "fallback"
 }
 
 export default async function HebrewApprovePage(props: {
@@ -161,7 +161,7 @@ export default async function HebrewApprovePage(props: {
       <PageHeader
         eyebrow="אישור תוכן"
         title="תור אישור MENI - מסונן"
-        description={`${readyRoutes.length} פוסטים עברו את כל הסינונים. המערכת מציגה למני רק את ${TOP_LIMIT} הראשונים לפי מקור עדיפות (Traffic Engine אם מחובר, או fallback אם לא).`}
+        description={`${readyRoutes.length} פוסטים עברו את כל הסינונים. המערכת מציגה למני רק את ${TOP_LIMIT} הראשונים לפי מקור עדיפות (תוכנת פירסום רובין אם שלחה דירוגים, אחרת AAOS/fallback).`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/he" className={cn(buttonVariants({ variant: "outline" }))}>
@@ -244,8 +244,8 @@ export default async function HebrewApprovePage(props: {
           <CardTitle>1. מוכן לאישור MENI ({TOP_LIMIT} הראשונים)</CardTitle>
           <CardDescription>
             עברו: יש קישור שותף אמיתי + link_ready, Final Copy תקין, אין כפילות עם published_records, הפלטפורמה פעילה.
-            הסדר: Internal Traffic Engine (performance_metrics + campaign_links של AAOS) → Robin →
-            fallback מוכנות. {internalConnected ? "(Internal פעיל)" : "(Internal אין מדדים, fallback)"}.
+            הסדר: תוכנת פירסום רובין → נתוני עזר של AAOS → fallback מוכנות.
+            {trafficConnected ? " (רובין שלח דירוגים)" : " (רובין עדיין לא שלח דירוגים)"}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -347,11 +347,12 @@ function InternalTrafficEngineBanner({
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Badge variant="default">Internal Traffic Engine</Badge>
-            <span>מסונן לפי ביצועים אמיתיים של AAOS</span>
+            <Badge variant="default">AAOS signals</Badge>
+            <span>נתוני עזר פנימיים לבחירת סדר זמני</span>
           </CardTitle>
           <CardDescription>
-            הסדר משתמש ב-performance_metrics ו-campaign_links שכבר ב-Supabase. מוצרים עם {totals.products_with_metrics} מטריקות וב-{totals.products_with_campaign_link} עם קישור UTM מוכן.
+            עד שתוכנת פירסום רובין שולחת דירוגים, AAOS משתמש ב-performance_metrics ו-campaign_links שכבר ב-Supabase.
+            מוצרים עם {totals.products_with_metrics} מטריקות וב-{totals.products_with_campaign_link} עם קישור UTM מוכן.
             סך קליקים: {totals.total_clicks} · סך הכנסות: ${totals.total_revenue.toFixed(2)}.
           </CardDescription>
         </CardHeader>
@@ -363,10 +364,10 @@ function InternalTrafficEngineBanner({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Badge variant="outline">fallback זמני</Badge>
-          <span>Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות</span>
+          <span>AAOS: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות</span>
         </CardTitle>
         <CardDescription>
-          ב-AAOS עוד אין performance_metrics אמיתיים (אין import מ-Impact / PartnerStack / Reditus) או שאין campaign_links מוכנים עבור הזוגות (מוצר, פלטפורמה) המומלצים. הסדר הזמני: link_ready → validation_status=valid → updated_at. ברגע שמתחילים לייבא קליקים אמיתיים - הסדר עובר אוטומטית לציון אמיתי.
+          ב-AAOS עוד אין performance_metrics אמיתיים (אין import מ-Impact / PartnerStack / Reditus) או שאין campaign_links מוכנים עבור הזוגות (מוצר, פלטפורמה) המומלצים. הסדר הזמני: link_ready → validation_status=valid → updated_at. זה לא מחליף את תוכנת פירסום רובין.
           {fetchError ? <em> (מצב: {fetchError})</em> : null}
         </CardDescription>
       </CardHeader>
@@ -386,11 +387,11 @@ function TrafficEngineBanner({
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Badge variant="default">Traffic Engine</Badge>
-            <span>נבחר על ידי Traffic Engine (Robin Marketing Automation)</span>
+            <Badge variant="default">תוכנת פירסום רובין</Badge>
+            <span>נבחר על ידי מנוע התנועה של רובין</span>
           </CardTitle>
           <CardDescription>
-            הסדר של 6 הראשונים מגיע מ-Robin (GSC + keyword tracker). אם score לא קיים לזוג (product, platform) -
+            הסדר של 6 הראשונים מגיע מתוכנת פירסום רובין (GSC + keyword tracker). אם score לא קיים לזוג (product, platform) -
             הפריט יורד לסוף הרשימה ולא נכנס לטופ 6.
           </CardDescription>
         </CardHeader>
@@ -402,12 +403,12 @@ function TrafficEngineBanner({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Badge variant="outline">fallback זמני</Badge>
-          <span>Traffic Engine לא מחובר עדיין</span>
+          <span>תוכנת פירסום רובין עדיין לא שלחה דירוגים</span>
         </CardTitle>
         <CardDescription>
-          המיון כאן לא דירוג תנועה אמיתי - הוא לפי readiness ואז updated_at של ה-Final Copy. ה-Traffic Engine הקבוע
-          (Robin Marketing Automation) צריך לכתוב לטבלה <code>traffic_engine_rankings</code> ב-Supabase כדי שהסדר יבוא
-          ממנו. {connectionError ? <em>(מצב: {connectionError})</em> : null}
+          המיון כאן לא דירוג תנועה אמיתי של רובין - הוא לפי readiness ואז updated_at של ה-Final Copy. תוכנת פירסום רובין
+          צריכה לכתוב לטבלה <code>traffic_engine_rankings</code> ב-Supabase כדי שהסדר יבוא ממנה.
+          {connectionError ? <em>(מצב: {connectionError})</em> : null}
         </CardDescription>
       </CardHeader>
     </Card>
@@ -444,10 +445,10 @@ function CountBadge({
 function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
   const { route, detail, program, campaignLink, ranking, internalScore, imageUrl, assetStatus, selectionReason, selectionSource } = candidate
   const sourceBadge =
-    selectionSource === "internal_traffic_engine" ? (
-      <Badge variant="default">נבחר על ידי Internal Traffic Engine</Badge>
-    ) : selectionSource === "external_robin" ? (
-      <Badge variant="default">נבחר על ידי Traffic Engine (Robin)</Badge>
+    selectionSource === "robin_traffic_engine" ? (
+      <Badge variant="default">נבחר על ידי תוכנת פירסום רובין</Badge>
+    ) : selectionSource === "aaos_signal" ? (
+      <Badge variant="default">נבחר לפי נתוני AAOS</Badge>
     ) : (
       <Badge variant="outline">fallback זמני</Badge>
     )
@@ -541,7 +542,7 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
         <p className="text-muted-foreground">{selectionReason}</p>
         {ranking ? (
           <p className="mt-1 text-xs text-muted-foreground">
-            Traffic Engine score: {ranking.score}
+            ציון תוכנת פירסום רובין: {ranking.score}
             {ranking.keyword ? ` · keyword: ${ranking.keyword}` : ""}
             {ranking.reason ? ` · ${ranking.reason}` : ""}
             {" · "}
@@ -654,26 +655,24 @@ function pickTopCandidates(input: {
       const internalScore =
         input.internalIndex.get(`${route.productId}::${route.platform.key}`) ?? null
       let selectionReason: string
-      let selectionSource: "internal_traffic_engine" | "external_robin" | "fallback"
-      // Priority order: internal AAOS signal > Robin signal > fallback.
-      // The internal signal is built from real performance_metrics + active
-      // campaign_links — both owned by AAOS — so it is preferred when available.
-      if (internalScore && internalScore.score > 0) {
-        selectionSource = "internal_traffic_engine"
-        selectionReason = `Internal score ${internalScore.score.toFixed(2)} (${internalScore.reason})`
-      } else if (ranking) {
-        selectionSource = "external_robin"
+      let selectionSource: "aaos_signal" | "robin_traffic_engine" | "fallback"
+      // Priority order: Robin Traffic Engine > AAOS local signal > fallback.
+      if (ranking) {
+        selectionSource = "robin_traffic_engine"
         selectionReason = ranking.reason
-          ? `Robin Traffic Engine score ${ranking.score} (${ranking.reason})`
-          : `Robin Traffic Engine score ${ranking.score}`
+          ? `ציון תוכנת פירסום רובין ${ranking.score} (${ranking.reason})`
+          : `ציון תוכנת פירסום רובין ${ranking.score}`
+      } else if (internalScore && internalScore.score > 0) {
+        selectionSource = "aaos_signal"
+        selectionReason = `AAOS signal ${internalScore.score.toFixed(2)} (${internalScore.reason})`
       } else if (input.trafficConnected) {
         selectionSource = "fallback"
         selectionReason =
-          "Robin Traffic Engine מחובר אבל אין דירוג לזוג (מוצר, פלטפורמה) הזה - הצגה לפי readiness כ-fallback."
+          "תוכנת פירסום רובין שלחה דירוגים, אבל אין דירוג לזוג (מוצר, פלטפורמה) הזה - הצגה לפי readiness כ-fallback."
       } else {
         selectionSource = "fallback"
         selectionReason =
-          "Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות (link_ready + validation valid) ו-updated_at."
+          "תוכנת פירסום רובין עדיין לא שלחה דירוגים - מיון זמני לפי מוכנות (link_ready + validation valid) ו-updated_at."
       }
       return { route, detail, program, campaignLink, ranking, internalScore, imageUrl, assetStatus, selectionReason, selectionSource }
     })
@@ -683,14 +682,14 @@ function pickTopCandidates(input: {
     .filter((c) => c.route.mediaReady)
 
   candidates.sort((a, b) => {
-    // 1. Internal Traffic Engine score (real AAOS performance data).
-    const aInternal = a.internalScore?.score ?? -Infinity
-    const bInternal = b.internalScore?.score ?? -Infinity
-    if (aInternal !== bInternal) return bInternal - aInternal
-    // 2. External Robin Traffic Engine score (if present).
+    // 1. Robin traffic score (if present).
     const aRobin = a.ranking?.score ?? -Infinity
     const bRobin = b.ranking?.score ?? -Infinity
     if (aRobin !== bRobin) return bRobin - aRobin
+    // 2. AAOS local signal (real performance_metrics + active campaign_links).
+    const aInternal = a.internalScore?.score ?? -Infinity
+    const bInternal = b.internalScore?.score ?? -Infinity
+    if (aInternal !== bInternal) return bInternal - aInternal
     // 3. Freshness — newer final_copy first.
     const aDate = a.detail.updatedAt ? Date.parse(a.detail.updatedAt) : 0
     const bDate = b.detail.updatedAt ? Date.parse(b.detail.updatedAt) : 0

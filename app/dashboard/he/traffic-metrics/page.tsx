@@ -44,7 +44,7 @@ export default async function TrafficMetricsPage(props: {
       <PageHeader
         eyebrow="Traffic Metrics"
         title="מטריקות תנועה אמיתיות"
-        description="כל מה שנכנס לטבלה performance_metrics + מי קיבל כרגע עדיפות לפי Internal Traffic Engine. אין כאן score מומצא. אם הטבלה ריקה - הדשבורד נשאר fallback."
+        description="כל מה שנכנס לטבלה performance_metrics + נתוני עזר זמניים של AAOS. תוכנת פירסום רובין היא מנוע התנועה הראשי; אם אין נתונים - הדשבורד נשאר fallback."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/he" className={cn(buttonVariants({ variant: "outline" }))}>
@@ -190,11 +190,11 @@ export default async function TrafficMetricsPage(props: {
 
       <Card>
         <CardHeader>
-          <CardTitle>עדיפות נוכחית - Internal Traffic Engine</CardTitle>
+          <CardTitle>עדיפות זמנית לפי נתוני AAOS</CardTitle>
           <CardDescription>
             {snapshot.connected
               ? `יש signal אמיתי. עד ${TOP_PICKS_LIMIT} עדיפויות גבוהות.`
-              : "Traffic Engine: אין עדיין מדדי ביצוע - מיון זמני לפי מוכנות. תור האישור פועל ב-fallback."}
+              : "אין עדיין מדדי ביצוע ב-AAOS - מיון זמני לפי מוכנות. תור האישור פועל ב-fallback עד שתוכנת פירסום רובין שולחת דירוגים."}
           </CardDescription>
         </CardHeader>
         <CardContent>

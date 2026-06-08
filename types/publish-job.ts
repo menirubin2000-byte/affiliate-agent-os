@@ -25,6 +25,9 @@ export interface PublishJob {
   approvalId: string | null
   executorUrl: string | null
   finalConfirmedAt: string | null
+  scheduledAt: string | null
+  schedulePolicyVersion: string | null
+  scheduleNotes: string[]
   liveUrl: string | null
   verifiedAt: string | null
   finalCopyTitle: string | null

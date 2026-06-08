@@ -14,6 +14,9 @@ export const CAMPAIGN_PLATFORMS: CampaignPlatform[] = [
   "reddit",
   "facebook_page",
   "instagram_professional",
+  "pinterest",
+  "x_twitter",
+  "youtube",
 ]
 
 interface PolicyInput {
@@ -32,10 +35,13 @@ const PLATFORM_POLICY_SOURCE: Record<CampaignPlatform, string> = {
   reddit: "https://support.reddithelp.com/hc/en-us/articles/360043504051-What-constitutes-spam",
   facebook_page: "https://developers.facebook.com/docs/pages-api/posts/",
   instagram_professional: "https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/content-publishing/",
+  pinterest: "https://developers.pinterest.com/docs/api/v5/",
+  x_twitter: "https://docs.x.com/x-api/posts/creation-of-a-post",
+  youtube: "https://developers.google.com/youtube/v3/docs/videos/insert",
 }
 
 export function platformAllowsDirectAffiliateLinks(platform: CampaignPlatform) {
-  return platform !== "quora"
+  return platform !== "quora" && platform !== "reddit"
 }
 
 export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck {
@@ -46,6 +52,16 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       publishMode: "prohibited",
       notes: "Quora adaptations must not contain direct affiliate links. Use an educational answer without the affiliate URL.",
       blocker: "quora_affiliate_links_prohibited",
+    })
+  }
+
+  if (input.platform === "reddit" && input.includesAffiliateLink) {
+    return buildPolicy({
+      platform: input.platform,
+      status: "prohibited",
+      publishMode: "prohibited",
+      notes: "Reddit posts must not contain direct affiliate or campaign links. Link only to the public review bridge page after subreddit rules are verified.",
+      blocker: "reddit_direct_affiliate_links_prohibited",
     })
   }
 
@@ -65,6 +81,16 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       status: "requires_manual_verification",
       publishMode: "manual",
       notes: "TikTok requires a video asset and commercial disclosure handling before publish readiness.",
+      blocker: "missing_video_asset",
+    })
+  }
+
+  if (input.platform === "youtube" && !input.hasVideoAsset) {
+    return buildPolicy({
+      platform: input.platform,
+      status: "requires_manual_verification",
+      publishMode: "api",
+      notes: "YouTube publishing requires a ready video asset, OAuth, and YouTube Data API upload access.",
       blocker: "missing_video_asset",
     })
   }
@@ -126,6 +152,36 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       publishMode: "api",
       notes: "Instagram publishing requires a Professional account, official API access, commercial disclosure, and a visual asset.",
       blocker: input.hasVideoAsset ? null : "instagram_media_asset_required",
+    })
+  }
+
+  if (input.platform === "pinterest") {
+    return buildPolicy({
+      platform: input.platform,
+      status: "allowed",
+      publishMode: "api",
+      notes: "Pinterest publishing requires official API access, board ID, visual asset, and affiliate disclosure.",
+      blocker: null,
+    })
+  }
+
+  if (input.platform === "x_twitter") {
+    return buildPolicy({
+      platform: input.platform,
+      status: "allowed",
+      publishMode: "api",
+      notes: "X/Twitter publishing requires official OAuth, API access, and paid partnership disclosure.",
+      blocker: null,
+    })
+  }
+
+  if (input.platform === "youtube") {
+    return buildPolicy({
+      platform: input.platform,
+      status: "allowed",
+      publishMode: "api",
+      notes: "YouTube publishing requires a ready video asset, OAuth, and YouTube Data API upload access.",
+      blocker: null,
     })
   }
 

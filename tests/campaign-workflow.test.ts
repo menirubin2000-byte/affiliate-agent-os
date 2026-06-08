@@ -9,6 +9,7 @@ import {
 import { evaluatePlatformPolicy } from "@/lib/platform-policy"
 
 const affiliateLink = "https://try.example.com/abc123"
+const publicReviewUrl = "https://affiliate-agent-os.vercel.app/reviews/systeme-io"
 
 function baseBody(link = affiliateLink) {
   return [
@@ -57,6 +58,7 @@ test("quora adaptations remove direct affiliate links and remain manual verifica
     platform: "quora",
     sourceBody: baseBody(),
     campaignLinkUrl: affiliateLink,
+    publicReviewUrl,
   })
   const policy = evaluatePlatformPolicy({
     platform: "quora",
@@ -64,6 +66,7 @@ test("quora adaptations remove direct affiliate links and remain manual verifica
   })
 
   assert.equal(body.includes(affiliateLink), false)
+  assert.equal(body.includes(publicReviewUrl), true)
   assert.equal(policy.status, "requires_manual_verification")
 })
 
@@ -94,19 +97,38 @@ test("tiktok without video asset is not publish-ready", () => {
 })
 
 test("reddit stays blocked until community rules are verified", () => {
+  const body = buildPlatformBody({
+    platform: "reddit",
+    sourceBody: baseBody(),
+    campaignLinkUrl: affiliateLink,
+    publicReviewUrl,
+  })
   const { quality, policy } = buildCampaignQualityChecks({
     platform: "reddit",
     title: "Useful discussion",
-    body: baseBody(),
+    body,
     targetKeyword: "systeme.io review",
     affiliateLink,
     campaignLinkUrl: affiliateLink,
     redditRulesVerified: false,
   })
 
+  assert.equal(body.includes(affiliateLink), false)
+  assert.equal(body.includes(publicReviewUrl), true)
   assert.equal(policy.status, "requires_manual_verification")
   assert.equal(policy.blocker, "reddit_community_rules_not_verified")
   assert.equal(quality.passed, false)
+})
+
+test("reddit with a direct affiliate link is prohibited", () => {
+  const policy = evaluatePlatformPolicy({
+    platform: "reddit",
+    includesAffiliateLink: true,
+    redditRulesVerified: true,
+  })
+
+  assert.equal(policy.status, "prohibited")
+  assert.equal(policy.blocker, "reddit_direct_affiliate_links_prohibited")
 })
 
 test("content hash is stable for unchanged source/adaptation content", () => {

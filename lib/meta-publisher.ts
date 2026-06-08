@@ -6,7 +6,7 @@ import {
   getFacebookPageOfficialApiCapability,
   getInstagramOfficialApiCapability,
 } from "@/lib/meta-official-api"
-import { updatePublishJobFromExecutor } from "@/lib/publish-jobs-db"
+import { assertPublishJobScheduleIsDue, updatePublishJobFromExecutor } from "@/lib/publish-jobs-db"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 
 type MetaPublishJobRow = {
@@ -16,6 +16,7 @@ type MetaPublishJobRow = {
   platform: string
   status: string
   approval_id: string | null
+  scheduled_at: string | null
   final_copies:
     | {
         title: string
@@ -74,7 +75,7 @@ async function loadMetaJob(jobId: string) {
   const { data, error } = await supabase
     .from("publish_jobs")
     .select(
-      "id, final_copy_id, product_id, platform, status, approval_id, final_copies(title, body, status, validation_status, language), products(image_url, image_url_he)",
+      "id, final_copy_id, product_id, platform, status, approval_id, scheduled_at, final_copies(title, body, status, validation_status, language), products(image_url, image_url_he)",
     )
     .eq("id", jobId)
     .single()
@@ -88,6 +89,7 @@ async function loadMetaJob(jobId: string) {
   if (job.status !== "pending_operator_confirmation") {
     throw new Error("Meta job requires MENI final confirmation.")
   }
+  assertPublishJobScheduleIsDue(job)
   return { job, finalCopy, product: related(job.products) }
 }
 

@@ -18,6 +18,7 @@ type FinalCopyRow = {
   product_id: string
   affiliate_program_id: string | null
   affiliate_link: string | null
+  public_review_url: string | null
   source_content_id: string
   platform_adaptation_id: string
   platform: CampaignPlatform
@@ -63,6 +64,7 @@ function mapFinalCopy(row: FinalCopyRow, productName?: string | null): FinalCopy
     productName: productName ?? null,
     affiliateProgramId: row.affiliate_program_id,
     affiliateLink: row.affiliate_link,
+    publicReviewUrl: row.public_review_url,
     sourceContentId: row.source_content_id,
     platformAdaptationId: row.platform_adaptation_id,
     platform: row.platform,

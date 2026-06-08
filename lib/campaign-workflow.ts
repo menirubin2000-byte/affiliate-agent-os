@@ -35,6 +35,7 @@ export function buildCampaignQualityChecks(input: {
   targetKeyword: string | null
   affiliateLink: string | null
   campaignLinkUrl?: string | null
+  publicReviewUrl?: string | null
   hasVideoAsset?: boolean
   redditRulesVerified?: boolean
 }): {
@@ -94,11 +95,16 @@ export function buildPlatformBody(input: {
   sourceBody: string
   campaignLinkUrl: string | null
   affiliateLink?: string | null
+  publicReviewUrl?: string | null
 }) {
   const sourceBody = input.sourceBody.trim()
 
-  if (input.platform === "quora") {
-    return removeAffiliateLinks(sourceBody, [input.campaignLinkUrl, input.affiliateLink])
+  if (input.platform === "quora" || input.platform === "reddit") {
+    return buildBridgeBody({
+      body: sourceBody,
+      bridgeUrl: input.publicReviewUrl ?? null,
+      forbiddenUrls: [input.campaignLinkUrl, input.affiliateLink],
+    })
   }
 
   if (!input.campaignLinkUrl) return sourceBody
@@ -189,4 +195,21 @@ function removeAffiliateLinks(body: string, urls: Array<string | null | undefine
     .filter((line) => !links.some((link) => line.includes(link)))
     .join("\n")
     .trim()
+}
+
+function buildBridgeBody(input: {
+  body: string
+  bridgeUrl: string | null
+  forbiddenUrls: Array<string | null | undefined>
+}) {
+  const safeBridgeUrl = input.bridgeUrl?.trim()
+  const withoutForbiddenLinks = removeAffiliateLinks(input.body, input.forbiddenUrls)
+    .split("\n")
+    .filter((line) => !/https?:\/\//i.test(line))
+    .join("\n")
+    .trim()
+
+  if (!safeBridgeUrl) return withoutForbiddenLinks
+
+  return `${withoutForbiddenLinks}\n\nCTA: Read the public review page here: ${safeBridgeUrl}`
 }

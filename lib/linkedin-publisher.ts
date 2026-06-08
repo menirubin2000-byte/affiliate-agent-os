@@ -6,7 +6,7 @@ import {
   LINKEDIN_POSTS_ENDPOINT,
   linkedInPostUrnToLiveUrl,
 } from "@/lib/linkedin-official-api"
-import { updatePublishJobFromExecutor } from "@/lib/publish-jobs-db"
+import { assertPublishJobScheduleIsDue, updatePublishJobFromExecutor } from "@/lib/publish-jobs-db"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 
 type LinkedInPublishJobRow = {
@@ -16,6 +16,7 @@ type LinkedInPublishJobRow = {
   platform: string
   status: string
   approval_id: string | null
+  scheduled_at: string | null
   final_copies:
     | {
         body: string
@@ -61,7 +62,7 @@ export async function publishLinkedInJobViaOfficialApi(jobId: string) {
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("publish_jobs")
-    .select("id, final_copy_id, product_id, platform, status, approval_id, final_copies(body, status, validation_status)")
+    .select("id, final_copy_id, product_id, platform, status, approval_id, scheduled_at, final_copies(body, status, validation_status)")
     .eq("id", jobId)
     .single()
 
@@ -73,6 +74,7 @@ export async function publishLinkedInJobViaOfficialApi(jobId: string) {
   if (job.status !== "pending_operator_confirmation") {
     throw new Error("LinkedIn job requires MENI final confirmation.")
   }
+  assertPublishJobScheduleIsDue(job)
   if (!finalCopy || finalCopy.status !== "operator_approved" || finalCopy.validation_status !== "valid") {
     throw new Error("LinkedIn final copy is not approved and valid.")
   }
