@@ -174,7 +174,7 @@ Official site: https://www.synthesia.io`,
 
 const PLATFORM_POLICY_BLOCKS = {
   quora: ["quora_direct_affiliate_links_prohibited"],
-  reddit: ["reddit_community_rules_not_verified"],
+  reddit: ["bridge_url_required"],
 }
 
 async function main() {

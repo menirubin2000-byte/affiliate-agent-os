@@ -46,7 +46,7 @@ export default async function HebrewBrowserControlPage() {
       <PageHeader
         eyebrow="Affiliate Agent OS Browser Helper"
         title="מנוע פרסום ודפדפן"
-        description="המסך מציג האם executor/browser helper מחובר, מה הוא רואה, ומה חסום. הוא לא מבקש מ-MENI להעתיק, להדביק, לפרסם ידנית או לאסוף URL."
+        description="המסך מציג האם executor/browser helper מחובר, מה הוא רואה, ומה חסום. הוא לא מבקש מ-MENI להעתיק, להדביק או לאסוף URL."
         actions={
           <Link href="/dashboard/he/publish-ready" className={cn(buttonVariants({ variant: "outline" }))}>
             מצב פרסום

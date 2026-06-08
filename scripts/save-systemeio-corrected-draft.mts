@@ -81,7 +81,7 @@ const { data: created, error } = await supabase
     },
     status: "draft",
     ai_model: "operator-corrected",
-    approval_notes: "Operator-corrected draft — ready for human approval. Status: draft (NOT published). Use only for manual publishing workflow.",
+    approval_notes: "Operator-corrected draft — ready for human approval. Status: draft (NOT published). Use only for the platform-specific publishing workflow.",
   })
   .select("id")
   .single()

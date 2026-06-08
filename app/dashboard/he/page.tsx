@@ -46,7 +46,7 @@ export default async function HebrewDashboardPage() {
       <PageHeader
         eyebrow="Affiliate Agent OS"
         title="דשבורד מפעיל"
-        description="מסך מפעיל נקי: מה פעיל, מה חסר, מה ממתין לאישור, ומה הפעולה הבאה. כל המספרים מתעדכנים ישירות מ-Supabase. MENI לא מקבל משימות העתקה, הדבקה או פרסום ידני."
+        description="מסך מפעיל נקי: מה פעיל, מה חסר, מה ממתין לאישור, ומה הפעולה הבאה. כל המספרים מתעדכנים ישירות מ-Supabase. MENI לא מקבל משימות העתקה, הדבקה או איסוף URL."
         actions={<RoutingNavActions />}
       />
 
@@ -136,9 +136,9 @@ export default async function HebrewDashboardPage() {
           ctaLabel="פתח רשימת מוצרים"
         />
         <NextActionCard
-          title="ידני בלבד (Quora/Reddit)"
+          title="Quora/Reddit — קישור גישור ציבורי"
           count={totals.manualOnly}
-          description="פוסטים שצריך לפרסם ידנית לפי חוקי הקהילה. אסור affiliate / campaign link בגוף הפוסט."
+          description="פוסטים ל־Quora/Reddit לא כוללים affiliate link או campaign link ישיר. הם משתמשים בקישור גישור ציבורי לדף סקירה באתר שלנו, לפי חוקי הקהילה."
           href="/dashboard/he/operator"
           ctaLabel="פתח לפירוט"
         />
@@ -188,8 +188,8 @@ export default async function HebrewDashboardPage() {
           <CardTitle>חוק READY עסקי - מדיה חובה</CardTitle>
           <CardDescription>
             תמונה חובה לפני READY בפלטפורמות LinkedIn, Facebook Page, Medium, Substack, Instagram Business,
-            Pinterest ו-X/Twitter. וידאו חובה לפני READY ב-TikTok וב-YouTube. Quora ו-Reddit הם ידניים בלבד
-            ולא נכנסים ל-READY אוטומטי. גם אם פלטפורמה תומכת טקסט בלבד, AAOS לא מציג אותה לאישור בלי המדיה הנדרשת.
+            Pinterest ו-X/Twitter. וידאו חובה לפני READY ב-TikTok וב-YouTube. Quora ו-Reddit משתמשים בקישור גישור ציבורי
+            לדף סקירה באתר, ללא affiliate link או campaign link ישיר בגוף הפוסט.
           </CardDescription>
         </CardHeader>
       </Card>

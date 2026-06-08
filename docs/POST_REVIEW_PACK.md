@@ -17,7 +17,7 @@ production routing function as `/dashboard/he`. Numbers match the operator UI ex
 | needs_video | 0 |
 | needs_system_fix | 0 |
 | missing_final_copy | 0 |
-| manual_only_quora_reddit | 48 |
+| bridge_url_quora_reddit | 48 |
 | platform_pending_setup | 48 |
 | platform_pending_approval | 24 |
 | true_blocked | 24 |

@@ -147,7 +147,7 @@ async function main() {
       needs_video: stateCount.needs_video ?? 0,
       needs_system_fix: stateCount.needs_system_fix ?? 0,
       missing_final_copy: stateCount.missing_final_copy ?? 0,
-      manual_only_quora_reddit: stateCount.manual_only_platform ?? 0,
+      bridge_url_quora_reddit: stateCount.bridge_url_platform ?? 0,
       platform_pending_setup: pendingSetupOAuth,
       platform_pending_approval: pendingSetupExternalApproval,
       true_blocked:
@@ -275,7 +275,7 @@ function renderOperatorTruth(r: { generated_at: string; buckets: Record<string, 
   out.push(`- **חסר וידאו:** ${b.needs_video}`)
   out.push(`- **חסר קופי לפלטפורמה:** ${b.missing_final_copy}`)
   out.push(`- **צריך תיקון מערכת:** ${b.needs_system_fix}`)
-  out.push(`- **ידני בלבד (Quora/Reddit):** ${b.manual_only_quora_reddit}`)
+  out.push(`- **Quora/Reddit — קישור גישור ציבורי:** ${b.bridge_url_quora_reddit}`)
   out.push(`- **ממתין להגדרת פלטפורמה (OAuth/setup):** ${b.platform_pending_setup}`)
   out.push(`- **חסומים אמיתיים:** ${b.true_blocked}`)
   out.push("")
@@ -293,7 +293,7 @@ function renderOperatorTruth(r: { generated_at: string; buckets: Record<string, 
   out.push(`4. Required media is present (image for paid surfaces, video for video surfaces).`)
   out.push(`5. Active campaign_link exists for paid surfaces.`)
   out.push(`6. Final Copy status ∈ {ready_for_operator_approval, validated}.`)
-  out.push(`Quora/Reddit are manual_only (never auto-ready). TikTok is disabled (video gating).`)
+  out.push(`Quora/Reddit use only public_review_url/bridge_url in post bodies; direct affiliate, campaign, or tracking links are blocked. TikTok is disabled (video gating).`)
   return out.join("\n")
 }
 

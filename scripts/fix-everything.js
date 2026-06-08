@@ -63,7 +63,7 @@ const STATUS_PRIORITY = {
     // disclosure is at top and CTA references the product BY NAME. The
     // existing validator will mark zero-link content as blocked because
     // affiliateLinkExists requires one. So for Quora/Reddit we accept the
-    // "blocked" validation marker but route them via manual_only_platform
+    // "blocked" validation marker but route them via bridge_url_platform
     // anyway — the operator publishes manually. Use a clean discussion body.
     const newBody = fc.platform === "quora"
       ? `Affiliate disclosure: I may earn a commission if you sign up after seeing this answer (no direct link in body per Quora policy).
@@ -100,7 +100,7 @@ Happy to share more notes if anyone is evaluating it.
 Try ${name} by searching for it directly — no affiliate links allowed in this community.`
     // Set status to ready_for_operator_approval but validation_status=blocked
     // so the validator still marks it; routing puts these into
-    // manual_only_platform anyway.
+    // bridge_url_platform anyway.
     quoraRedditUpdates.push({
       id: fc.id,
       newBody,

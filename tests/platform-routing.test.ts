@@ -189,7 +189,7 @@ test("missing campaign_link on a paid platform routes to needs_campaign_link, no
   assert.equal(overview.counts.needsCampaignLink >= 1, true)
 })
 
-test("Quora bypasses campaign_link gate and stays manual_only", () => {
+test("Quora bypasses campaign_link gate and uses bridge URL route state", () => {
   const overview = buildPlatformRoutingOverview({
     products: [product],
     affiliatePrograms: [{ productId: product.id, status: "link_ready", affiliateLink: product.affiliateLink }],
@@ -210,7 +210,7 @@ test("Quora bypasses campaign_link gate and stays manual_only", () => {
   })
 
   const quora = overview.products[0]?.routes.find((r) => r.platform.key === "quora")
-  assert.equal(quora?.state, "manual_only_platform")
+  assert.equal(quora?.state, "bridge_url_platform")
 })
 
 test("missing_final_copy is counted separately from needs_system_fix", () => {

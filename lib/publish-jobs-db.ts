@@ -106,7 +106,7 @@ export type PublishExecutorJob = PublishJob & {
   affiliateLink: string | null
   mediaRequired: boolean
   mediaReady: boolean
-  publishMediaMode: "image" | "video" | "manual_only"
+  publishMediaMode: "image" | "video" | "bridge_url_only"
   imageRequired: boolean
   videoRequired: boolean
   blockingReasons: string[]

@@ -11,7 +11,7 @@
  *   REDDIT_USERNAME
  *   REDDIT_PASSWORD
  *
- * Platforms without API (manual only):
+ * Platforms without API:
  *   - Substack (no public API)
  *   - TikTok (video only)
  *   - Quora (no public API)

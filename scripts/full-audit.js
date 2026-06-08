@@ -151,7 +151,7 @@ async function main() {
   console.log(`  truly READY for MENI approval:     ${realReady}`)
   console.log(`  operator_approved (queued/ready):  ${operatorApproved}`)
   console.log(`  needs_system_fix:                  ${needsFix}`)
-  console.log(`  manual_only (quora/reddit):        ${manualOnly}`)
+  console.log(`  bridge_url_only (quora/reddit):    ${manualOnly}`)
   console.log(`  already published:                 ${alreadyPublished}`)
   console.log(`  blocking reasons across all rows:`)
   for (const [r, n] of [...blockReasons.entries()].sort((a, b) => b[1] - a[1])) {
@@ -217,7 +217,7 @@ async function main() {
     published_verified: 0, ready_for_executor: 0, pending_meni_approval: 0,
     needs_image: 0, needs_video: 0, needs_campaign_link: 0,
     needs_system_fix: 0, missing_final_copy: 0,
-    missing_affiliate_link: 0, manual_only_platform: 0,
+    missing_affiliate_link: 0, bridge_url_platform: 0,
     platform_pending_setup: 0, platform_disabled: 0,
   }
   // Preload all per-route data in 3 bulk queries (no per-route round-trips).
@@ -237,7 +237,7 @@ async function main() {
       const status = PLATFORM_STATUS[platform]
       if (status === "disabled") { buckets.platform_disabled++; continue }
       if (status === "pending_setup") { buckets.platform_pending_setup++; continue }
-      if (MANUAL_ONLY.has(platform)) { buckets.manual_only_platform++; continue }
+      if (MANUAL_ONLY.has(platform)) { buckets.bridge_url_platform++; continue }
       const fc = fcByKey.get(key)
       if (!fc) { buckets.missing_final_copy++; continue }
       if (fc.status === "needs_system_fix" || fc.validation_status !== "valid") { buckets.needs_system_fix++; continue }

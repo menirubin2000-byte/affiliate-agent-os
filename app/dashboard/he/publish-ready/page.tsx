@@ -84,7 +84,8 @@ function blockerLabel(reason: string) {
     passkey_required: "דרוש Passkey",
     executor_waiting_final_confirmation: "המנוע מילא תוכן וממתין לאישור פעולה סופית",
     substack_editor_automation_timeout: "Substack חסום בגלל timeout בעורך",
-    reddit_community_rules_not_verified: "Reddit חסום עד אימות חוקי קהילה",
+    reddit_direct_tracking_links_prohibited: "Reddit לא מאפשר affiliate/campaign/direct tracking link בגוף הפוסט",
+    bridge_url_required: "Quora/Reddit דורשים public_review_url או bridge_url בלבד",
     quora_no_direct_affiliate_links: "Quora לא מאפשר קישור אפיליאייט ישיר",
   }
 
@@ -130,7 +131,7 @@ export default async function HebrewPublishReadyPage() {
                 : "חסום - נדרש חיבור LinkedIn רשמי"}
             </CardTitle>
             <CardDescription>
-              LinkedIn נשאר official API only. אין שימוש באוטומציית דפדפן לא רשמית ואין משימת פרסום ידנית ל-MENI.
+              LinkedIn נשאר official API only. אין שימוש באוטומציית דפדפן לא רשמית ואין משימת העתקה/הדבקה ל-MENI.
             </CardDescription>
           </CardHeader>
           {!linkedinCapability.configured ? (

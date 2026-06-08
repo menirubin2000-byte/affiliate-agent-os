@@ -15,12 +15,12 @@ They match `/dashboard/he` exactly.
 - **חסר וידאו:** 0
 - **חסר קופי לפלטפורמה:** 0
 - **צריך תיקון מערכת:** 0
-- **ידני בלבד (Quora/Reddit):** 48
+- **Quora/Reddit — קישור גישור ציבורי:** 48
 - **ממתין להגדרת פלטפורמה (OAuth/setup):** 48
 - **חסומים אמיתיים:** 24
 
 ## Underlying route states (raw)
-- manual_only_platform: 48
+- bridge_url_quora_reddit: 48
 - pending_meni_approval: 50
 - platform_disabled: 24
 - platform_pending_setup: 72
@@ -41,4 +41,4 @@ A route reaches "pending_meni_approval" only if ALL of:
 4. Required media is present (image for paid surfaces, video for video surfaces).
 5. Active campaign_link exists for paid surfaces.
 6. Final Copy status ∈ {ready_for_operator_approval, validated}.
-Quora/Reddit are manual_only (never auto-ready). TikTok is disabled (video gating).
+Quora/Reddit use only public_review_url/bridge_url in post bodies; direct affiliate, campaign, or tracking links are blocked. TikTok is disabled (video gating).

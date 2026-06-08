@@ -90,7 +90,8 @@ test("tiktok_script fallback body includes affiliate URL and passes quality chec
   assert.equal(checks.has_meta_description, true, "meta description check must pass")
 })
 
-test("quora_answer fallback body includes affiliate URL and passes quality checks", () => {
+test("quora_answer fallback body uses public review URL and passes quality checks", () => {
+  const publicReviewUrl = `https://affiliate-agent-os.vercel.app/reviews/${testProduct.slug}`
   const body = [
     `When looking at options in ${testProduct.category}, ${testProduct.name} is one tool worth considering.`,
     "",
@@ -98,12 +99,13 @@ test("quora_answer fallback body includes affiliate URL and passes quality check
     "- The product page should be checked for current features and pricing.",
     "- This answer is based on publicly available information and should be verified.",
     "",
-    `For more details, you can visit: ${testProduct.affiliateUrl}`,
-    "Affiliate disclosure: This answer may include affiliate links, and a commission may be earned at no extra cost to you.",
+    `For more details, you can read the public review page here: ${publicReviewUrl}`,
+    "Affiliate disclosure: The public review page may include affiliate links, and a commission may be earned at no extra cost to you.",
     `Target keyword: ${testProduct.targetKeyword}.`,
   ].join("\n")
 
-  assert.ok(body.includes(testProduct.affiliateUrl), "body must include affiliate URL")
+  assert.equal(body.includes(testProduct.affiliateUrl), false, "body must not include affiliate URL")
+  assert.ok(body.includes(publicReviewUrl), "body must include public review URL")
   assert.ok(body.toLowerCase().includes("affiliate disclosure"), "body must include disclosure")
   assert.ok(body.toLowerCase().includes("what stands out"), "body must include structure marker")
 
@@ -127,18 +129,20 @@ test("quora_answer fallback body includes affiliate URL and passes quality check
   assert.equal(checks.avoids_fake_claims, true)
 })
 
-test("reddit_post fallback body includes affiliate URL and passes quality checks", () => {
+test("reddit_post fallback body uses public review URL and passes quality checks", () => {
+  const publicReviewUrl = `https://affiliate-agent-os.vercel.app/reviews/${testProduct.slug}`
   const body = [
     `Has anyone tried ${testProduct.name} for ${testProduct.category}?`,
     "",
     `I've been looking into options in ${testProduct.category} and came across ${testProduct.name}. The product page lists some interesting features but I'd like to hear real experiences.`,
     "",
-    `Check it out here: ${testProduct.affiliateUrl}`,
-    "Affiliate disclosure: The link above may be an affiliate link. I may earn a commission at no extra cost to you.",
+    `Read the public review page here: ${publicReviewUrl}`,
+    "Affiliate disclosure: The public review page may include affiliate links. I may earn a commission at no extra cost to you.",
     `Target keyword: ${testProduct.targetKeyword}.`,
   ].join("\n")
 
-  assert.ok(body.includes(testProduct.affiliateUrl), "body must include affiliate URL")
+  assert.equal(body.includes(testProduct.affiliateUrl), false, "body must not include affiliate URL")
+  assert.ok(body.includes(publicReviewUrl), "body must include public review URL")
   assert.ok(body.toLowerCase().includes("affiliate disclosure"), "body must include disclosure")
 
   const checks = buildQualityChecks({
@@ -394,6 +398,6 @@ test("new template types without affiliate URL and no CTA phrase fail CTA check"
       templateType,
     })
 
-    assert.equal(checks.has_clear_cta, false, `CTA check should fail when affiliate URL is not in body for ${templateType}`)
+    assert.equal(checks.has_clear_cta, false, `CTA check should fail when required URL is not in body for ${templateType}`)
   }
 })

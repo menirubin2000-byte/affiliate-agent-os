@@ -57,8 +57,8 @@ export interface PlatformRoutingDefinition {
   setupBlocker: string | null
   /**
    * True for paid/measurable platforms where every approved post must carry
-   * a tracked campaign_link before MENI approval. Quora/Reddit are manual and
-   * forbid affiliate links in-body; TikTok/YouTube are still pending_setup.
+   * a tracked campaign_link before MENI approval. Quora/Reddit require a
+   * public review bridge URL in-body; TikTok/YouTube are still pending_setup.
    */
   requiresCampaignLink: boolean
 }
@@ -78,7 +78,7 @@ export type PlatformRouteState =
   | "needs_campaign_link"
   | "missing_final_copy"
   | "missing_affiliate_link"
-  | "manual_only_platform"
+  | "bridge_url_platform"
   | "platform_pending_setup"
   | "platform_disabled"
 
@@ -224,7 +224,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     approvalRequired: true,
     status: "active",
     directAffiliateLinksAllowed: true,
-    policySummary: "פרסום ידני ב-LinkedIn דרך MCP. ה-Official API חסום ע\"י LinkedIn עד 100+ חיבורים, אבל הפרסום דרך הדפדפן עובד.",
+    policySummary: "LinkedIn דרך MCP/browser helper. ה-Official API חסום ע\"י LinkedIn עד 100+ חיבורים, אבל זרימת הדפדפן זמינה.",
     setupBlocker: null,
     requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
@@ -269,10 +269,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     approvalRequired: true,
     status: "active",
     directAffiliateLinksAllowed: false,
-    policySummary: "ידני בלבד. אסור affiliate link ישיר. במקום זה — קישור לפלטפורמה אחרת של MENI (LinkedIn / FB Page / Substack / Medium) ששם נמצא הקישור האמיתי.",
+    policySummary: "פוסטים ל־Quora/Reddit לא כוללים affiliate link או campaign link ישיר. הם משתמשים בקישור גישור ציבורי לדף סקירה באתר שלנו, לפי חוקי הקהילה.",
     setupBlocker: null,
     requiresCampaignLink: false,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד. במקום affiliate link — קישור עקיף ל-LinkedIn/FB/Substack/Medium של MENI ששם נמצא ה-affiliate." },
+    media: { textOnly: true, image: "supported", video: "supported", notes: "קישור גישור ציבורי בלבד: public_review_url או bridge_url. ללא affiliate/campaign/direct tracking link בגוף הפוסט." },
   },
   {
     key: "reddit",
@@ -284,10 +284,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     approvalRequired: true,
     status: "active",
     directAffiliateLinksAllowed: false,
-    policySummary: "ידני בלבד. תלוי חוקי subreddit. אסור affiliate link ישיר — במקום זה קישור לפלטפורמה אחרת של MENI (LinkedIn / FB Page / Substack / Medium) ששם הקישור האמיתי.",
+    policySummary: "פוסטים ל־Quora/Reddit לא כוללים affiliate link או campaign link ישיר. הם משתמשים בקישור גישור ציבורי לדף סקירה באתר שלנו, לפי חוקי הקהילה.",
     setupBlocker: null,
     requiresCampaignLink: false,
-    media: { textOnly: true, image: "supported", video: "supported", notes: "ידני בלבד. במקום affiliate link — קישור עקיף ל-LinkedIn/FB/Substack/Medium של MENI." },
+    media: { textOnly: true, image: "supported", video: "supported", notes: "קישור גישור ציבורי בלבד: public_review_url או bridge_url. ללא affiliate/campaign/direct tracking link בגוף הפוסט." },
   },
   {
     key: "tiktok",
@@ -501,7 +501,7 @@ function buildProductRoutingSummary(
 
   const publishedCount = routes.filter((route) => route.state === "published_verified").length
   // "blocked" = ONLY genuine blockers (executor / policy / unsupported / data corruption).
-  // Missing media / missing link / missing copy / manual_only / pending_setup get
+  // Missing media / missing link / missing copy / bridge URL / pending_setup get
   // their own counters so the dashboard can show actionable buckets.
   const blockedCount = routes.filter((route) =>
     ["executor_blocked", "policy_blocked", "platform_disabled"].includes(route.state),
@@ -516,7 +516,7 @@ function buildProductRoutingSummary(
   // needs_system_fix = code/data bug. missing_final_copy is its own bucket — copy not generated yet.
   const needsSystemFixCount = routes.filter((r) => r.state === "needs_system_fix").length
   const needsFinalCopyCount = routes.filter((r) => r.state === "missing_final_copy").length
-  const manualOnlyCount = routes.filter((r) => r.state === "manual_only_platform").length
+  const manualOnlyCount = routes.filter((r) => r.state === "bridge_url_platform").length
   const platformPendingSetupCount = routes.filter((r) => r.state === "platform_pending_setup").length
 
   return {
@@ -608,18 +608,18 @@ function buildPlatformRoute(input: {
     })
   }
 
-  // Manual-only platforms (Quora, Reddit) get their own bucket so they don't
-  // pollute the "blocked" count. They never go through auto-READY.
+  // Quora/Reddit get their own bridge URL bucket so they don't pollute the
+  // "blocked" count while still enforcing no direct tracking links in-body.
   const MANUAL_PLATFORMS = new Set<PlatformRoutingKey>(["quora", "reddit"])
   if (MANUAL_PLATFORMS.has(input.platform.key)) {
     return route(input, {
-      state: "manual_only_platform",
-      labelHe: "ידני בלבד",
-      blocker: "manual_platform_not_auto_ready",
+      state: "bridge_url_platform",
+      labelHe: "קישור גישור ציבורי",
+      blocker: "bridge_url_required",
       finalCopy: latestFinalCopy,
       publishJob,
       publishedRecord: null,
-      nextActionHe: "פרסום ידני ע\"י MENI לפי חוקי הקהילה. אסור affiliate/campaign link.",
+      nextActionHe: "להשתמש רק ב-public_review_url/bridge_url. אסור affiliate/campaign/direct tracking link בגוף הפוסט.",
     })
   }
 
@@ -667,7 +667,7 @@ function buildPlatformRoute(input: {
   // Campaign link is the measurability gate for paid surfaces.
   // LinkedIn / Medium / Substack / Facebook Page / Instagram Business / Pinterest / X
   // must have a tracked campaign_link before the post can go to MENI for approval.
-  // Quora/Reddit are already short-circuited to manual_only_platform above.
+  // Quora/Reddit are already short-circuited to bridge_url_platform above.
   // TikTok/YouTube are still pending_setup and never reach this branch.
   if (input.platform.requiresCampaignLink && !input.hasCampaignLink) {
     return route(input, {
@@ -724,19 +724,19 @@ function routeFromPublishJob(
   finalCopy: RoutingFinalCopyInput | null,
   publishJob: RoutingPublishJobInput,
 ): PlatformRoute {
-  // Manual-only platforms (Quora / Reddit) never auto-publish even when a
+  // Quora / Reddit posts use public review bridge URLs only, even when a
   // stale publish_job exists. Treat the platform identity as truth and route
-  // to manual_only_platform regardless of what the publish_job says.
+  // to the bridge URL bucket regardless of what the publish_job says.
   const MANUAL_PLATFORMS = new Set<PlatformRoutingKey>(["quora", "reddit"])
   if (MANUAL_PLATFORMS.has(input.platform.key)) {
     return route(input, {
-      state: "manual_only_platform",
-      labelHe: "ידני בלבד",
-      blocker: "manual_platform_not_auto_ready",
+      state: "bridge_url_platform",
+      labelHe: "קישור גישור ציבורי",
+      blocker: "bridge_url_required",
       finalCopy,
       publishJob,
       publishedRecord: null,
-      nextActionHe: "פרסום ידני ע\"י MENI לפי חוקי הקהילה. אסור affiliate/campaign link.",
+      nextActionHe: "להשתמש רק ב-public_review_url/bridge_url. אסור affiliate/campaign/direct tracking link בגוף הפוסט.",
     })
   }
   const media = evaluatePlatformMediaReadiness(input.platform.key, input.product)
@@ -866,7 +866,7 @@ function route(
 function mediaNextActionHe(media: PlatformMediaReadiness) {
   if (media.nextAction === "add_product_image") return "להוסיף תמונה למוצר לפני READY"
   if (media.nextAction === "add_product_video") return "להוסיף וידאו למוצר לפני READY"
-  if (media.nextAction === "manual_policy_review_required") return "פלטפורמה ידנית - לא READY אוטומטי"
+  if (media.nextAction === "bridge_url_required") return "קישור גישור ציבורי בלבד ל-Quora/Reddit"
   return "מדיה תקינה"
 }
 

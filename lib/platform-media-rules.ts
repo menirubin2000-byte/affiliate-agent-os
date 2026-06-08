@@ -1,4 +1,4 @@
-export type PublishMediaMode = "image" | "video" | "manual_only"
+export type PublishMediaMode = "image" | "video" | "bridge_url_only"
 
 export type ProductMediaInput = {
   imageUrl?: string | null
@@ -42,24 +42,24 @@ export const IMAGE_REQUIRED_FOR_READY = [
 
 export const VIDEO_REQUIRED_FOR_READY = ["tiktok", "youtube"] as const
 
-export const MANUAL_ONLY_NOT_AUTO_READY = ["quora", "reddit"] as const
+export const BRIDGE_URL_ONLY_NOT_AUTO_READY = ["quora", "reddit"] as const
 
 const imageRequiredPlatforms = new Set<string>(IMAGE_REQUIRED_FOR_READY)
 const videoRequiredPlatforms = new Set<string>(VIDEO_REQUIRED_FOR_READY)
-const manualOnlyPlatforms = new Set<string>(MANUAL_ONLY_NOT_AUTO_READY)
+const bridgeUrlOnlyPlatforms = new Set<string>(BRIDGE_URL_ONLY_NOT_AUTO_READY)
 
 export function getPlatformMediaRule(platform: string): PlatformMediaRule {
   const imageRequired = imageRequiredPlatforms.has(platform)
   const videoRequired = videoRequiredPlatforms.has(platform)
-  const manualOnly = manualOnlyPlatforms.has(platform)
+  const bridgeUrlOnly = bridgeUrlOnlyPlatforms.has(platform)
 
   return {
     platform,
     mediaRequired: imageRequired || videoRequired,
-    publishMediaMode: manualOnly ? "manual_only" : videoRequired ? "video" : "image",
+    publishMediaMode: bridgeUrlOnly ? "bridge_url_only" : videoRequired ? "video" : "image",
     imageRequired,
     videoRequired,
-    automaticReadyAllowed: !manualOnly,
+    automaticReadyAllowed: !bridgeUrlOnly,
   }
 }
 
@@ -85,7 +85,7 @@ export function evaluatePlatformMediaReadiness(
 
   const blockingReasons: string[] = []
   if (!rule.automaticReadyAllowed) {
-    blockingReasons.push("manual_platform_not_auto_ready")
+    blockingReasons.push("bridge_url_required")
   }
   if (rule.imageRequired && !hasImage) {
     blockingReasons.push("image_required_for_ready")
@@ -103,8 +103,8 @@ export function evaluatePlatformMediaReadiness(
 }
 
 function buildNextAction(rule: PlatformMediaRule, blockingReasons: string[]) {
-  if (blockingReasons.includes("manual_platform_not_auto_ready")) {
-    return "manual_policy_review_required"
+  if (blockingReasons.includes("bridge_url_required")) {
+    return "bridge_url_required"
   }
   if (rule.imageRequired && blockingReasons.includes("image_required_for_ready")) {
     return "add_product_image"

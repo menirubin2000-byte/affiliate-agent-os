@@ -53,7 +53,7 @@ test("missing affiliate link blocks platforms that allow affiliate links", () =>
   assert.equal(quality.blockers.includes("missing_real_affiliate_link"), true)
 })
 
-test("quora adaptations remove direct affiliate links and remain manual verification", () => {
+test("quora adaptations remove direct affiliate links and use the public review URL", () => {
   const body = buildPlatformBody({
     platform: "quora",
     sourceBody: baseBody(),
@@ -67,17 +67,24 @@ test("quora adaptations remove direct affiliate links and remain manual verifica
 
   assert.equal(body.includes(affiliateLink), false)
   assert.equal(body.includes(publicReviewUrl), true)
-  assert.equal(policy.status, "requires_manual_verification")
+  assert.equal(policy.status, "allowed")
 })
 
-test("quora with a direct affiliate link is prohibited", () => {
-  const policy = evaluatePlatformPolicy({
+test("quora with a direct affiliate or campaign link is prohibited", () => {
+  const { quality, policy } = buildCampaignQualityChecks({
     platform: "quora",
-    includesAffiliateLink: true,
+    title: "Systeme.io Review",
+    body: baseBody(),
+    targetKeyword: "systeme.io review",
+    affiliateLink,
+    campaignLinkUrl: affiliateLink,
+    publicReviewUrl,
   })
 
   assert.equal(policy.status, "prohibited")
   assert.equal(policy.publishMode, "prohibited")
+  assert.equal(quality.passed, false)
+  assert.equal(quality.blockers.includes("direct_tracking_link_not_allowed"), true)
 })
 
 test("tiktok without video asset is not publish-ready", () => {
@@ -96,7 +103,7 @@ test("tiktok without video asset is not publish-ready", () => {
   assert.equal(quality.blockers.includes("missing_video_asset"), true)
 })
 
-test("reddit stays blocked until community rules are verified", () => {
+test("reddit passes link validation with public review URL only", () => {
   const body = buildPlatformBody({
     platform: "reddit",
     sourceBody: baseBody(),
@@ -110,25 +117,34 @@ test("reddit stays blocked until community rules are verified", () => {
     targetKeyword: "systeme.io review",
     affiliateLink,
     campaignLinkUrl: affiliateLink,
-    redditRulesVerified: false,
+    publicReviewUrl,
   })
 
   assert.equal(body.includes(affiliateLink), false)
   assert.equal(body.includes(publicReviewUrl), true)
-  assert.equal(policy.status, "requires_manual_verification")
-  assert.equal(policy.blocker, "reddit_community_rules_not_verified")
-  assert.equal(quality.passed, false)
+  assert.equal(policy.status, "allowed")
+  assert.equal(policy.blocker, null)
+  assert.equal(quality.passed, true)
 })
 
-test("reddit with a direct affiliate link is prohibited", () => {
-  const policy = evaluatePlatformPolicy({
+test("reddit without public review URL is blocked", () => {
+  const body = buildPlatformBody({
     platform: "reddit",
-    includesAffiliateLink: true,
-    redditRulesVerified: true,
+    sourceBody: baseBody(),
+    campaignLinkUrl: affiliateLink,
+  })
+  const { quality, policy } = buildCampaignQualityChecks({
+    platform: "reddit",
+    title: "Useful discussion",
+    body,
+    targetKeyword: "systeme.io review",
+    affiliateLink,
+    campaignLinkUrl: affiliateLink,
   })
 
-  assert.equal(policy.status, "prohibited")
-  assert.equal(policy.blocker, "reddit_direct_affiliate_links_prohibited")
+  assert.equal(policy.status, "allowed")
+  assert.equal(quality.passed, false)
+  assert.equal(quality.blockers.includes("missing_public_review_url"), true)
 })
 
 test("content hash is stable for unchanged source/adaptation content", () => {

@@ -484,7 +484,7 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
           </Badge>
           <Badge variant="secondary">{route.platform.contentType}</Badge>
           <Badge variant={route.mediaReady ? "default" : "destructive"}>
-            {route.publishMediaMode === "video" ? "video READY" : route.publishMediaMode === "manual_only" ? "manual only" : "image READY"}
+            {route.publishMediaMode === "video" ? "video READY" : route.publishMediaMode === "bridge_url_only" ? "bridge URL only" : "image READY"}
           </Badge>
           {assetStatus?.imageStatus === "ready" ? (
             <Badge variant="default">🖼 image ready</Badge>

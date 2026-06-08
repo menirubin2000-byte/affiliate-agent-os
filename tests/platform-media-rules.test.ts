@@ -35,7 +35,7 @@ test("video platforms require product video for AAOS READY", () => {
   assert.deepEqual(youtube.blockingReasons, ["video_required_for_ready"])
 })
 
-test("Quora and Reddit are manual-only and never automatic READY", () => {
+test("Quora and Reddit require public review bridge URLs before READY", () => {
   for (const platform of ["quora", "reddit"]) {
     const rule = getPlatformMediaRule(platform)
     const readiness = evaluatePlatformMediaReadiness(platform, {
@@ -43,8 +43,8 @@ test("Quora and Reddit are manual-only and never automatic READY", () => {
       videoStatus: "ready",
     })
 
-    assert.equal(rule.publishMediaMode, "manual_only")
+    assert.equal(rule.publishMediaMode, "bridge_url_only")
     assert.equal(readiness.mediaReady, false)
-    assert.deepEqual(readiness.blockingReasons, ["manual_platform_not_auto_ready"])
+    assert.deepEqual(readiness.blockingReasons, ["bridge_url_required"])
   }
 })

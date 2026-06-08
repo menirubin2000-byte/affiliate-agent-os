@@ -24,7 +24,7 @@ The app should support many publishing platforms and many products without mixin
 3. Add deterministic routing:
    - No real affiliate link means no publishing route.
    - No approval means route to approval.
-   - Approved but not published means route to publish job or manual publish.
+   - Approved but not published means route to a publish job or platform-specific publishing flow.
    - Published means display only when a real URL exists.
 
 4. Update the Hebrew dashboard pages:

@@ -127,7 +127,7 @@ async function main() {
     needs_video: 0,
     needs_system_fix: 0,
     missing_final_copy: 0,
-    manual_only_quora_reddit: 0,
+    bridge_url_quora_reddit: 0,
     platform_pending_setup: 0,
     platform_pending_approval: 0,
     true_blocked: 0,
@@ -169,7 +169,7 @@ async function main() {
         else buckets.platform_pending_setup++
         continue
       }
-      if (MANUAL_ONLY.has(platform)) { buckets.manual_only_quora_reddit++; continue }
+      if (MANUAL_ONLY.has(platform)) { buckets.bridge_url_quora_reddit++; continue }
       const fc = latestCopyByKey.get(key)
       if (!fc) {
         buckets.missing_final_copy++
@@ -331,7 +331,7 @@ function renderOperatorTruthMd(s, _d) {
   lines.push(`- **חסר וידאו:** ${b.needs_video}`)
   lines.push(`- **חסר קופי לפלטפורמה:** ${b.missing_final_copy}`)
   lines.push(`- **צריך תיקון מערכת:** ${b.needs_system_fix}`)
-  lines.push(`- **ידני בלבד (Quora/Reddit):** ${b.manual_only_quora_reddit}`)
+  lines.push(`- **Quora/Reddit — קישור גישור ציבורי:** ${b.bridge_url_quora_reddit ?? 0}`)
   lines.push(`- **ממתין להגדרת פלטפורמה (OAuth):** ${b.platform_pending_setup}`)
   lines.push(`- **ממתין לאישור פלטפורמה (FB/IG/Pinterest):** ${b.platform_pending_approval}`)
   lines.push(`- **חסומים אמיתיים (TikTok וכד׳):** ${b.true_blocked}`)
@@ -359,7 +359,7 @@ function renderOperatorTruthMd(s, _d) {
   lines.push(`5. Active campaign_link exists for paid surfaces (LinkedIn/Medium/Substack/FB/IG/Pinterest/X).`)
   lines.push(`6. Final Copy status ∈ {ready_for_operator_approval, validated}.`)
   lines.push("")
-  lines.push(`Quora/Reddit are always manual_only (never auto-ready). TikTok is disabled (video gating).`)
+  lines.push(`Quora/Reddit use only public_review_url/bridge_url in post bodies; direct affiliate, campaign, or tracking links are blocked. TikTok is disabled (video gating).`)
   return lines.join("\n")
 }
 

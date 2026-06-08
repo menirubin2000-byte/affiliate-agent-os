@@ -233,7 +233,7 @@ export function HebrewDailyMaintenanceTask({
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">מוצרים מוכנים לפרסום</h3>
             {readyProducts.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">אין כרגע מוצר שעומד בכל התנאים לפרסום ידני.</p>
+              <p className="mt-2 text-sm text-muted-foreground">אין כרגע מוצר שעומד בכל התנאים לכניסה לתור הפרסום.</p>
             ) : (
               <ul className="mt-2 space-y-2 text-sm">
                 {readyProducts.slice(0, 6).map((product) => (

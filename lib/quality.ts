@@ -16,16 +16,22 @@ function hasDisclosure(body: string) {
   return disclosurePhrases.some((phrase) => includesNormalized(body, phrase))
 }
 
-function hasClearCta(body: string, affiliateUrl: string) {
+function hasClearCta(body: string, affiliateUrl: string, templateType: TemplateType) {
   const ctaPhrases = [
     "visit",
     "check it out",
     "learn more",
     "see current details",
     "review the official page",
+    "public review page",
   ]
 
-  return body.includes(affiliateUrl) && ctaPhrases.some((phrase) => includesNormalized(body, phrase))
+  const hasCtaPhrase = ctaPhrases.some((phrase) => includesNormalized(body, phrase))
+  if (templateType === "quora_answer" || templateType === "reddit_post") {
+    return hasCtaPhrase && /https?:\/\/[^\s]+\/(?:he\/)?reviews\/[a-z0-9-]+/i.test(body)
+  }
+
+  return body.includes(affiliateUrl) && hasCtaPhrase
 }
 
 function hasTargetKeyword(draft: DraftCreateInput, targetKeyword: string | null) {
@@ -111,7 +117,7 @@ export function buildQualityChecks(params: {
 }): QualityChecks {
   return {
     has_disclosure: hasDisclosure(params.draft.body),
-    has_clear_cta: hasClearCta(params.draft.body, params.affiliateUrl),
+    has_clear_cta: hasClearCta(params.draft.body, params.affiliateUrl, params.templateType),
     has_target_keyword: hasTargetKeyword(params.draft, params.targetKeyword),
     has_meta_title: Boolean(params.draft.metaTitle?.trim()),
     has_meta_description: Boolean(params.draft.metaDescription?.trim()),

@@ -48,6 +48,11 @@ function formatKeywordList(keywords: string[]) {
   return keywords.length > 0 ? keywords.join(", ") : "N/A"
 }
 
+function buildPublicReviewUrl(product: Product) {
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://affiliate-agent-os.vercel.app").replace(/\/$/, "")
+  return `${siteUrl}/reviews/${product.slug}`
+}
+
 function buildProductSummary(product: Product, templateType: TemplateType) {
   return [
     `Template type: ${templateType}`,
@@ -55,6 +60,7 @@ function buildProductSummary(product: Product, templateType: TemplateType) {
     `Brand: ${product.brand ?? "N/A"}`,
     `Category: ${product.category ?? "N/A"}`,
     `Affiliate URL: ${product.affiliateUrl}`,
+    `Public review URL: ${buildPublicReviewUrl(product)}`,
     `Price: ${product.price ?? "Unknown"}`,
     `Commission rate: ${product.commissionRate ?? "Unknown"}`,
     `Notes: ${product.notes ?? "N/A"}`,
@@ -83,7 +89,8 @@ Rules:
 - Never invent fake product claims, reviews, ratings, testimonials, awards, certifications, discounts, or prices.
 - If a detail is missing, say it should be verified rather than fabricating it.
 - Always include a clear affiliate disclosure in the body.
-- Always include a CTA with the affiliate URL.
+- Always include a CTA. Use the affiliate URL for normal platforms.
+- For quora_answer and reddit_post, do not include the affiliate URL, campaign URL, or direct tracking URL in the body. Use only the Public review URL as the CTA.
 - Use the target keyword naturally when one is available.
 - Keep the output in draft form for human review.
 
@@ -187,6 +194,7 @@ function getFallbackBody(product: Product, templateType: TemplateType) {
   }
 
   if (templateType === "quora_answer") {
+    const publicReviewUrl = buildPublicReviewUrl(product)
     return [
       `When looking at options in ${product.category ?? "this space"}, ${product.name} is one tool worth considering.`,
       "",
@@ -194,19 +202,20 @@ function getFallbackBody(product: Product, templateType: TemplateType) {
       "- The product page should be checked for current features and pricing.",
       "- This answer is based on publicly available information and should be verified.",
       "",
-      `For more details, you can visit: ${product.affiliateUrl}`,
-      "Affiliate disclosure: This answer may include affiliate links, and a commission may be earned at no extra cost to you.",
+      `For more details, you can read the public review page here: ${publicReviewUrl}`,
+      "Affiliate disclosure: The public review page may include affiliate links, and a commission may be earned at no extra cost to you.",
     ].join("\n")
   }
 
   if (templateType === "reddit_post") {
+    const publicReviewUrl = buildPublicReviewUrl(product)
     return [
       `Has anyone tried ${product.name} for ${product.category ?? "this use case"}?`,
       "",
       `I've been looking into options in ${product.category ?? "this space"} and came across ${product.name}. The product page lists some interesting features but I'd like to hear real experiences.`,
       "",
-      `Check it out here: ${product.affiliateUrl}`,
-      "Affiliate disclosure: The link above may be an affiliate link. I may earn a commission at no extra cost to you.",
+      `Read the public review page here: ${publicReviewUrl}`,
+      "Affiliate disclosure: The public review page may include affiliate links. I may earn a commission at no extra cost to you.",
     ].join("\n")
   }
 

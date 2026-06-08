@@ -29,7 +29,7 @@ async function main() {
 
   console.log("Substack posts blocked by executor:", copies.rows.length)
   console.log("Reason: substack_official_executor_not_connected")
-  console.log("MENI action: none. Do not assign copy/paste/manual publish work.")
+  console.log("MENI action: none. Do not assign copy/paste publishing work.")
   console.log("")
 
   for (const copy of copies.rows) {

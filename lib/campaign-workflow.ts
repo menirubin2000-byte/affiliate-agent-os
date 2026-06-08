@@ -46,10 +46,23 @@ export function buildCampaignQualityChecks(input: {
   const combined = `${input.title ?? ""}\n${body}`
   const allowsAffiliateLink = platformAllowsDirectAffiliateLinks(input.platform)
   const expectedLink = input.campaignLinkUrl?.trim() || input.affiliateLink?.trim() || ""
+  const forbiddenDirectLinks = [input.campaignLinkUrl, input.affiliateLink]
+    .map((url) => url?.trim())
+    .filter((url): url is string => Boolean(url))
+  const bridgeOnlyPlatform = input.platform === "quora" || input.platform === "reddit"
+  const publicReviewUrl = input.publicReviewUrl?.trim() ?? ""
   const includesAffiliateLink = Boolean(expectedLink && combined.includes(expectedLink))
+  const includesForbiddenDirectLink = forbiddenDirectLinks.some((url) => combined.includes(url))
+  const includesPublicReviewUrl = Boolean(publicReviewUrl && combined.includes(publicReviewUrl))
+  const urlsInBody = extractUrls(combined)
+  const hasOnlyBridgeUrls =
+    !bridgeOnlyPlatform ||
+    urlsInBody.every((url) => isAllowedPublicReviewUrl(url, publicReviewUrl))
   const policy = evaluatePlatformPolicy({
     platform: input.platform,
-    includesAffiliateLink,
+    includesAffiliateLink: bridgeOnlyPlatform
+      ? includesForbiddenDirectLink || !hasOnlyBridgeUrls
+      : includesAffiliateLink,
     hasVideoAsset: input.hasVideoAsset,
     redditRulesVerified: input.redditRulesVerified,
   })
@@ -57,7 +70,11 @@ export function buildCampaignQualityChecks(input: {
   const blockers: string[] = []
   const disclosurePresent = hasDisclosure(body)
   const ctaPresent = hasCta(body)
-  const affiliateLinkPresent = allowsAffiliateLink ? includesAffiliateLink : !includesAffiliateLink
+  const affiliateLinkPresent = bridgeOnlyPlatform
+    ? includesPublicReviewUrl && !includesForbiddenDirectLink && hasOnlyBridgeUrls
+    : allowsAffiliateLink
+      ? includesAffiliateLink
+      : !includesAffiliateLink
   const avoidsFakeClaims = avoidsFakeClaimsCheck(body)
   const targetKeywordPresent = hasTargetKeyword(combined, input.targetKeyword)
   const minimumLength = body.trim().length >= minimumLengthForPlatform(input.platform)
@@ -66,8 +83,12 @@ export function buildCampaignQualityChecks(input: {
 
   if (!disclosurePresent) blockers.push("missing_disclosure")
   if (!ctaPresent) blockers.push("missing_cta")
+  if (bridgeOnlyPlatform && !includesPublicReviewUrl) blockers.push("missing_public_review_url")
+  if (bridgeOnlyPlatform && (includesForbiddenDirectLink || !hasOnlyBridgeUrls)) {
+    blockers.push("direct_tracking_link_not_allowed")
+  }
   if (allowsAffiliateLink && !affiliateLinkPresent) blockers.push("missing_real_affiliate_link")
-  if (!allowsAffiliateLink && includesAffiliateLink) blockers.push("affiliate_link_not_allowed")
+  if (!allowsAffiliateLink && includesForbiddenDirectLink) blockers.push("affiliate_link_not_allowed")
   if (!avoidsFakeClaims) blockers.push("unsupported_claims")
   if (!targetKeywordPresent) blockers.push("missing_target_keyword")
   if (!minimumLength) blockers.push("minimum_length_not_met")
@@ -121,6 +142,21 @@ export function getFirstBlockingReason(quality: CampaignQualityChecks, policy: P
 
 function normalizeText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase()
+}
+
+function extractUrls(value: string) {
+  return Array.from(value.matchAll(/https?:\/\/[^\s)\]]+/gi), (match) =>
+    match[0].replace(/[.,;:!?]+$/, ""),
+  )
+}
+
+function isAllowedPublicReviewUrl(url: string, publicReviewUrl: string) {
+  if (!publicReviewUrl) return false
+  return (
+    url === publicReviewUrl ||
+    url.startsWith(`${publicReviewUrl}?`) ||
+    url.startsWith(`${publicReviewUrl}#`)
+  )
 }
 
 function hasDisclosure(body: string) {

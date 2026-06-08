@@ -23,7 +23,7 @@ const stateVariant: Record<PlatformRouteState, "default" | "secondary" | "destru
   needs_campaign_link: "outline",
   missing_final_copy: "outline",
   missing_affiliate_link: "destructive",
-  manual_only_platform: "outline",
+  bridge_url_platform: "outline",
   platform_pending_setup: "outline",
   platform_disabled: "outline",
 }

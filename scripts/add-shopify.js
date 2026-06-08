@@ -15,7 +15,7 @@ const LINK = "https://shopify.pxf.io/QY49QA"
 
 const PLATFORM_POLICY_BLOCKS = {
   quora: ["quora_direct_affiliate_links_prohibited"],
-  reddit: ["reddit_community_rules_not_verified"],
+  reddit: ["bridge_url_required"],
 }
 
 const POSTS = {

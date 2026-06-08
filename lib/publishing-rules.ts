@@ -22,8 +22,8 @@ export function assertDraftStatusTransition(currentStatus: DraftStatus, nextStat
 }
 
 /**
- * Platforms that require manual or browser-driven publishing
- * (no public API for posting content as a regular user).
+ * Platforms that require a non-WordPress publishing path
+ * (official API, browser helper, or a platform-specific executor).
  */
 const MANUAL_PUBLISH_PLATFORMS: PublishingTargetPlatform[] = [
   "linkedin",
@@ -93,7 +93,7 @@ export function getPublishingEligibility(
   if (requiresManual) {
     return {
       allowed: true,
-      message: "Draft is approved. Platform requires manual/browser publishing — record the real published URL after posting.",
+      message: "Draft is approved. Platform requires a platform-specific publishing flow — record only the real published URL after posting.",
       requiresManual: true,
     }
   }

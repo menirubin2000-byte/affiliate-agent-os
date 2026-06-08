@@ -50,8 +50,8 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       platform: input.platform,
       status: "prohibited",
       publishMode: "prohibited",
-      notes: "Quora adaptations must not contain direct affiliate links. Use an educational answer without the affiliate URL.",
-      blocker: "quora_affiliate_links_prohibited",
+      notes: "Quora posts must not contain direct affiliate, campaign, or tracking links. Use only the public review bridge URL in the post body.",
+      blocker: "quora_direct_tracking_links_prohibited",
     })
   }
 
@@ -60,18 +60,18 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       platform: input.platform,
       status: "prohibited",
       publishMode: "prohibited",
-      notes: "Reddit posts must not contain direct affiliate or campaign links. Link only to the public review bridge page after subreddit rules are verified.",
-      blocker: "reddit_direct_affiliate_links_prohibited",
+      notes: "Reddit posts must not contain direct affiliate, campaign, or tracking links. Use only the public review bridge URL in the post body.",
+      blocker: "reddit_direct_tracking_links_prohibited",
     })
   }
 
   if (input.platform === "quora") {
     return buildPolicy({
       platform: input.platform,
-      status: "requires_manual_verification",
-      publishMode: "manual",
-      notes: "Quora answers must stay educational and cannot contain direct affiliate links.",
-      blocker: "quora_manual_no_direct_affiliate_link",
+      status: "allowed",
+      publishMode: "browser_helper",
+      notes: "Quora/Reddit — public review bridge URL only. The post body may use public_review_url/bridge_url and must not include affiliate_link or campaign_link directly.",
+      blocker: null,
     })
   }
 
@@ -95,13 +95,13 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
     })
   }
 
-  if (input.platform === "reddit" && !input.redditRulesVerified) {
+  if (input.platform === "reddit") {
     return buildPolicy({
       platform: input.platform,
-      status: "requires_manual_verification",
-      publishMode: "manual",
-      notes: "Reddit requires a verified subreddit-specific rules match before any publish job. Generic Reddit submit or home-feed publishing is disabled.",
-      blocker: "reddit_community_rules_not_verified",
+      status: "allowed",
+      publishMode: "browser_helper",
+      notes: "Quora/Reddit — public review bridge URL only. The post body may use public_review_url/bridge_url and must not include affiliate_link or campaign_link directly. Keep subreddit/community rules in the compliance notes.",
+      blocker: null,
     })
   }
 
@@ -130,7 +130,7 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       platform: input.platform,
       status: "requires_manual_verification",
       publishMode: "api",
-      notes: "LinkedIn publishing is allowed only through an approved official API application. No browser-helper or manual publishing fallback is assigned to MENI.",
+      notes: "LinkedIn publishing is allowed only through an approved official API application. MENI is not assigned copy/paste publishing work.",
       blocker: "linkedin_developer_app_blocked_not_enough_connections",
     })
   }

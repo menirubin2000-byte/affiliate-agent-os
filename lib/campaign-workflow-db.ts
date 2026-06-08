@@ -469,7 +469,7 @@ export async function listCampaignManualPublishItems(): Promise<CampaignManualPu
 
   if (finalCopiesResult.error?.message.includes("final_copies")) return []
   if (finalCopiesResult.error) {
-    throw new Error(`Unable to load final copies for manual publishing: ${finalCopiesResult.error.message}`)
+    throw new Error(`Unable to load final copies for platform-specific publishing: ${finalCopiesResult.error.message}`)
   }
 
   const finalCopies = (finalCopiesResult.data ?? []) as FinalCopyPublishRow[]
@@ -490,7 +490,7 @@ export async function listCampaignManualPublishItems(): Promise<CampaignManualPu
   ])
 
   for (const result of [productsResult, sourcesResult, approvalsResult, publishedResult]) {
-    if (result.error) throw new Error(`Unable to load manual publish items: ${result.error.message}`)
+    if (result.error) throw new Error(`Unable to load platform-specific publish items: ${result.error.message}`)
   }
 
   const products = (productsResult.data ?? []) as Array<{ id: string; name: string }>

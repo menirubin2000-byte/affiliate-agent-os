@@ -64,12 +64,12 @@ const IMAGE_REQUIRED_FOR_READY = new Set([
   "x_twitter",
 ])
 const VIDEO_REQUIRED_FOR_READY = new Set(["tiktok", "youtube"])
-const MANUAL_ONLY_NOT_AUTO_READY = new Set(["quora", "reddit"])
+const BRIDGE_URL_ONLY_NOT_AUTO_READY = new Set(["quora", "reddit"])
 
 function mediaReadiness(row) {
   const imageRequired = IMAGE_REQUIRED_FOR_READY.has(row.platform)
   const videoRequired = VIDEO_REQUIRED_FOR_READY.has(row.platform)
-  const manualOnly = MANUAL_ONLY_NOT_AUTO_READY.has(row.platform)
+  const bridgeUrlOnly = BRIDGE_URL_ONLY_NOT_AUTO_READY.has(row.platform)
   const hasImage =
     row.image_status === "ready" ||
     Boolean(row.image_url) ||
@@ -79,18 +79,18 @@ function mediaReadiness(row) {
     Boolean(row.video_url) ||
     (Array.isArray(row.video_suitable_for) && row.video_suitable_for.includes(row.platform))
   const blockingReasons = []
-  if (manualOnly) blockingReasons.push("manual_platform_not_auto_ready")
+  if (bridgeUrlOnly) blockingReasons.push("bridge_url_required")
   if (imageRequired && !hasImage) blockingReasons.push("image_required_for_ready")
   if (videoRequired && !hasVideo) blockingReasons.push("video_required_for_ready")
   return {
     media_required: imageRequired || videoRequired,
     media_ready: blockingReasons.length === 0,
-    publish_media_mode: manualOnly ? "manual_only" : videoRequired ? "video" : "image",
+    publish_media_mode: bridgeUrlOnly ? "bridge_url_only" : videoRequired ? "video" : "image",
     image_required: imageRequired,
     video_required: videoRequired,
     media_blocking_reasons: blockingReasons,
-    next_action: blockingReasons.includes("manual_platform_not_auto_ready")
-      ? "manual_policy_review_required"
+    next_action: blockingReasons.includes("bridge_url_required")
+      ? "bridge_url_required"
       : blockingReasons.includes("image_required_for_ready")
         ? "add_product_image"
         : blockingReasons.includes("video_required_for_ready")

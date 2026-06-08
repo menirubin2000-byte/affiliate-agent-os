@@ -53,7 +53,7 @@ test("campaign link is not a publishedUrl — only real platform URLs count", ()
   // The real enforcement is that the publishing flow never stores a campaign link as publishedUrl
 })
 
-test("platform-specific manual publish requirement", () => {
+test("platform-specific publishing flow requirement", () => {
   assert.equal(platformRequiresManualPublish("linkedin"), true)
   assert.equal(platformRequiresManualPublish("medium"), true)
   assert.equal(platformRequiresManualPublish("substack"), true)
@@ -117,7 +117,7 @@ test("approved draft already published is blocked from re-queueing", () => {
   assert.match(result.message, /already has a published URL/)
 })
 
-test("manual platforms surface the manual-publishing requirement when eligible", () => {
+test("platform-specific flows surface the publishing requirement when eligible", () => {
   const result = getPublishingEligibility({
     draftStatus: "approved",
     alreadyPublished: false,
@@ -125,7 +125,7 @@ test("manual platforms surface the manual-publishing requirement when eligible",
   })
   assert.equal(result.allowed, true)
   assert.equal(result.requiresManual, true)
-  assert.match(result.message, /manual\/browser publishing/)
+  assert.match(result.message, /platform-specific publishing flow/)
 })
 
 test("throws for invalid approval state transitions", () => {
