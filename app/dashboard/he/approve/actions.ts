@@ -28,6 +28,7 @@ export async function approveFinalCopyAction(formData: FormData) {
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/he")
   revalidatePath("/dashboard/he/approve")
+  revalidatePath("/dashboard/he/schedule")
   revalidatePath("/dashboard/he/publish-ready")
   revalidatePath("/dashboard/he/content-review")
   redirect("/dashboard/he/approve?approved=1")

@@ -16,6 +16,7 @@ import {
   type PublishedItem,
   type ScheduledPublishItem,
 } from "@/lib/publishing-schedule-policy"
+import { materializeDueScheduledPublishItems } from "@/lib/scheduled-publish-queue-db"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { BrowserPlatform } from "@/types/browser-control"
@@ -469,6 +470,7 @@ async function getProductMedia(productId: string): Promise<ProductMediaRow | nul
 
 export async function listPublishJobsForHebrewDashboard(): Promise<PublishJob[]> {
   if (!isSupabaseConfigured()) return []
+  await materializeDueScheduledPublishItems()
   await refreshPublishJobsForExecutorConnection()
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
@@ -478,7 +480,9 @@ export async function listPublishJobsForHebrewDashboard(): Promise<PublishJob[]>
 
   if (error?.message.includes("publish_jobs")) return []
   if (error) throw new Error(`Unable to load publish jobs: ${error.message}`)
-  return ((data ?? []) as PublishJobRow[]).map(mapPublishJob)
+  return ((data ?? []) as PublishJobRow[])
+    .map(mapPublishJob)
+    .filter((job) => !job.scheduledAt || Date.parse(job.scheduledAt) <= Date.now() || job.status === "verified")
 }
 
 export async function getNextPublishJobForExecutor(): Promise<PublishExecutorJob | null> {
@@ -632,7 +636,7 @@ export async function updatePublishJobFromExecutor(input: {
       throw new Error("Published record requires source content and platform adaptation traceability.")
     }
 
-    await supabase
+    const { data: publishedRecord, error: publishedRecordError } = await supabase
       .from("published_records")
       .upsert({
         product_id: job.productId,
@@ -645,6 +649,12 @@ export async function updatePublishJobFromExecutor(input: {
         final_copy_id: job.finalCopyId,
         campaign_approval_id: job.approvalId,
       }, { onConflict: "platform,live_url" })
+      .select("id")
+      .single()
+
+    if (publishedRecordError) {
+      throw new Error(`Unable to create published record: ${publishedRecordError.message}`)
+    }
 
     await supabase
       .from("final_copies")
@@ -664,6 +674,14 @@ export async function updatePublishJobFromExecutor(input: {
       .single()
 
     if (error) throw new Error(`Unable to verify publish job: ${error.message}`)
+    await supabase
+      .from("scheduled_publish_queue")
+      .update({
+        status: "published",
+        published_record_id: (publishedRecord as { id: string }).id,
+        last_error: null,
+      })
+      .eq("final_copy_id", job.finalCopyId)
     return mapPublishJob(data as PublishJobRow)
   }
 

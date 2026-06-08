@@ -180,9 +180,9 @@ export default async function HebrewApprovePage(props: {
       {params.approved ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
-            <CardTitle className="text-green-950">Final copy אושר</CardTitle>
+            <CardTitle className="text-green-950">הפוסט אושר ונכנס לתור תזמון</CardTitle>
             <CardDescription className="text-green-800">
-              סטטוס שונה ל-operator_approved ונוצר/עודכן publish_job. ממתין למנוע פרסום.
+              סטטוס שונה ל-operator_approved ונוצר/עודכן scheduled_publish_queue. פרסום יתבצע רק כשיגיע חלון התזמון והפלטפורמה מוכנה.
             </CardDescription>
           </CardHeader>
         </Card>

@@ -149,7 +149,7 @@ export default async function HebrewPublishReadyPage() {
           <CardHeader>
             <CardTitle>אין publish jobs כרגע</CardTitle>
             <CardDescription>
-              אחרי אישור MENI וקמפיין תקין, המערכת תיצור publish_job ותציג אם הוא מוכן, חסום, בביצוע או מאומת.
+              אחרי אישור MENI הפריט נכנס לתור תזמון. כאן יוצגו רק פריטים שהגיע זמן הפרסום שלהם והפכו ל-publish_job.
             </CardDescription>
           </CardHeader>
         </Card>

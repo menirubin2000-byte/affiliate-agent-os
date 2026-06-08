@@ -8,7 +8,7 @@ import {
 } from "@/lib/content-review"
 import { createImprovementTask } from "@/lib/db"
 import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
-import { createOrUpdatePublishJobForFinalCopy } from "@/lib/publish-jobs-db"
+import { createOrUpdateScheduledPublishItemForFinalCopy } from "@/lib/scheduled-publish-queue-db"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import type { FinalCopy, FinalCopyStatus, FinalCopyValidationStatus } from "@/types/content-review"
@@ -214,12 +214,6 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
     throw new Error(`Cannot approve invalid final copy: ${validation.blockingReasons.join(", ")}`)
   }
 
-  const productMedia = await getProductMedia(finalCopy.product_id)
-  const media = evaluatePlatformMediaReadiness(finalCopy.platform, productMedia)
-  if (!media.mediaReady) {
-    throw new Error(`Cannot approve invalid final copy: ${media.blockingReasons.join(", ")}`)
-  }
-
   const { data: updated, error: updateError } = await supabase
     .from("final_copies")
     .update({
@@ -234,7 +228,7 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
     .single()
 
   if (updateError) throw new Error(`Unable to approve final copy: ${updateError.message}`)
-  await createOrUpdatePublishJobForFinalCopy(finalCopyId)
+  await createOrUpdateScheduledPublishItemForFinalCopy(finalCopyId)
   return mapFinalCopy(updated as FinalCopyRow)
 }
 
