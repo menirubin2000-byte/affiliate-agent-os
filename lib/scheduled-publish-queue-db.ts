@@ -5,6 +5,8 @@ import {
 import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
 import {
   deriveScheduledPublishStatus,
+  getPlatformQueuePriority,
+  getPlatformQueuePriorityReason,
   isAutoQueuePlatform,
   isQueueStatusMaterializable,
   isScheduledItemDue,
@@ -173,7 +175,7 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
       approval_id: approvalId,
       status: nextStatus,
       publish_at: publishAt,
-      priority: getPriority(finalCopy.platform),
+      priority: getPlatformQueuePriority(finalCopy.platform),
       last_error: null,
     }, { onConflict: "final_copy_id" })
     .select(QUEUE_SELECT)
@@ -190,12 +192,12 @@ export async function listScheduledPublishQueue(): Promise<ScheduledPublishItem[
   const { data, error } = await supabase
     .from("scheduled_publish_queue")
     .select(QUEUE_SELECT)
-    .order("publish_at", { ascending: true })
     .order("priority", { ascending: true })
+    .order("publish_at", { ascending: true })
 
   if (error?.message.includes("scheduled_publish_queue")) return []
   if (error) throw new Error(`Unable to load scheduled publish queue: ${error.message}`)
-  return ((data ?? []) as QueueRow[]).map(mapQueueRow)
+  return sortQueueItemsForDisplay(((data ?? []) as QueueRow[]).map(mapQueueRow))
 }
 
 export async function refreshScheduledPublishQueueStatuses() {
@@ -221,6 +223,7 @@ export async function materializeDueScheduledPublishItems(limit = 10) {
     .select(QUEUE_SELECT)
     .lte("publish_at", new Date().toISOString())
     .in("status", ["ready_to_publish", "waiting_executor"])
+    .order("priority", { ascending: true })
     .order("publish_at", { ascending: true })
     .limit(limit)
 
@@ -274,7 +277,10 @@ export function summarizeScheduledPublishQueue(items: ScheduledPublishItem[]): S
   for (const item of items) {
     byPlatform[item.platform] = (byPlatform[item.platform] ?? 0) + 1
     byProduct[item.productName ?? item.productId] = (byProduct[item.productName ?? item.productId] ?? 0) + 1
-    if (!nextPublishAt && ["scheduled", "ready_to_publish", "waiting_executor"].includes(item.status)) {
+    if (
+      ["scheduled", "ready_to_publish", "waiting_executor"].includes(item.status) &&
+      (!nextPublishAt || Date.parse(item.publishAt) < Date.parse(nextPublishAt))
+    ) {
       nextPublishAt = item.publishAt
     }
   }
@@ -330,7 +336,10 @@ async function createPublishJobForScheduledItem(item: ScheduledPublishItem) {
       approval_id: item.approvalId,
       scheduled_at: item.publishAt,
       schedule_policy_version: schedulePolicyNotes(item.platform)[0].replace("policy=", ""),
-      schedule_notes: schedulePolicyNotes(item.platform),
+      schedule_notes: [
+        ...schedulePolicyNotes(item.platform),
+        `platform_priority_reason=${getPlatformQueuePriorityReason(item.platform)}`,
+      ],
       live_url: null,
       verified_at: null,
     })
@@ -421,13 +430,6 @@ function executorTypeForPlatform(platform: CampaignPlatform) {
   return "browser_helper"
 }
 
-function getPriority(platform: CampaignPlatform) {
-  if (platform === "pinterest") return 70
-  if (platform === "x_twitter") return 80
-  if (platform === "medium" || platform === "substack") return 120
-  return 100
-}
-
 async function updateQueueStatus(id: string, status: ScheduledPublishStatus) {
   const supabase = getServiceRoleSupabase()
   const { error } = await supabase.from("scheduled_publish_queue").update({ status }).eq("id", id)
@@ -445,4 +447,14 @@ async function markQueueFailed(id: string, message: string) {
 
 function dayKey(date: Date) {
   return date.toISOString().slice(0, 10)
+}
+
+function sortQueueItemsForDisplay(items: ScheduledPublishItem[]) {
+  return [...items].sort((left, right) => {
+    const priorityDiff = left.priority - right.priority
+    if (priorityDiff !== 0) return priorityDiff
+    const timeDiff = Date.parse(left.publishAt) - Date.parse(right.publishAt)
+    if (timeDiff !== 0) return timeDiff
+    return left.platform.localeCompare(right.platform)
+  })
 }

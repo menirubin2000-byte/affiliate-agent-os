@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { comparePlatformQueuePriority, getPlatformQueuePriorityReason } from "@/lib/production-publishing-scheduler"
 import { listScheduledPublishQueue, summarizeScheduledPublishQueue } from "@/lib/scheduled-publish-queue-db"
 import { formatDateTime } from "@/lib/utils"
 import type { ScheduledPublishItem, ScheduledPublishStatus } from "@/types/scheduled-publish"
@@ -83,7 +84,7 @@ export default async function HebrewSchedulePage(props: {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Breakdown title="לפי פלטפורמה" data={summary.byPlatform} />
+        <Breakdown title="לפי פלטפורמה" data={summary.byPlatform} sortByPlatformPriority />
         <Breakdown title="לפי מוצר" data={summary.byProduct} />
       </section>
 
@@ -120,9 +121,13 @@ function ScheduleItemCard({ item }: { item: ScheduledPublishItem }) {
             <Badge variant={statusVariant(item.status)}>{statusLabels[item.status]}</Badge>
             <Badge variant="outline">{platformLabels[item.platform] ?? item.platform}</Badge>
             <Badge variant="secondary">{item.language}</Badge>
+            <Badge variant="secondary">priority {item.priority}</Badge>
           </div>
           <div className="text-lg font-semibold">{item.productName ?? item.productId}</div>
           <div className="text-sm text-muted-foreground">{item.finalCopyTitle ?? item.finalCopyId}</div>
+          <div className="max-w-2xl text-xs text-muted-foreground">
+            {getPlatformQueuePriorityReason(item.platform)}
+          </div>
         </div>
         <div className="text-sm">
           <div className="text-muted-foreground">publish_at</div>
@@ -179,8 +184,13 @@ function Metric({ title, value, compact = false }: { title: string; value: numbe
   )
 }
 
-function Breakdown({ title, data }: { title: string; data: Record<string, number> }) {
-  const rows = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 12)
+function Breakdown({ title, data, sortByPlatformPriority = false }: { title: string; data: Record<string, number>; sortByPlatformPriority?: boolean }) {
+  const rows = Object.entries(data)
+    .sort((a, b) => {
+      if (sortByPlatformPriority) return comparePlatformQueuePriority(a[0] as ScheduledPublishItem["platform"], b[0] as ScheduledPublishItem["platform"])
+      return b[1] - a[1]
+    })
+    .slice(0, 12)
   return (
     <Card>
       <CardHeader>

@@ -2,10 +2,13 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import {
+  comparePlatformQueuePriority,
   deriveScheduledPublishStatus,
+  getPlatformQueuePriority,
   isAutoQueuePlatform,
   isScheduledItemDue,
   planScheduledPublishTime,
+  schedulePolicyNotes,
 } from "@/lib/production-publishing-scheduler"
 
 const now = new Date("2026-06-08T08:00:00.000Z")
@@ -125,4 +128,18 @@ test("status routes missing media and platform connection to waiting states", ()
 test("Quora and Reddit stay out of the normal auto queue", () => {
   assert.equal(isAutoQueuePlatform("quora"), false)
   assert.equal(isAutoQueuePlatform("reddit"), false)
+})
+
+test("platform queue priority routes high-capacity visual platforms first", () => {
+  assert.equal(getPlatformQueuePriority("pinterest") < getPlatformQueuePriority("medium"), true)
+  assert.equal(getPlatformQueuePriority("x_twitter") < getPlatformQueuePriority("substack"), true)
+  assert.equal(comparePlatformQueuePriority("pinterest", "linkedin") < 0, true)
+  assert.equal(comparePlatformQueuePriority("medium", "pinterest") > 0, true)
+})
+
+test("schedule policy notes include platform priority", () => {
+  const notes = schedulePolicyNotes("pinterest")
+
+  assert.ok(notes.includes("platform_priority=60"))
+  assert.ok(notes.some((note) => note.startsWith("platform_priority_label=")))
 })

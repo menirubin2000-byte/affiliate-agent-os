@@ -123,6 +123,10 @@ export function listPublishingScheduleRules(): Array<{ title: string; descriptio
       description: "Rotate products and do not publish the same product twice on the same platform in one day.",
     },
     {
+      title: "Platform queue priority",
+      description: "Route scheduled items by platform priority before materializing publish jobs: high-capacity visual channels first, long-form channels later, and Quora/Reddit outside the normal auto queue.",
+    },
+    {
       title: "Platform targets",
       description: "Pinterest: 5-10 Pins/day. X/Twitter: 3-5/day when connected. Medium/Substack can cap at 1/day if long-form quality drops.",
     },

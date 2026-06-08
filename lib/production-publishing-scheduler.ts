@@ -32,8 +32,80 @@ export const PLATFORM_DAILY_CAPACITY: Record<string, { min: number; max: number 
   youtube: { min: 1, max: 1 },
 }
 
+export const PLATFORM_QUEUE_PRIORITY: Record<CampaignPlatform, { priority: number; label: string; reason: string }> = {
+  pinterest: {
+    priority: 60,
+    label: "high-volume visual discovery",
+    reason: "Pinterest has the highest safe daily capacity and is strong for visual product discovery.",
+  },
+  x_twitter: {
+    priority: 70,
+    label: "fast social rotation",
+    reason: "X/Twitter can run more daily posts when connected and supports fast product rotation.",
+  },
+  facebook_page: {
+    priority: 80,
+    label: "primary broad audience",
+    reason: "Facebook is a primary broad-audience channel when API and media are ready.",
+  },
+  instagram_professional: {
+    priority: 90,
+    label: "visual social",
+    reason: "Instagram is prioritized for strong product images and visual hooks.",
+  },
+  linkedin: {
+    priority: 100,
+    label: "professional/B2B fit",
+    reason: "LinkedIn is prioritized for SaaS, work tools, and professional products.",
+  },
+  tiktok: {
+    priority: 110,
+    label: "video only",
+    reason: "TikTok stays behind image channels unless a real video asset exists.",
+  },
+  youtube: {
+    priority: 120,
+    label: "video only",
+    reason: "YouTube Shorts stays behind image channels unless a real video asset exists.",
+  },
+  medium: {
+    priority: 130,
+    label: "long-form review",
+    reason: "Medium is lower-volume and should be used for quality long-form reviews.",
+  },
+  substack: {
+    priority: 140,
+    label: "long-form newsletter",
+    reason: "Substack is lower-volume and should be used for quality long-form reviews.",
+  },
+  quora: {
+    priority: 900,
+    label: "community bridge only",
+    reason: "Quora is excluded from the normal auto queue and uses public review bridge links only.",
+  },
+  reddit: {
+    priority: 910,
+    label: "community bridge only",
+    reason: "Reddit is excluded from the normal auto queue and uses public review bridge links only.",
+  },
+}
+
 export function isAutoQueuePlatform(platform: CampaignPlatform) {
   return AUTO_QUEUE_PLATFORMS.includes(platform)
+}
+
+export function getPlatformQueuePriority(platform: CampaignPlatform) {
+  return PLATFORM_QUEUE_PRIORITY[platform]?.priority ?? 500
+}
+
+export function getPlatformQueuePriorityReason(platform: CampaignPlatform) {
+  return PLATFORM_QUEUE_PRIORITY[platform]?.reason ?? "Default queue priority."
+}
+
+export function comparePlatformQueuePriority(left: CampaignPlatform, right: CampaignPlatform) {
+  const priorityDiff = getPlatformQueuePriority(left) - getPlatformQueuePriority(right)
+  if (priorityDiff !== 0) return priorityDiff
+  return left.localeCompare(right)
 }
 
 export function planScheduledPublishTime(input: {
@@ -112,8 +184,11 @@ export function isQueueStatusMaterializable(status: ScheduledPublishStatus) {
 
 export function schedulePolicyNotes(platform: CampaignPlatform) {
   const capacity = PLATFORM_DAILY_CAPACITY[platform]
+  const queuePriority = PLATFORM_QUEUE_PRIORITY[platform]
   return [
     `policy=${PUBLISHING_SCHEDULE_POLICY_VERSION}`,
+    `platform_priority=${getPlatformQueuePriority(platform)}`,
+    queuePriority ? `platform_priority_label=${queuePriority.label}` : "platform_priority_label=default",
     capacity ? `daily_capacity=${capacity.min}-${capacity.max}` : "daily_capacity=default",
     "same_platform_gap=240m",
     "global_gap=15m",
