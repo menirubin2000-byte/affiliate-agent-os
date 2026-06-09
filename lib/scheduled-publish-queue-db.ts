@@ -299,7 +299,11 @@ export function summarizeScheduledPublishQueue(items: ScheduledPublishItem[]): S
 }
 
 async function refreshScheduledPublishItem(finalCopyId: string) {
-  await createOrUpdateScheduledPublishItemForFinalCopy(finalCopyId)
+  try {
+    await createOrUpdateScheduledPublishItemForFinalCopy(finalCopyId)
+  } catch {
+    // Final copy may have been deleted — skip refresh for this item
+  }
 }
 
 async function createPublishJobForScheduledItem(item: ScheduledPublishItem) {

@@ -549,8 +549,16 @@ async function getProductMedia(productId: string): Promise<ProductMediaRow | nul
 
 export async function listPublishJobsForHebrewDashboard(): Promise<PublishJob[]> {
   if (!isSupabaseConfigured()) return []
-  await materializeDueScheduledPublishItems()
-  await refreshPublishJobsForExecutorConnection()
+  try {
+    await materializeDueScheduledPublishItems()
+  } catch {
+    // Non-fatal: scheduled publish materialization failure should not crash dashboard
+  }
+  try {
+    await refreshPublishJobsForExecutorConnection()
+  } catch {
+    // Non-fatal: stale executor state is acceptable for dashboard display
+  }
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("publish_jobs")
