@@ -21,11 +21,14 @@ import {
   LayoutDashboard,
   LogOut,
   Package2,
+  Route,
+  Scale,
   Send,
   Settings,
   Search,
   Share2,
   Shield,
+  ShieldCheck,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -61,6 +64,7 @@ const hebrewNavigation = [
   { href: "/dashboard/he/content-review", label: "בדיקת קופי", icon: FileText },
   { href: "/dashboard/he/approve", label: "אישור טיוטות", icon: CheckSquare },
   { href: "/dashboard/he/schedule", label: "תור תזמון", icon: CalendarClock },
+  { href: "/dashboard/he/traffic-ops", label: "תפעול תנועה", icon: Route },
   { href: "/dashboard/he/publish-ready", label: "מוכן לפרסום", icon: Send },
   { href: "/dashboard/he/browser-control", label: "שליטה בדפדפן", icon: Bot },
   { href: "/dashboard/he#products", label: "מוצרים", icon: Package2 },
@@ -71,6 +75,8 @@ const hebrewNavigation = [
   { href: "/dashboard/he#rejected", label: "נדחה", icon: AlertTriangle },
   { href: "/dashboard/he#actions", label: "פעולה עכשיו", icon: Command },
   { href: "/dashboard/he#performance", label: "נתונים אמיתיים", icon: Activity },
+  { href: "/privacy", label: "מדיניות פרטיות", icon: ShieldCheck },
+  { href: "/terms", label: "תנאי שימוש", icon: Scale },
   { href: "/dashboard/operator", label: "English", icon: Languages },
 ]
 

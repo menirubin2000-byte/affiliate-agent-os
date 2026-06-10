@@ -1,0 +1,29 @@
+◇ injected env (45) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+error: (ENOTFOUND) tenant/user postgres.gbkwydsodondarccqyet not found
+    at parseErrorMessage (C:\Users\USER\Documents\אוטומציה\node_modules\pg-protocol\dist\parser.js:305:11)
+    at Parser.handlePacket (C:\Users\USER\Documents\אוטומציה\node_modules\pg-protocol\dist\parser.js:143:27)
+    at Parser.parse (C:\Users\USER\Documents\אוטומציה\node_modules\pg-protocol\dist\parser.js:37:38)
+    at TLSSocket.<anonymous> (C:\Users\USER\Documents\אוטומציה\node_modules\pg-protocol\dist\index.js:11:42)
+    at TLSSocket.emit (node:events:509:20)
+    at addChunk (node:internal/streams/readable:564:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:515:3)
+    at Readable.push (node:internal/streams/readable:395:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+  length: 84,
+  severity: 'FATAL',
+  code: 'XX000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined
+}
