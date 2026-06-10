@@ -8,7 +8,7 @@ Email: Rubin-Q.S@rsqs.net
 
 | Platform | Profile URL | Status |
 |----------|------------|--------|
-| LinkedIn | https://www.linkedin.com/in/meni-rubin-342967412/ | Active |
+| LinkedIn | https://www.linkedin.com/in/r-qs/ | Active |
 | Medium | https://medium.com/@Rubin-Q.S | Active |
 | Substack | https://menirubin.substack.com | Active |
 | TikTok | https://www.tiktok.com/@menirubin | Active |
@@ -35,7 +35,7 @@ Email: Rubin-Q.S@rsqs.net
 | Property | URL | Type | Verification |
 |----------|-----|------|-------------|
 | Medium | https://medium.com/@Rubin-Q.S | Website | Pending Manual Verification |
-| LinkedIn | www.linkedin.com/in/meni-rubin-342967412/ | LinkedIn | No verification required |
+| LinkedIn | www.linkedin.com/in/r-qs/ | LinkedIn | No verification required |
 
 ### Media Properties to add:
 - TikTok: https://www.tiktok.com/@menirubin (Social)

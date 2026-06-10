@@ -93,6 +93,50 @@ export function resolveYouTubeConnectionStatus(input: {
   return "connected"
 }
 
+export type LinkedInConnectionUpsert = {
+  provider: "linkedin"
+  status: PlatformConnectionStatus
+  connected_by: string
+  connected_at: string
+  expires_at: string | null
+  scopes: string[]
+  token_type: string | null
+  access_token_hash: string | null
+  refresh_token_present: boolean
+  metadata: Record<string, unknown>
+}
+
+export function buildLinkedInConnectionUpsert(input: {
+  accessToken: string
+  memberUrn: string
+  expiresIn: number
+  connectedBy: string
+  now?: Date
+}): LinkedInConnectionUpsert {
+  const now = input.now ?? new Date()
+  const expiresAt = input.expiresIn
+    ? new Date(now.getTime() + input.expiresIn * 1000).toISOString()
+    : null
+
+  return {
+    provider: "linkedin",
+    status: "connected",
+    connected_by: input.connectedBy,
+    connected_at: now.toISOString(),
+    expires_at: expiresAt,
+    scopes: ["w_member_social"],
+    token_type: "Bearer",
+    access_token_hash: hashSecret(input.accessToken),
+    refresh_token_present: false,
+    metadata: {
+      source: "official_linkedin_oauth",
+      raw_token_stored: false,
+      publishing_enabled: false,
+      member_urn: input.memberUrn || null,
+    },
+  }
+}
+
 export function buildYouTubeConnectionUpsert(input: {
   token: YouTubeOAuthTokenResponse
   connectedBy: string

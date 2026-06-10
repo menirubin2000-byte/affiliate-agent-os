@@ -3,6 +3,8 @@ import * as path from "path"
 
 import { NextResponse } from "next/server"
 
+import { upsertLinkedInPlatformConnection } from "@/lib/platform-connections-db"
+
 export const dynamic = "force-dynamic"
 
 function redirect(request: Request, status: string) {
@@ -47,29 +49,51 @@ export async function GET(request: Request) {
       return redirect(request, "token_exchange_failed")
     }
 
-    const tokenData = (await tokenRes.json()) as { access_token: string; expires_in: number }
+    const tokenData = (await tokenRes.json()) as {
+      access_token: string
+      expires_in: number
+      id_token?: string
+    }
     const accessToken = tokenData.access_token
     if (!accessToken) {
       return redirect(request, "no_access_token")
     }
 
-    const profileRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+    let memberUrn = ""
+
+    const userinfoRes = await fetch("https://api.linkedin.com/v2/userinfo", {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
+    if (userinfoRes.ok) {
+      const profile = (await userinfoRes.json()) as { sub: string }
+      if (profile.sub) memberUrn = `urn:li:person:${profile.sub}`
+    }
 
-    let memberUrn = ""
-    if (profileRes.ok) {
-      const profile = (await profileRes.json()) as { sub: string }
-      if (profile.sub) {
-        memberUrn = `urn:li:person:${profile.sub}`
+    if (!memberUrn) {
+      const meRes = await fetch("https://api.linkedin.com/v2/me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (meRes.ok) {
+        const me = (await meRes.json()) as { id: string }
+        if (me.id) memberUrn = `urn:li:person:${me.id}`
       }
+    }
+
+    try {
+      await upsertLinkedInPlatformConnection({
+        accessToken,
+        memberUrn,
+        expiresIn: tokenData.expires_in,
+        connectedBy: "MENI",
+      })
+    } catch (e) {
+      console.error("Failed to save LinkedIn connection:", e)
     }
 
     if (process.env.NODE_ENV === "development") {
       try {
         const envPath = path.join(process.cwd(), ".env.local")
         let envContent = fs.readFileSync(envPath, "utf8")
-
         for (const [key, val] of [
           ["LINKEDIN_ACCESS_TOKEN", accessToken],
           ["LINKEDIN_MEMBER_URN", memberUrn],

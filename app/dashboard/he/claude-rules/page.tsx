@@ -54,7 +54,8 @@ const FORBIDDEN = [
 // שאוסרת promotion), הקישור בגוף הפוסט הוא לפלטפורמה אחרת של MENI:
 // LinkedIn / Facebook Page / Substack / Medium. שם נמצא הקישור האמיתי.
 // אסור: affiliate link ישיר בגוף.
-// מותר: linkedin.com/in/meni-rubin-... או menirubin.substack.com/p/... וכו'.
+// מותר: linkedin.com/in/r-qs/ או menirubin.substack.com/p/... וכו'.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const INDIRECT_LINK_RULE = [
   "Quora / Reddit / כל קהילה שאוסרת affiliate ישיר → קישור לפלטפורמה אחרת של MENI (LinkedIn, FB Page, Substack, Medium).",
   "שם נמצא הקישור האמיתי. ככה הקהילה לא חוסמת ו-MENI עדיין מקבל את התנועה.",

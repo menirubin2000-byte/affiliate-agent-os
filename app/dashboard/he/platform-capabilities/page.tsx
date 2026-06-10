@@ -61,13 +61,15 @@ function getXBlockingReason(status: StoredConnectionStatus) {
 }
 
 export default async function PlatformCapabilitiesPage() {
-  const [xConnection, youtubeConnection] = await Promise.all([
+  const [xConnection, youtubeConnection, linkedinConnection] = await Promise.all([
     getPlatformConnection("x"),
     getPlatformConnection("youtube"),
+    getPlatformConnection("linkedin"),
   ])
   const capabilities = getPlatformCapabilities()
   const xStoredStatus = getXConnectionStatus(xConnection)
   const youtubeStoredStatus = youtubeConnection?.status ?? "not_connected"
+  const linkedinStoredStatus = linkedinConnection?.status ?? "not_connected"
 
   return (
     <div dir="rtl" className="space-y-6">
@@ -93,6 +95,7 @@ export default async function PlatformCapabilitiesPage() {
 
       <section className="space-y-4">
         {capabilities.map((capability) => {
+          const isLinkedIn = capability.platform === "linkedin"
           const isX = capability.platform === "x_twitter"
           const isYouTube = capability.platform === "youtube"
 
@@ -121,6 +124,10 @@ export default async function PlatformCapabilitiesPage() {
                   <CapabilityDetail label="Browser Helper" value={capability.browserHelperNotes} />
                 </div>
 
+                {isLinkedIn ? (
+                  <LinkedInConnectionPanel status={linkedinStoredStatus} />
+                ) : null}
+
                 {isX ? (
                   <XConnectionPanel connection={xConnection} status={xStoredStatus} />
                 ) : null}
@@ -142,6 +149,15 @@ export default async function PlatformCapabilitiesPage() {
                   <span className="font-medium">הפעולה היחידה של MENI בעתיד: </span>
                   {capability.nextOperatorAction}
                 </div>
+
+                {isLinkedIn ? (
+                  <a
+                    href="/api/auth/linkedin/connect"
+                    className="inline-flex rounded-md border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    חבר LinkedIn רשמי
+                  </a>
+                ) : null}
 
                 {isX ? (
                   <a
@@ -180,6 +196,31 @@ export default async function PlatformCapabilitiesPage() {
           )
         })}
       </section>
+    </div>
+  )
+}
+
+function LinkedInConnectionPanel({ status }: { status: StoredConnectionStatus }) {
+  const labels: Record<StoredConnectionStatus, string> = {
+    not_connected: "לא מחובר — לחץ חבר LinkedIn רשמי להשלמת OAuth.",
+    connected: "מחובר דרך OAuth. מוכן לפרסום דרך LinkedIn REST API.",
+    requires_reconnect: "דורש חיבור מחדש — תוקף הטוקן פג.",
+    api_access_not_ready: "אפליקציית Developer קיימת אבל חסר access token.",
+  }
+  return (
+    <div className="rounded-lg border bg-muted/20 p-4 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="font-medium">סטטוס חיבור LinkedIn</div>
+          <div className="mt-1 text-muted-foreground">{labels[status]}</div>
+        </div>
+        <Badge variant={status === "connected" ? "secondary" : "destructive"}>
+          {xStoredStatusLabels[status]}
+        </Badge>
+      </div>
+      <div className="mt-3 text-xs text-muted-foreground">
+        פרופיל: https://www.linkedin.com/in/r-qs/
+      </div>
     </div>
   )
 }

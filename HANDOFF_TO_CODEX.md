@@ -74,6 +74,30 @@ npx supabase db push --db-url "postgresql://postgres:<password>@db.gbkwydsodonda
 
 ---
 
+## Amazon Product Workstream Update (2026-06-09)
+
+- Amazon Associates intake has started with 4 seeded products:
+  - HUANUO FlowLift Dual Monitor Stand
+  - GTPLAYER GT800A Gaming Chair with Footrest
+  - Logitech MX Vertical Wireless Mouse
+- SSK Portable SSD 4TB External Solid State Drive was added as an intake-only Amazon product for Israel-targeted review, but it is still blocked on legal image sourcing.
+- Expected seeded platform copy count from `scripts/add-amazon-manufacturer-posts.js`: 26 final copies total.
+- Media coverage for the first 3 products currently points to 20 manufacturer-hosted product image URLs:
+  - HUANUO: 6
+  - GTPLAYER: 8
+  - Logitech: 6
+- The SSK SSD product currently has 0 legal product images in the system and must stay non-visual until PA-API media or an approved manufacturer asset exists.
+- Public bridge reviews are now supported through `/reviews/[slug]` for Quora and Reddit safe linking.
+
+### Amazon image rule (critical)
+
+- For Amazon-sourced products, use only manufacturer-site images or official Amazon PA-API image URLs.
+- Do not manually paste or store Amazon-hosted image URLs unless they were returned by the official PA-API flow.
+- Do not use downloaded Amazon screenshots as product media.
+- Until PA-API credentials are available and verified, Amazon product media in the system must stay manufacturer-hosted.
+
+---
+
 ## Active Products with Affiliate Links
 
 | Product | Network | Status | Link |
@@ -129,7 +153,7 @@ All posts also exported to `content/review-queue/<product>/<platform>.md` + `.me
 
 ## Publishing Platforms (Operator Accounts)
 
-- LinkedIn: https://www.linkedin.com/in/meni-rubin-342967412/
+- LinkedIn: https://www.linkedin.com/in/r-qs/
 - Medium: https://medium.com/@Rubin-Q.S
 - Substack: https://menirubin.substack.com
 - TikTok: https://www.tiktok.com/@menirubin (video only — needs video production)

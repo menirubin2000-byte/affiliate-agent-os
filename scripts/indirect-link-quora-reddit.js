@@ -15,7 +15,7 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 })
 
 const MENI = {
-  linkedin: "https://www.linkedin.com/in/meni-rubin-342967412/",
+  linkedin: "https://www.linkedin.com/in/r-qs/",
   medium: "https://medium.com/@Rubin-Q.S",
   substack: "https://menirubin.substack.com",
 }

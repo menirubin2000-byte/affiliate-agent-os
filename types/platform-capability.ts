@@ -1,4 +1,5 @@
 export type ResearchedPlatform =
+  | "linkedin"
   | "facebook_page"
   | "instagram_professional"
   | "pinterest"

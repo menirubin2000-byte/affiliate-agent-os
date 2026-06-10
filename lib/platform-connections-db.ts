@@ -1,6 +1,6 @@
 import "server-only"
 
-import { buildXConnectionUpsert, buildYouTubeConnectionUpsert } from "@/lib/platform-connections"
+import { buildLinkedInConnectionUpsert, buildXConnectionUpsert, buildYouTubeConnectionUpsert } from "@/lib/platform-connections"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type {
   PlatformConnection,
@@ -89,6 +89,33 @@ export async function upsertYouTubePlatformConnection(input: {
     .single()
 
   if (error) throw new Error(`Unable to store YouTube connection state: ${error.message}`)
+  return mapConnection(data as PlatformConnectionRow)
+}
+
+export async function upsertLinkedInPlatformConnection(input: {
+  accessToken: string
+  memberUrn: string
+  expiresIn: number
+  connectedBy?: string
+}): Promise<PlatformConnection | null> {
+  if (!isSupabaseConfigured()) return null
+  const supabase = getServiceRoleSupabase()
+  const payload = buildLinkedInConnectionUpsert({
+    accessToken: input.accessToken,
+    memberUrn: input.memberUrn,
+    expiresIn: input.expiresIn,
+    connectedBy: input.connectedBy ?? "MENI",
+  })
+
+  const { data, error } = await supabase
+    .from("platform_connections")
+    .upsert(payload, { onConflict: "provider" })
+    .select(
+      "id, provider, status, connected_by, connected_at, expires_at, scopes, token_type, refresh_token_present, metadata, created_at, updated_at",
+    )
+    .single()
+
+  if (error) throw new Error(`Unable to store LinkedIn connection state: ${error.message}`)
   return mapConnection(data as PlatformConnectionRow)
 }
 

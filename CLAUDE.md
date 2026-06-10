@@ -204,7 +204,7 @@ Email for all signups: Rubin-Q.S@rsqs.net (NEVER use menirubin2000@gmail.com)
 https://affiliate-agent-os.vercel.app/dashboard/products
 
 ### Publishing Platforms & Profiles
-- LinkedIn: https://www.linkedin.com/in/meni-rubin-342967412/
+- LinkedIn: https://www.linkedin.com/in/r-qs/
 - Medium: https://medium.com/@Rubin-Q.S
 - Substack: https://menirubin.substack.com
 - TikTok: https://www.tiktok.com/@menirubin

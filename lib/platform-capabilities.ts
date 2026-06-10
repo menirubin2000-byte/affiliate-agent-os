@@ -1,4 +1,5 @@
 import type { PlatformCapability } from "@/types/platform-capability"
+import { getLinkedInOfficialApiCapability } from "@/lib/linkedin-official-api"
 import { PINTEREST_OPERATOR_PROFILE_URL } from "@/lib/operator-social-profiles"
 import {
   getPinterestOfficialApiCapability,
@@ -12,11 +13,44 @@ import {
   YOUTUBE_VIDEO_ASSET_BLOCKING_REASON,
 } from "@/lib/youtube-official-api"
 
-const CHECKED_AT = "2026-06-05"
+const CHECKED_AT = "2026-06-10"
+const linkedinCapability = getLinkedInOfficialApiCapability()
 const pinterestCapability = getPinterestOfficialApiCapability()
 const youtubeCapability = getYouTubeOfficialApiCapability()
 
 export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
+  {
+    platform: "linkedin",
+    label: "LinkedIn",
+    apiAvailability: "official_api_available",
+    connectionStatus: linkedinCapability.configured ? "connected" : linkedinCapability.oauthAppConfigured ? "requires_official_connection" : "requires_official_connection",
+    requiredAccountType:
+      "LinkedIn member account with a Developer App that has the Share on LinkedIn product enabled.",
+    requiredPermissions: [
+      "LinkedIn Developer App",
+      "Share on LinkedIn product (w_member_social)",
+      "OAuth 2.0 Authorization Code Flow",
+      "Access Token + Member URN",
+    ],
+    affiliateContentPolicy: "allowed_with_disclosure",
+    affiliatePolicyNotes:
+      "Affiliate and sponsored content must be disclosed. LinkedIn supports Sponsored Content labels for paid posts.",
+    safeExecutorPath: "official_api_only",
+    browserHelperAllowed: false,
+    browserHelperNotes:
+      "Use the LinkedIn REST API (Posts endpoint). MCP browser is the fallback until API image upload is implemented.",
+    blockers: linkedinCapability.configured
+      ? []
+      : linkedinCapability.missingKeys.map((k) => `missing_${k.toLowerCase()}`),
+    nextOperatorAction: linkedinCapability.configured
+      ? "LinkedIn API is connected. Ready for publishing through the REST API."
+      : "Connect LinkedIn through OAuth to get an access token and member URN.",
+    sourceUrls: [
+      "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin",
+      "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+    ],
+    checkedAt: CHECKED_AT,
+  },
   {
     platform: "facebook_page",
     label: "Facebook Page",
