@@ -27,8 +27,8 @@ import {
 
 export const dynamic = "force-dynamic"
 
-const TOP_LIMIT = 6
-const MAX_PER_PRODUCT = 2
+const TOP_LIMIT = 20
+const MAX_PER_PRODUCT = 6
 
 type FinalCopyDetail = {
   body: string
@@ -210,8 +210,15 @@ export default async function HebrewApprovePage(props: {
       {params.error ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
-            <CardTitle>שגיאה</CardTitle>
-            <CardDescription className="text-destructive">{params.error}</CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>שגיאה</CardTitle>
+                <CardDescription className="text-destructive">{params.error}</CardDescription>
+              </div>
+              <Link href="/dashboard/he/approve" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
+                ✕ סגור
+              </Link>
+            </div>
           </CardHeader>
         </Card>
       ) : null}
