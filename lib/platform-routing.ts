@@ -8,6 +8,7 @@ import {
   INSTAGRAM_CURRENT_BLOCKING_REASON,
 } from "@/lib/meta-official-api"
 import { getPinterestOfficialApiCapability } from "@/lib/pinterest-official-api"
+import { getXPublishCapability, X_CURRENT_BLOCKING_REASON } from "@/lib/x-official-api"
 import {
   evaluatePlatformMediaReadiness,
   type PlatformMediaReadiness,
@@ -111,6 +112,7 @@ export interface RoutingFinalCopyInput {
   validationStatus: FinalCopyValidationStatus | string
   title: string | null
   blockingReasons: string[]
+  language: "en" | "he"
 }
 
 export interface RoutingPublishJobInput {
@@ -149,6 +151,7 @@ export interface PlatformRoute {
   productId: string
   productName: string
   platform: PlatformRoutingDefinition
+  language: "en" | "he"
   state: PlatformRouteState
   labelHe: string
   blocker: string | null
@@ -364,10 +367,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "פוסט קצר",
     publishMode: "official_api",
     approvalRequired: true,
-    status: "pending_setup",
+    status: getXPublishCapability().canPublish ? "active" : "pending_setup",
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש OAuth רשמי ו-X API access ready.",
-    setupBlocker: "x_api_access_not_ready",
+    setupBlocker: getXPublishCapability().canPublish ? null : X_CURRENT_BLOCKING_REASON,
     requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
@@ -427,6 +430,10 @@ function refreshPlatformDefinitionStatus(def: PlatformRoutingDefinition): Platfo
   if (def.key === "pinterest") {
     const cap = getPinterestOfficialApiCapability()
     return { ...def, status: cap.publishReady ? "active" : "pending_setup", setupBlocker: cap.blockingReason }
+  }
+  if (def.key === "x_twitter") {
+    const cap = getXPublishCapability()
+    return { ...def, status: cap.canPublish ? "active" : "pending_setup", setupBlocker: cap.canPublish ? null : X_CURRENT_BLOCKING_REASON }
   }
   return def
 }
@@ -492,20 +499,31 @@ function buildProductRoutingSummary(
     (link) => link.productId === product.id && (link.status ?? "active") === "active",
   )
 
-  const routes = platforms.map((platform) =>
-    buildPlatformRoute({
-      product,
-      platform,
-      affiliateReady,
-      hasRealAffiliateLink,
-      hasCampaignLink: productLinks.some((link) => (link.source ?? "").toLowerCase() === platform.key),
-      finalCopies: input.finalCopies.filter((copy) => copy.productId === product.id && copy.platform === platform.key),
-      publishJobs: input.publishJobs.filter((job) => job.productId === product.id && job.platform === platform.key),
-      publishedRecords: input.publishedRecords.filter(
-        (record) => record.productId === product.id && record.platform === platform.key,
-      ),
-    }),
-  )
+  const routes = platforms.flatMap((platform) => {
+    const platformCopies = input.finalCopies.filter((copy) => copy.productId === product.id && copy.platform === platform.key)
+    const platformJobs = input.publishJobs.filter((job) => job.productId === product.id && job.platform === platform.key)
+    const platformRecords = input.publishedRecords.filter(
+      (record) => record.productId === product.id && record.platform === platform.key,
+    )
+    const hasCampaignLink = productLinks.some((link) => (link.source ?? "").toLowerCase() === platform.key)
+
+    const languagesWithCopies = new Set(platformCopies.map((c) => c.language))
+    if (languagesWithCopies.size === 0) languagesWithCopies.add("en")
+
+    return Array.from(languagesWithCopies).map((lang) =>
+      buildPlatformRoute({
+        product,
+        platform,
+        affiliateReady,
+        hasRealAffiliateLink,
+        hasCampaignLink,
+        language: lang,
+        finalCopies: platformCopies.filter((c) => c.language === lang),
+        publishJobs: platformJobs,
+        publishedRecords: platformRecords,
+      }),
+    )
+  })
 
   const publishedCount = routes.filter((route) => route.state === "published_verified").length
   // "blocked" = ONLY genuine blockers (executor / policy / unsupported / data corruption).
@@ -558,6 +576,7 @@ function buildPlatformRoute(input: {
   affiliateReady: boolean
   hasRealAffiliateLink: boolean
   hasCampaignLink: boolean
+  language: "en" | "he"
   finalCopies: RoutingFinalCopyInput[]
   publishJobs: RoutingPublishJobInput[]
   publishedRecords: RoutingPublishedRecordInput[]
@@ -732,6 +751,7 @@ function routeFromPublishJob(
   input: {
     product: RoutingProductInput
     platform: PlatformRoutingDefinition
+    language: "en" | "he"
   },
   finalCopy: RoutingFinalCopyInput | null,
   publishJob: RoutingPublishJobInput,
@@ -845,6 +865,7 @@ function route(
   input: {
     product: RoutingProductInput
     platform: PlatformRoutingDefinition
+    language: "en" | "he"
   },
   state: {
     state: PlatformRouteState
@@ -861,6 +882,7 @@ function route(
     productId: input.product.id,
     productName: input.product.name,
     platform: input.platform,
+    language: input.language,
     state: state.state,
     labelHe: state.labelHe,
     blocker: state.blocker,

@@ -613,11 +613,12 @@ function RouteList({ routes, more, cta }: { routes: PlatformRoute[]; more: numbe
       <ul className="space-y-1">
         {routes.map((route) => (
           <li
-            key={route.finalCopyId ?? `${route.productId}-${route.platform.key}`}
+            key={route.finalCopyId ?? `${route.productId}-${route.platform.key}-${route.language}`}
             className="flex flex-wrap items-center justify-between gap-2 rounded border px-3 py-2"
           >
             <span>
               {route.productName} · <span className="text-muted-foreground">{route.platform.hebrewName}</span>
+              <span className="mr-1 text-xs text-muted-foreground">({route.language === "he" ? "עב" : "EN"})</span>
             </span>
             <span className="text-xs text-muted-foreground">{route.blocker ?? route.labelHe}</span>
           </li>

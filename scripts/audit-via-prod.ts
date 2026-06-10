@@ -80,7 +80,7 @@ async function loadOverview() {
     else if (typeof r.blocking_reasons === "string") {
       try { const p = JSON.parse(r.blocking_reasons); br = Array.isArray(p) ? p.map(String) : [r.blocking_reasons] } catch { br = [r.blocking_reasons] }
     }
-    return { id: r.id, productId: r.product_id, platform: r.platform, status: r.status, validationStatus: r.validation_status, title: r.title, blockingReasons: br }
+    return { id: r.id, productId: r.product_id, platform: r.platform, status: r.status, validationStatus: r.validation_status, title: r.title, blockingReasons: br, language: (r as Record<string, unknown>).language === "he" ? "he" as const : "en" as const }
   }
   const mapJob = (r: PublishJobRow): RoutingPublishJobInput => ({
     id: r.id, finalCopyId: r.final_copy_id, productId: r.product_id, platform: r.platform,

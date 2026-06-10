@@ -168,9 +168,12 @@ export function PlatformRouteMatrix({
               </thead>
               <tbody>
                 {product.routes.map((route) => (
-                  <tr key={`${product.product.id}-${route.platform.key}`} className="border-b align-top">
+                  <tr key={`${product.product.id}-${route.platform.key}-${route.language}`} className="border-b align-top">
                     <td className="px-3 py-3">
-                      <div className="font-medium">{route.platform.hebrewName}</div>
+                      <div className="font-medium">
+                        {route.platform.hebrewName}
+                        <span className="mr-1 text-xs text-muted-foreground">({route.language === "he" ? "עב" : "EN"})</span>
+                      </div>
                       <div className="text-xs text-muted-foreground">{route.platform.contentType}</div>
                     </td>
                     <td className="px-3 py-3">

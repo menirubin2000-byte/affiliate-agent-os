@@ -41,6 +41,7 @@ type FinalCopyRow = {
   validation_status: string
   title: string | null
   blocking_reasons: unknown
+  language: string | null
 }
 
 type PublishJobRow = {
@@ -104,7 +105,7 @@ export async function getPlatformRoutingOverview(): Promise<PlatformRoutingOverv
     safeSelect<FinalCopyRow>("final_copies", () =>
       supabase
         .from("final_copies")
-        .select("id, product_id, platform, status, validation_status, title, blocking_reasons")
+        .select("id, product_id, platform, status, validation_status, title, blocking_reasons, language")
         .order("updated_at", { ascending: false }),
     ),
     safeSelect<PublishJobRow>("publish_jobs", () =>
@@ -204,6 +205,7 @@ function mapFinalCopy(row: FinalCopyRow): RoutingFinalCopyInput {
     validationStatus: row.validation_status,
     title: row.title,
     blockingReasons: normalizeStringArray(row.blocking_reasons),
+    language: row.language === "he" ? "he" : "en",
   }
 }
 
