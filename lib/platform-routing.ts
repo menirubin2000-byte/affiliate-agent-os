@@ -9,6 +9,13 @@ import {
 } from "@/lib/meta-official-api"
 import { getPinterestOfficialApiCapability } from "@/lib/pinterest-official-api"
 import { getXPublishCapability, X_CURRENT_BLOCKING_REASON } from "@/lib/x-official-api"
+
+function getYouTubeApiReady(env: NodeJS.ProcessEnv = process.env) {
+  const clientId = env.YOUTUBE_CLIENT_ID?.trim()
+  const clientSecret = env.YOUTUBE_CLIENT_SECRET?.trim()
+  const ready = env.YOUTUBE_API_ACCESS_READY?.trim().toLowerCase() === "true"
+  return { configured: Boolean(clientId && clientSecret && ready) }
+}
 import {
   evaluatePlatformMediaReadiness,
   type PlatformMediaReadiness,
@@ -434,6 +441,10 @@ function refreshPlatformDefinitionStatus(def: PlatformRoutingDefinition): Platfo
   if (def.key === "x_twitter") {
     const cap = getXPublishCapability()
     return { ...def, status: cap.canPublish ? "active" : "pending_setup", setupBlocker: cap.canPublish ? null : X_CURRENT_BLOCKING_REASON }
+  }
+  if (def.key === "youtube") {
+    const cap = getYouTubeApiReady()
+    return { ...def, status: cap.configured ? "active" : "pending_setup", setupBlocker: cap.configured ? null : "youtube_video_and_api_required" }
   }
   return def
 }
