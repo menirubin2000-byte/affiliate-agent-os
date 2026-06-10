@@ -275,6 +275,28 @@ Not published yet (draft/approval needed):
 - Overview page = 404 (needs fix)
 - Live publishing = disabled
 
+### Bilingual Content Rules (EN + HE)
+Every product must have final_copies in TWO languages:
+1. **English (en)** — for international audience. Image: `image_url` (English text/branding).
+2. **Hebrew (he)** — for Israeli audience. Image: `image_url_he` (Hebrew text/branding).
+
+Rules:
+- English post → English image. Hebrew post → Hebrew image.
+- If `image_url_he` is null on the product, flag it — Hebrew posts exist but image is missing.
+- YouTube Shorts / TikTok / Reels: same video can serve both languages, description changes per language.
+- Quora/Reddit: indirect link rule applies to BOTH languages.
+- `language` field on final_copies must be set: "en" or "he".
+- When creating new product content, generate BOTH languages in the same batch.
+
+### Video Content Rules
+- YouTube uploads use the YouTube Data API (OAuth required).
+- Videos under 60 seconds are uploaded as Shorts (add #Shorts to title).
+- Video metadata: title, description (with affiliate link + hashtags), tags.
+- Same video file can be used for YouTube Shorts, TikTok, and Instagram Reels.
+- `video_url` on the product points to Supabase Storage.
+- `video_status` must be "ready" before creating video final_copies.
+- `video_suitable_for` array indicates which platforms the video fits.
+
 ### Do NOT Do
 - Do not add WordPress
 - Do not add AI API keys

@@ -41,6 +41,22 @@ const SANDBOX_DOMAINS = [
   { domain: "db.gbkwydsodondarccqyet.supabase.co", use: "Supabase DB (קריאה/כתיבה דרך service-role)" },
   { domain: "supabase.co", use: "Supabase API" },
 ]
+const BILINGUAL_RULES = [
+  "כל מוצר חייב final_copies בשתי שפות: אנגלית (en) + עברית (he).",
+  "פוסט באנגלית → תמונה באנגלית (image_url). פוסט בעברית → תמונה בעברית (image_url_he).",
+  "אם image_url_he ריק → לסמן שחסרה תמונה עברית.",
+  "YouTube Shorts / TikTok / Reels: אותו סרטון, תיאור משתנה לפי שפה.",
+  "Quora/Reddit: חוק הקישור העקיף חל על שתי השפות.",
+  "שדה language ב-final_copies חייב להיות en או he.",
+  "בייצור תוכן למוצר חדש — ליצור שתי שפות באותו batch.",
+]
+const VIDEO_RULES = [
+  "YouTube uploads דרך YouTube Data API (OAuth נדרש).",
+  "סרטונים מתחת ל-60 שניות עולים כ-Shorts (להוסיף #Shorts לכותרת).",
+  "מטאדאטא של סרטון: כותרת, תיאור (עם affiliate link + hashtags), תגיות.",
+  "אותו קובץ וידאו משמש ל-YouTube Shorts, TikTok ו-Instagram Reels.",
+  "video_status חייב להיות ready לפני יצירת final_copies לוידאו.",
+]
 const FORBIDDEN = [
   "להזין סיסמה / טוקן / קוד 2FA לתוך UI.",
   "auto-approval. רק MENI מאשר final_copy -> operator_approved.",
@@ -121,6 +137,34 @@ export default function ClaudeRulesPage() {
                 <code className="text-xs">{d.domain}</code>
                 <span className="text-muted-foreground">{d.use}</span>
               </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle>תוכן דו-לשוני (EN + HE)</CardTitle>
+          <CardDescription>כל מוצר חייב פוסטים בשתי שפות. תמונה תואמת שפה.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-inside list-disc space-y-1 text-sm">
+            {BILINGUAL_RULES.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <CardTitle>כללי וידאו (YouTube / TikTok / Reels)</CardTitle>
+          <CardDescription>סרטונים מתחת ל-60 שניות עולים כ-Shorts.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-inside list-disc space-y-1 text-sm">
+            {VIDEO_RULES.map((line, i) => (
+              <li key={i}>{line}</li>
             ))}
           </ul>
         </CardContent>
