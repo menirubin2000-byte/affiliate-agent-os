@@ -24,6 +24,9 @@ export default function PrivacyPolicyPage() {
             <Link className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted" href="/terms">
               Terms of Service
             </Link>
+            <Link className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted" href="/dashboard/he">
+              ← חזרה לדשבורד
+            </Link>
           </nav>
         </header>
 

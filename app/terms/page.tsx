@@ -24,6 +24,9 @@ export default function TermsOfServicePage() {
             <Link className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground" href="/terms">
               Terms of Service
             </Link>
+            <Link className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted" href="/dashboard/he">
+              ← חזרה לדשבורד
+            </Link>
           </nav>
         </header>
 
