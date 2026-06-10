@@ -282,7 +282,8 @@ Every product must have final_copies in TWO languages:
 
 Rules:
 - English post → English image. Hebrew post → Hebrew image.
-- If `image_url_he` is null on the product, flag it — Hebrew posts exist but image is missing.
+- **English and Hebrew are independent tracks. NEVER delay English content because Hebrew image/video is missing.**
+- If `image_url_he` is null, Hebrew posts can wait — English goes out immediately.
 - YouTube Shorts / TikTok / Reels: same video can serve both languages, description changes per language.
 - Quora/Reddit: indirect link rule applies to BOTH languages.
 - `language` field on final_copies must be set: "en" or "he".
