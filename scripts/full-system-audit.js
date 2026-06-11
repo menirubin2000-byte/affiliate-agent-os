@@ -20,6 +20,30 @@ async function fetchAll(table, columns) {
 
 const PAID = new Set(["linkedin", "medium", "substack", "facebook_page", "instagram_professional", "pinterest", "x_twitter"])
 const ALL_PLATFORMS = ["linkedin", "medium", "substack", "facebook_page", "instagram_professional", "pinterest", "x_twitter", "youtube", "quora", "reddit", "tiktok"]
+const MANUAL_ONLY = new Set(["quora", "reddit"])
+
+function envSet(k) { return Boolean((process.env[k] ?? "").trim()) }
+function envIsTrue(k) { return (process.env[k] ?? "").trim().toLowerCase() === "true" }
+const FB_CONFIGURED = envSet("FB_PAGE_ACCESS_TOKEN") && envSet("FB_PAGE_ID") && /^\d+$/.test(process.env.FB_PAGE_ID || "")
+const IG_CONFIGURED = envSet("IG_ACCESS_TOKEN") && envSet("IG_BUSINESS_ACCOUNT_ID") && /^\d+$/.test(process.env.IG_BUSINESS_ACCOUNT_ID || "")
+const PIN_PUBLISH_READY = envSet("PINTEREST_ACCESS_TOKEN") && envSet("PINTEREST_BOARD_ID") && envIsTrue("PINTEREST_API_ACCESS_READY")
+const PLATFORM_STATUS = {
+  linkedin: "active",
+  medium: "active",
+  substack: "active",
+  quora: "active",
+  reddit: "active",
+  tiktok: "disabled",
+  facebook_page: FB_CONFIGURED ? "active" : "pending_setup",
+  instagram_professional: IG_CONFIGURED ? "active" : "pending_setup",
+  pinterest: PIN_PUBLISH_READY ? "active" : "pending_setup",
+  x_twitter: "pending_setup",
+  youtube: "pending_setup",
+}
+
+function shouldExpectOwnedRoute(platform) {
+  return PLATFORM_STATUS[platform] === "active" && !MANUAL_ONLY.has(platform)
+}
 
 ;(async () => {
   console.log("=== Loading full DB state ===\n")
@@ -89,10 +113,15 @@ const ALL_PLATFORMS = ["linkedin", "medium", "substack", "facebook_page", "insta
   const noSourceContent = owned.filter((p) => !productsWithSourceContent.has(p.id))
   if (noSourceContent.length) note("MEDIUM", "source_contents", `${noSourceContent.length} owned products without source_content`, noSourceContent.map((p) => p.name))
 
-  // 11. owned (product, platform) without platform_adaptation
+  // 11. owned (product, platform) without platform_adaptation on active routed platforms
   const adaptationKey = new Set(adaptations.map((a) => `${a.product_id}|${a.platform}`))
   const missingAdapt = []
-  for (const p of owned) for (const pl of ALL_PLATFORMS) if (!adaptationKey.has(`${p.id}|${pl}`)) missingAdapt.push(`${p.name}|${pl}`)
+  for (const p of owned) {
+    for (const pl of ALL_PLATFORMS) {
+      if (!shouldExpectOwnedRoute(pl)) continue
+      if (!adaptationKey.has(`${p.id}|${pl}`)) missingAdapt.push(`${p.name}|${pl}`)
+    }
+  }
   if (missingAdapt.length) note("LOW", "platform_adaptations", `${missingAdapt.length} (owned product, platform) pairs without platform_adaptation`, missingAdapt.slice(0, 10))
 
   // 12. Quora/Reddit final_copies contain raw affiliate link in body (policy violation)
@@ -108,10 +137,15 @@ const ALL_PLATFORMS = ["linkedin", "medium", "substack", "facebook_page", "insta
   }
   if (quoraRedditPolicyViolation.length) note("MEDIUM", "final_copies", `${quoraRedditPolicyViolation.length} Quora/Reddit final_copies contain raw affiliate link (policy violation if auto-published)`, quoraRedditPolicyViolation.slice(0, 10))
 
-  // 13. final_copies on owned product where the platform is in ALL_PLATFORMS but missing
+  // 13. final_copies on owned product where an active routed platform is missing
   const fcKey = new Set(finalCopies.map((f) => `${f.product_id}|${f.platform}`))
   const missingFc = []
-  for (const p of owned) for (const pl of ALL_PLATFORMS) if (!fcKey.has(`${p.id}|${pl}`)) missingFc.push(`${p.name}|${pl}`)
+  for (const p of owned) {
+    for (const pl of ALL_PLATFORMS) {
+      if (!shouldExpectOwnedRoute(pl)) continue
+      if (!fcKey.has(`${p.id}|${pl}`)) missingFc.push(`${p.name}|${pl}`)
+    }
+  }
   if (missingFc.length) note("HIGH", "final_copies", `${missingFc.length} owned (product, platform) pairs without final_copy`, missingFc.slice(0, 10))
 
   // 14. platform_connections status not "connected" for FB/IG/Pinterest

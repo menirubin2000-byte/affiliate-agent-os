@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { evaluatePostMediaGate, requiresImageForPost } from "@/lib/post-media-policy"
+import { evaluatePostMediaGate, requiresImageForPost, validateLanguageMediaConsistency } from "@/lib/post-media-policy"
 
 test("visual platforms require an image before publishing", () => {
   for (const platform of ["facebook_page", "instagram_professional", "pinterest", "linkedin", "medium", "substack", "x_twitter"]) {
@@ -39,4 +39,77 @@ test("Quora and Reddit do not use the visual image gate", () => {
   assert.equal(requiresImageForPost("quora"), false)
   assert.equal(evaluatePostMediaGate({ platform: "quora" }).mediaReady, true)
   assert.equal(evaluatePostMediaGate({ platform: "reddit" }).mediaStatus, "not_required")
+})
+
+// ---------------------------------------------------------------------------
+// Language–media consistency
+// ---------------------------------------------------------------------------
+
+test("Hebrew image with English copy is blocked", () => {
+  const result = validateLanguageMediaConsistency({
+    language: "en",
+    imageUrl: "https://cdn.example.com/he-image.jpg",
+    product: {
+      image_url: "https://cdn.example.com/en-image.jpg",
+      image_url_he: "https://cdn.example.com/he-image.jpg",
+    },
+  })
+  assert.equal(result.consistent, false)
+  assert.equal(result.reason, "language_mismatch_media_copy")
+})
+
+test("English image with Hebrew copy is blocked", () => {
+  const result = validateLanguageMediaConsistency({
+    language: "he",
+    imageUrl: "https://cdn.example.com/en-image.jpg",
+    product: {
+      image_url: "https://cdn.example.com/en-image.jpg",
+      image_url_he: "https://cdn.example.com/he-image.jpg",
+    },
+  })
+  assert.equal(result.consistent, false)
+  assert.equal(result.reason, "language_mismatch_media_copy")
+})
+
+test("Hebrew image with Hebrew copy is allowed", () => {
+  const result = validateLanguageMediaConsistency({
+    language: "he",
+    imageUrl: "https://cdn.example.com/he-image.jpg",
+    product: {
+      image_url: "https://cdn.example.com/en-image.jpg",
+      image_url_he: "https://cdn.example.com/he-image.jpg",
+    },
+  })
+  assert.equal(result.consistent, true)
+  assert.equal(result.reason, null)
+})
+
+test("English image with English copy is allowed", () => {
+  const result = validateLanguageMediaConsistency({
+    language: "en",
+    imageUrl: "https://cdn.example.com/en-image.jpg",
+    product: {
+      image_url: "https://cdn.example.com/en-image.jpg",
+      image_url_he: "https://cdn.example.com/he-image.jpg",
+    },
+  })
+  assert.equal(result.consistent, true)
+  assert.equal(result.reason, null)
+})
+
+test("product with only one image passes for any language", () => {
+  const result = validateLanguageMediaConsistency({
+    language: "he",
+    imageUrl: "https://cdn.example.com/only-image.jpg",
+    product: {
+      image_url: "https://cdn.example.com/only-image.jpg",
+      image_url_he: null,
+    },
+  })
+  assert.equal(result.consistent, true)
+})
+
+test("no product info passes validation", () => {
+  assert.equal(validateLanguageMediaConsistency({ language: "en", imageUrl: "x.jpg", product: null }).consistent, true)
+  assert.equal(validateLanguageMediaConsistency({ language: null, imageUrl: "x.jpg", product: {} }).consistent, true)
 })
