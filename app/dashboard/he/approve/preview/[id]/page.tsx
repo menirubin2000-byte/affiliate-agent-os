@@ -9,12 +9,23 @@ import {
   approveFinalCopyAction,
   rejectFinalCopyAction,
   requestFinalCopyFixAction,
+  deleteFinalCopyAction,
+  deleteProductAction,
+  updateFinalCopyBodyAction,
+  uploadProductImageAction,
 } from "../../actions"
 
 export const dynamic = "force-dynamic"
 
-export default async function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PreviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ approved?: string }>
+}) {
   const { id } = await params
+  const sp = (await searchParams) ?? {}
 
   if (!isSupabaseConfigured()) return notFound()
 
@@ -82,6 +93,12 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
         </Link>
       </div>
 
+      {sp.approved === "body_updated" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          הטקסט עודכן בהצלחה
+        </div>
+      ) : null}
+
       <div className="rounded-lg border bg-card p-4 space-y-2 text-sm">
         <p><strong>מוצר:</strong> {product?.name ?? "לא ידוע"}</p>
         <p><strong>פלטפורמה:</strong> {platformNames[fc.platform] ?? fc.platform}</p>
@@ -115,12 +132,31 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
       )}
 
       <div className="space-y-2">
+        <h2 className="text-lg font-semibold">העלאת תמונה</h2>
+        <form action={uploadProductImageAction} className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
+          <input type="hidden" name="productId" value={fc.product_id} />
+          <input type="hidden" name="language" value={fc.language} />
+          <input type="file" name="image" accept="image/*" required className="text-sm" />
+          <Button type="submit" variant="outline" size="sm">
+            העלה תמונה
+          </Button>
+        </form>
+      </div>
+
+      <div className="space-y-2">
         <h2 className="text-lg font-semibold">טקסט הפוסט</h2>
-        <div className="rounded-lg border bg-muted/20 p-4">
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed" dir="auto">
-            {fc.body || "אין תוכן"}
-          </pre>
-        </div>
+        <form action={updateFinalCopyBodyAction}>
+          <input type="hidden" name="finalCopyId" value={fc.id} />
+          <textarea
+            name="body"
+            defaultValue={fc.body || ""}
+            dir="auto"
+            className="w-full min-h-[200px] rounded-lg border bg-muted/20 p-4 text-sm leading-relaxed font-mono"
+          />
+          <Button type="submit" size="sm" variant="outline" className="mt-2">
+            שמור שינויים בטקסט
+          </Button>
+        </form>
       </div>
 
       <div className="flex flex-wrap gap-3 rounded-lg border bg-card p-4">
@@ -140,6 +176,22 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
           <input type="hidden" name="finalCopyId" value={fc.id} />
           <Button type="submit" variant="ghost" size="lg">
             דרוש תיקון מערכת
+          </Button>
+        </form>
+      </div>
+
+      <div className="flex flex-wrap gap-3 rounded-lg border border-red-300 bg-red-50 p-4 dark:bg-red-950 dark:border-red-800">
+        <h3 className="w-full text-sm font-bold text-red-700 dark:text-red-300">פעולות מחיקה</h3>
+        <form action={deleteFinalCopyAction}>
+          <input type="hidden" name="finalCopyId" value={fc.id} />
+          <Button type="submit" variant="destructive" size="sm">
+            מחק פוסט
+          </Button>
+        </form>
+        <form action={deleteProductAction}>
+          <input type="hidden" name="productId" value={fc.product_id} />
+          <Button type="submit" variant="destructive" size="sm">
+            מחק מוצר
           </Button>
         </form>
       </div>
