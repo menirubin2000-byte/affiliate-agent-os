@@ -588,6 +588,12 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
           </Button>
         </form>
         <Link
+          href={`/dashboard/he/approve/preview/${route.finalCopyId}`}
+          className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
+        >
+          👁 תצוגה מקדימה מלאה
+        </Link>
+        <Link
           href="/dashboard/he/content-review"
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
         >
