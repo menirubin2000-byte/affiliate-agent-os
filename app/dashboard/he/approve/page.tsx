@@ -177,6 +177,8 @@ export default async function HebrewApprovePage(props: {
         }
       />
 
+      <AllPostsPreviewSection />
+
       {params.approved ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
@@ -245,8 +247,6 @@ export default async function HebrewApprovePage(props: {
         <CountBadge title="כבר פורסם ואומת" value={publishedRoutes.length} tone="green" />
         <CountBadge title="טיוטות ישנות (legacy)" value={legacyDraftsCount} tone="muted" />
       </section>
-
-      <AllPostsPreviewSection />
 
       <Card>
         <CardHeader>
