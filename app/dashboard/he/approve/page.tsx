@@ -568,6 +568,12 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
         {truncate(detail.body || "אין תוכן זמין.", 800)}
       </pre>
 
+      <Link
+        href={`/dashboard/he/approve/preview/${route.finalCopyId}`}
+        className="block w-full rounded-lg border-2 border-blue-500 bg-blue-50 p-3 text-center text-lg font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+      >
+        👁 פתח תצוגה מקדימה — תמונה + פוסט מלא
+      </Link>
       <div className="flex flex-wrap gap-2 border-t pt-3">
         <form action={approveFinalCopyAction}>
           <input type="hidden" name="finalCopyId" value={route.finalCopyId ?? ""} />
@@ -587,18 +593,6 @@ function ReadyRouteCard({ candidate }: { candidate: ReadyCandidate }) {
             דרוש תיקון מערכת
           </Button>
         </form>
-        <Link
-          href={`/dashboard/he/approve/preview/${route.finalCopyId}`}
-          className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
-        >
-          👁 תצוגה מקדימה מלאה
-        </Link>
-        <Link
-          href="/dashboard/he/content-review"
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-        >
-          צפה בקופי מלא
-        </Link>
       </div>
     </div>
   )
