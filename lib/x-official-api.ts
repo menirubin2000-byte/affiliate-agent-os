@@ -1,3 +1,5 @@
+import * as crypto from "crypto"
+
 export const X_REQUIRED_SCOPES = ["tweet.write", "tweet.read", "users.read"] as const
 export const X_POSTS_ENDPOINT = "https://api.x.com/2/tweets"
 export const X_AUTHORIZE_ENDPOINT = "https://x.com/i/oauth2/authorize"
@@ -13,6 +15,17 @@ const REQUIRED_ENV_KEYS = [
   "X_OAUTH_SCOPES",
   "X_ACCESS_TOKEN",
   "X_API_ACCESS_READY",
+] as const
+
+const OAUTH1_ENV_KEYS = [
+  "X_CONSUMER_KEY",
+  "X_CONSUMER_SECRET",
+  "X_ACCESS_TOKEN",
+  "X_ACCESS_TOKEN_SECRET",
+] as const
+
+const OAUTH2_POST_ENV_KEYS = [
+  "X_OAUTH2_ACCESS_TOKEN",
 ] as const
 
 export type XRequiredEnvKey = (typeof REQUIRED_ENV_KEYS)[number]
@@ -60,7 +73,9 @@ export type XOAuthCallbackValidation =
         | "x_oauth_state_invalid"
     }
 
-function value(env: NodeJS.ProcessEnv, key: XRequiredEnvKey) {
+type XAnyEnvKey = XRequiredEnvKey | "X_CONSUMER_KEY" | "X_CONSUMER_SECRET" | "X_ACCESS_TOKEN_SECRET" | "X_USERNAME" | "X_OAUTH2_ACCESS_TOKEN"
+
+function value(env: NodeJS.ProcessEnv, key: XAnyEnvKey) {
   return env[key]?.trim() ?? ""
 }
 
@@ -191,6 +206,165 @@ export function validateXOAuthCallbackState(input: {
     code: input.code,
     codeVerifier: input.codeVerifier,
   }
+}
+
+// --- OAuth 1.0a direct posting (uses Access Token + Access Token Secret) ---
+
+export type XPostTweetResult = {
+  ok: boolean
+  tweetId?: string
+  tweetUrl?: string
+  error?: string
+}
+
+function isOAuth1Configured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return OAUTH1_ENV_KEYS.every((key) => value(env, key))
+}
+
+function isOAuth2PostConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return !!value(env, "X_OAUTH2_ACCESS_TOKEN")
+}
+
+export function getXPublishCapability(env: NodeJS.ProcessEnv = process.env) {
+  const oauth1Ready = isOAuth1Configured(env)
+  const oauth2Ready = isOAuth2PostConfigured(env)
+  const apiAccessReady = value(env, "X_API_ACCESS_READY").toLowerCase() === "true"
+  const missing = oauth2Ready ? [] : OAUTH1_ENV_KEYS.filter((key) => !value(env, key))
+  return {
+    canPublish: (oauth1Ready || oauth2Ready) && apiAccessReady,
+    oauth1Ready,
+    oauth2Ready,
+    apiAccessReady,
+    missingKeys: missing,
+  }
+}
+
+function percentEncode(str: string): string {
+  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+}
+
+function buildOAuth1Header(
+  method: string,
+  url: string,
+  params: Record<string, string>,
+  consumerSecret: string,
+  tokenSecret: string,
+): string {
+  const nonce = crypto.randomBytes(16).toString("hex")
+  const timestamp = Math.floor(Date.now() / 1000).toString()
+
+  const oauthParams: Record<string, string> = {
+    ...params,
+    oauth_nonce: nonce,
+    oauth_timestamp: timestamp,
+    oauth_signature_method: "HMAC-SHA1",
+    oauth_version: "1.0",
+  }
+
+  const sortedKeys = Object.keys(oauthParams).sort()
+  const paramString = sortedKeys.map((k) => `${percentEncode(k)}=${percentEncode(oauthParams[k])}`).join("&")
+  const signatureBase = `${method.toUpperCase()}&${percentEncode(url)}&${percentEncode(paramString)}`
+  const signingKey = `${percentEncode(consumerSecret)}&${percentEncode(tokenSecret)}`
+  const signature = crypto.createHmac("sha1", signingKey).update(signatureBase).digest("base64")
+
+  const authParams = sortedKeys
+    .filter((k) => k.startsWith("oauth_"))
+    .concat(["oauth_signature"])
+  const allOauth: Record<string, string> = { ...oauthParams, oauth_signature: signature }
+  const headerParts = [...authParams]
+    .sort()
+    .map((k) => `${percentEncode(k)}="${percentEncode(allOauth[k])}"`)
+    .join(", ")
+
+  return `OAuth ${headerParts}`
+}
+
+async function postTweetOAuth2(
+  text: string,
+  env: NodeJS.ProcessEnv,
+  fetchImpl: typeof fetch,
+): Promise<XPostTweetResult> {
+  const oauth2Token = value(env, "X_OAUTH2_ACCESS_TOKEN")
+  const username = value(env, "X_USERNAME") || "i"
+
+  const response = await fetchImpl(X_POSTS_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${oauth2Token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    return { ok: false, error: `HTTP ${response.status}: ${errorBody}` }
+  }
+
+  const data = (await response.json()) as { data?: { id?: string } }
+  const tweetId = data?.data?.id
+  const tweetUrl = tweetId ? `https://x.com/${username}/status/${tweetId}` : undefined
+  return { ok: true, tweetId, tweetUrl }
+}
+
+async function postTweetOAuth1(
+  text: string,
+  env: NodeJS.ProcessEnv,
+  fetchImpl: typeof fetch,
+): Promise<XPostTweetResult> {
+  const consumerKey = value(env, "X_CONSUMER_KEY")
+  const consumerSecret = value(env, "X_CONSUMER_SECRET")
+  const accessToken = value(env, "X_ACCESS_TOKEN")
+  const accessTokenSecret = value(env, "X_ACCESS_TOKEN_SECRET")
+  const username = value(env, "X_USERNAME") || "i"
+
+  const oauthBaseParams: Record<string, string> = {
+    oauth_consumer_key: consumerKey,
+    oauth_token: accessToken,
+  }
+
+  const authHeader = buildOAuth1Header(
+    "POST",
+    X_POSTS_ENDPOINT,
+    oauthBaseParams,
+    consumerSecret,
+    accessTokenSecret,
+  )
+
+  const response = await fetchImpl(X_POSTS_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: authHeader,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    return { ok: false, error: `HTTP ${response.status}: ${errorBody}` }
+  }
+
+  const data = (await response.json()) as { data?: { id?: string } }
+  const tweetId = data?.data?.id
+  const tweetUrl = tweetId ? `https://x.com/${username}/status/${tweetId}` : undefined
+  return { ok: true, tweetId, tweetUrl }
+}
+
+export async function postTweet(
+  text: string,
+  env: NodeJS.ProcessEnv = process.env,
+  fetchImpl: typeof fetch = fetch,
+): Promise<XPostTweetResult> {
+  const cap = getXPublishCapability(env)
+  if (!cap.canPublish) {
+    return { ok: false, error: `X publishing not ready. Missing: ${cap.missingKeys.join(", ")}` }
+  }
+
+  if (cap.oauth2Ready) {
+    return postTweetOAuth2(text, env, fetchImpl)
+  }
+  return postTweetOAuth1(text, env, fetchImpl)
 }
 
 export async function exchangeXAuthorizationCode(input: {

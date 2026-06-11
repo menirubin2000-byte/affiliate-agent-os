@@ -94,10 +94,6 @@ export function validateFinalMediumArticle(input: {
 }): FinalContentValidation {
   const finalLink = input.finalAffiliateLink ?? SYSTEME_IO_MEDIUM_FINAL_LINK
   const body = input.body.trim()
-  // For Systeme.io posts the existing semantic is "the affiliate URL pattern
-  // ?sa= must appear exactly once". For every OTHER product we use the full
-  // finalLink as the signature so the duplicate check works for any product
-  // without making the Systeme tests change.
   const urlSignature = finalLink.includes("https://systeme.io/?sa=")
     ? "https://systeme.io/?sa="
     : finalLink
@@ -123,6 +119,47 @@ export function validateFinalMediumArticle(input: {
   const blockingReasons = Object.entries(checks)
     .filter(([, passed]) => !passed)
     .map(([key]) => key)
+
+  return {
+    validationStatus: blockingReasons.length ? "blocked" : "valid",
+    blockingReasons,
+    checks,
+  }
+}
+
+const LONG_FORM_PLATFORMS = new Set(["medium", "substack", "linkedin"])
+
+export function validateFinalCopyForPlatform(input: {
+  body: string
+  platform: string
+  finalAffiliateLink?: string
+}): FinalContentValidation {
+  if (LONG_FORM_PLATFORMS.has(input.platform)) {
+    return validateFinalMediumArticle(input)
+  }
+
+  const body = input.body.trim()
+  const disclosureIndex = body.toLowerCase().indexOf("affiliate disclosure")
+  const internalNotes = INTERNAL_NOTE_PATTERNS.some((pattern) => pattern.test(body))
+  const incomeOrGuarantee = INCOME_OR_GUARANTEE_PATTERNS.some((pattern) => pattern.test(body))
+  const hasLink = input.finalAffiliateLink ? body.includes(input.finalAffiliateLink) : true
+
+  const checks = {
+    disclosureAtTop: disclosureIndex >= 0,
+    oneCtaOnly: true,
+    affiliateLinkExists: hasLink,
+    noDuplicateUrl: true,
+    noInternalNotes: !internalNotes,
+    noPersonalExperienceClaim: true,
+    noIncomeOrGuaranteeClaim: !incomeOrGuarantee,
+  }
+
+  const blockingReasons: string[] = []
+  if (!checks.disclosureAtTop) blockingReasons.push("missingDisclosure")
+  if (!checks.affiliateLinkExists) blockingReasons.push("missingAffiliateLink")
+  if (!checks.noInternalNotes) blockingReasons.push("internalNotes")
+  if (!checks.noIncomeOrGuaranteeClaim) blockingReasons.push("incomeOrGuaranteeClaim")
+  if (body.length < 10) blockingReasons.push("bodyTooShort")
 
   return {
     validationStatus: blockingReasons.length ? "blocked" : "valid",

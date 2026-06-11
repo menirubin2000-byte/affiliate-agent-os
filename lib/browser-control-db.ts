@@ -269,9 +269,11 @@ export async function approvePublishApprovalItem(approvalItemId: string): Promis
 export async function getLatestBrowserSession(): Promise<BrowserSession | null> {
   if (!isSupabaseConfigured()) return null
   const supabase = getServiceRoleSupabase()
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
   const { data, error } = await supabase
     .from("browser_sessions")
     .select("*")
+    .gte("last_seen_at", tenMinutesAgo)
     .order("last_seen_at", { ascending: false, nullsFirst: false })
     .limit(1)
     .maybeSingle()

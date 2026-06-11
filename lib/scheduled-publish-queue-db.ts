@@ -52,7 +52,6 @@ type FinalCopyScheduleRow = {
   media_asset_url?: string | null
   image_url?: string | null
   image_asset_path?: string | null
-  video_asset_path?: string | null
   source_content_id: string
   platform_adaptation_id: string
   title: string
@@ -109,7 +108,7 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("final_copies")
-    .select("id, product_id, platform, language, status, validation_status, affiliate_link, public_review_url, media_asset_url, image_url, image_asset_path, video_asset_path, source_content_id, platform_adaptation_id, title, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for)")
+    .select("id, product_id, platform, language, status, validation_status, affiliate_link, public_review_url, media_asset_url, image_url, image_asset_path, source_content_id, platform_adaptation_id, title, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for)")
     .eq("id", finalCopyId)
     .single()
 
@@ -130,7 +129,7 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
     image_url: finalCopy.image_url ?? productMedia?.image_url ?? null,
     media_asset_url: finalCopy.media_asset_url ?? null,
     image_asset_path: finalCopy.image_asset_path ?? null,
-    video_asset_path: finalCopy.video_asset_path ?? null,
+    video_asset_path: null,
   })
   const imageAsset =
     finalCopy.media_asset_url ??
@@ -139,7 +138,7 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
     productMedia?.image_url_he ??
     productMedia?.image_url ??
     null
-  const videoAsset = finalCopy.video_asset_path ?? productMedia?.video_url ?? null
+  const videoAsset = productMedia?.video_url ?? null
   const approvalId = await getCampaignApprovalId(finalCopy.source_content_id, finalCopy.platform)
   const existingPublishAt = (existingQueue as { publish_at?: string } | null)?.publish_at ?? null
   const publishAt = existingPublishAt && !options.forceReschedule

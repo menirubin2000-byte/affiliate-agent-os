@@ -1,3 +1,6 @@
+import * as fs from "fs"
+import * as path from "path"
+
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
@@ -62,6 +65,21 @@ export async function GET(request: Request) {
       throw new Error("X OAuth callback did not return an access token.")
     }
     await upsertXPlatformConnection({ token, connectedBy: "MENI" })
+
+    // Persist OAuth 2.0 token for API posting (local dev only)
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const envPath = path.join(process.cwd(), ".env.local")
+        let envContent = fs.readFileSync(envPath, "utf8")
+        if (envContent.includes("X_OAUTH2_ACCESS_TOKEN=")) {
+          envContent = envContent.replace(/X_OAUTH2_ACCESS_TOKEN=.*/, `X_OAUTH2_ACCESS_TOKEN=${token.access_token}`)
+        } else {
+          envContent += `\nX_OAUTH2_ACCESS_TOKEN=${token.access_token}\n`
+        }
+        fs.writeFileSync(envPath, envContent, "utf8")
+      } catch { /* non-critical */ }
+    }
+    process.env.X_OAUTH2_ACCESS_TOKEN = token.access_token
 
     const response = redirectToPlatformCapabilities(request, "x_oauth_connected")
     clearOAuthCookies(response)

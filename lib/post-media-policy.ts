@@ -146,3 +146,47 @@ function pickVideo(input: PostMediaGateInput): { url: string | null; source: Med
   const video = input.finalCopy?.video_asset_path?.trim() || input.product?.video_url?.trim() || null
   return { url: video, source: video ? "product.video_url" : "none" }
 }
+
+// ---------------------------------------------------------------------------
+// Language–media consistency validation
+// ---------------------------------------------------------------------------
+
+export type LanguageConsistencyInput = {
+  language: string | null | undefined
+  imageUrl: string | null | undefined
+  product?: {
+    image_url?: string | null
+    image_url_he?: string | null
+  } | null
+}
+
+export type LanguageConsistencyResult = {
+  consistent: boolean
+  reason: string | null
+}
+
+/**
+ * Checks that the image attached to a final copy matches the copy language.
+ *
+ * If the product provides both `image_url` (EN) and `image_url_he` (HE) and they
+ * differ, the image on the final copy MUST match the one for its language.
+ * A Hebrew copy using the English image (or vice-versa) returns inconsistent.
+ */
+export function validateLanguageMediaConsistency(input: LanguageConsistencyInput): LanguageConsistencyResult {
+  const { language, imageUrl, product } = input
+  if (!language || !imageUrl || !product) return { consistent: true, reason: null }
+
+  const enImage = product.image_url?.trim() || null
+  const heImage = product.image_url_he?.trim() || null
+
+  if (!enImage || !heImage || enImage === heImage) return { consistent: true, reason: null }
+
+  if (language === "en" && imageUrl === heImage) {
+    return { consistent: false, reason: "language_mismatch_media_copy" }
+  }
+  if (language === "he" && imageUrl === enImage) {
+    return { consistent: false, reason: "language_mismatch_media_copy" }
+  }
+
+  return { consistent: true, reason: null }
+}

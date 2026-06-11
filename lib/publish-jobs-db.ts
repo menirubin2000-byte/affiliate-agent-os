@@ -11,6 +11,7 @@ import {
   INSTAGRAM_CURRENT_BLOCKING_REASON,
 } from "@/lib/meta-official-api"
 import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
+import { validateLanguageMediaConsistency } from "@/lib/post-media-policy"
 import {
   planNextPublishSlot,
   type PublishedItem,
@@ -65,7 +66,6 @@ type FinalCopyExecutionRow = {
   image_url?: string | null
   media_asset_url?: string | null
   image_asset_path?: string | null
-  video_asset_path?: string | null
   source_content_id: string
   platform_adaptation_id?: string
   affiliate_link?: string | null
@@ -90,7 +90,6 @@ type PublishExecutorFinalCopyRelation = {
   image_url?: string | null
   media_asset_url?: string | null
   image_asset_path?: string | null
-  video_asset_path?: string | null
 }
 
 type PublishExecutorProductRelation = {
@@ -149,7 +148,7 @@ const PUBLISH_JOB_SELECT =
   "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name), final_copies(title)"
 
 const PUBLISH_EXECUTOR_JOB_SELECT =
-  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link, language, image_url, media_asset_url, image_asset_path, video_asset_path)"
+  "id, final_copy_id, product_id, platform, status, executor_type, blocking_reason, approval_id, executor_url, final_confirmed_at, scheduled_at, schedule_policy_version, schedule_notes, live_url, verified_at, created_at, updated_at, products(name, image_url, image_url_he, image_status, video_url, video_status, video_suitable_for), final_copies(title, body, source_content_id, platform_adaptation_id, affiliate_link, language, image_url, media_asset_url, image_asset_path)"
 
 function relatedName<T extends { name?: string }>(value: T | T[] | null | undefined) {
   if (Array.isArray(value)) return value[0]?.name ?? null
@@ -215,11 +214,11 @@ function mapPublishExecutorJob(row: PublishExecutorJobRow): PublishExecutorJob {
     image_url: finalCopy?.image_url ?? productMedia?.image_url ?? null,
     media_asset_url: finalCopy?.media_asset_url ?? null,
     image_asset_path: finalCopy?.image_asset_path ?? null,
-    video_asset_path: finalCopy?.video_asset_path ?? null,
+    video_asset_path: null,
   })
   const mediaAssetUrl =
     media.publishMediaMode === "video"
-      ? finalCopy?.video_asset_path ?? productMedia?.video_url ?? null
+      ? productMedia?.video_url ?? null
       : finalCopy?.media_asset_url ??
         finalCopy?.image_url ??
         finalCopy?.image_asset_path ??
@@ -422,7 +421,7 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
 
   const { data: finalCopy, error: finalCopyError } = await supabase
     .from("final_copies")
-    .select("id, product_id, platform, status, validation_status, title, source_content_id, language, image_url, media_asset_url, image_asset_path, video_asset_path")
+    .select("id, product_id, platform, status, validation_status, title, source_content_id, language, image_url, media_asset_url, image_asset_path")
     .eq("id", finalCopyId)
     .single()
 
@@ -442,8 +441,33 @@ export async function createOrUpdatePublishJobForFinalCopy(finalCopyId: string):
     image_url: copy.image_url ?? productMedia?.image_url ?? null,
     media_asset_url: copy.media_asset_url ?? null,
     image_asset_path: copy.image_asset_path ?? null,
-    video_asset_path: copy.video_asset_path ?? null,
+    video_asset_path: null,
   })
+  const langCheck = validateLanguageMediaConsistency({
+    language: copy.language,
+    imageUrl: copy.media_asset_url ?? copy.image_url ?? null,
+    product: productMedia,
+  })
+  if (!langCheck.consistent) {
+    const { data, error } = await supabase
+      .from("publish_jobs")
+      .upsert({
+        final_copy_id: copy.id,
+        product_id: copy.product_id,
+        platform: copy.platform,
+        status: "waiting_media",
+        executor_type: executorTypeForPlatform(copy.platform),
+        blocking_reason: langCheck.reason,
+        live_url: null,
+        verified_at: null,
+      }, { onConflict: "final_copy_id" })
+      .select(PUBLISH_JOB_SELECT)
+      .single()
+
+    if (error) throw new Error(`Unable to mark language-mismatch publish job: ${error.message}`)
+    return mapPublishJob(data as PublishJobRow)
+  }
+
   if (!media.mediaReady) {
     const { data, error } = await supabase
       .from("publish_jobs")

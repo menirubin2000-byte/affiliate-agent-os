@@ -4,6 +4,7 @@ import {
   SYSTEME_IO_MEDIUM_FINAL_LINK,
   buildFinalContentHash,
   cleanupMediumArticle,
+  validateFinalCopyForPlatform,
   validateFinalMediumArticle,
 } from "@/lib/content-review"
 import { createImprovementTask } from "@/lib/db"
@@ -176,8 +177,9 @@ export async function getOrCreateSystemeIoMediumFinalCopy(): Promise<FinalCopy |
 }
 
 export async function getFinalCopyValidation(finalCopy: FinalCopy) {
-  const validation = validateFinalMediumArticle({
+  const validation = validateFinalCopyForPlatform({
     body: finalCopy.body,
+    platform: finalCopy.platform ?? "medium",
     finalAffiliateLink: finalCopy.affiliateLink ?? undefined,
   })
   const productMedia = await getProductMedia(finalCopy.productId)
@@ -206,8 +208,9 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
 
   if (finalCopyError || !finalCopy) throw new Error("Final copy was not found.")
 
-  const validation = validateFinalMediumArticle({
+  const validation = validateFinalCopyForPlatform({
     body: finalCopy.body,
+    platform: finalCopy.platform ?? "medium",
     finalAffiliateLink: finalCopy.affiliate_link ?? undefined,
   })
   if (validation.validationStatus !== "valid") {
