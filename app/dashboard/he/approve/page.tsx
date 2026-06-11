@@ -97,6 +97,23 @@ export default async function HebrewApprovePage(props: {
     total_revenue: 0,
   }
 
+  const supabase = getServiceRoleSupabase()
+  const { data: allDirectPosts } = await supabase
+    .from("final_copies")
+    .select("id, platform, language, status, products(name)")
+    .in("status", ["ready_for_operator_approval", "operator_approved"])
+    .order("updated_at", { ascending: false })
+    .limit(200)
+
+  const directPostsByProduct = new Map<string, typeof allDirectPosts>()
+  for (const post of allDirectPosts ?? []) {
+    const productRaw = post.products as unknown as { name: string } | { name: string }[] | null
+    const name = Array.isArray(productRaw) ? productRaw[0]?.name ?? "?" : productRaw?.name ?? "?"
+    const existing = directPostsByProduct.get(name) ?? []
+    existing.push(post)
+    directPostsByProduct.set(name, existing)
+  }
+
   try {
     const overview = await getPlatformRoutingOverview()
     const allRoutes = overview.products.flatMap((p) => p.routes)
@@ -177,7 +194,38 @@ export default async function HebrewApprovePage(props: {
         }
       />
 
-      <AllPostsPreviewSection />
+      {(allDirectPosts?.length ?? 0) > 0 ? (
+        <Card className="border-2 border-blue-400">
+          <CardHeader>
+            <CardTitle className="text-xl">כל הפוסטים — תצוגה מקדימה עם תמונה</CardTitle>
+            <CardDescription>
+              {allDirectPosts!.length} פוסטים. לחץ על כפתור כחול כדי לראות את הפוסט המלא עם התמונה + עריכה + מחיקה.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Array.from(directPostsByProduct.entries()).map(([productName, posts]) => (
+              <div key={productName} className="space-y-2">
+                <h3 className="font-bold text-base border-b pb-1">{productName}</h3>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {posts!.map((post) => (
+                    <Link
+                      key={post.id}
+                      href={`/dashboard/he/approve/preview/${post.id}`}
+                      className="flex items-center justify-between gap-2 rounded-lg border-2 border-blue-400 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+                    >
+                      <span>{PLATFORM_LABELS[post.platform] ?? post.platform}</span>
+                      <span className="text-xs">
+                        {post.language === "he" ? "עב" : "EN"}
+                        {post.status === "operator_approved" ? " · מאושר" : ""}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {params.approved ? (
         <Card className="border-green-200 bg-green-50">
@@ -354,60 +402,6 @@ const PLATFORM_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   reddit: "Reddit",
   quora: "Quora",
-}
-
-async function AllPostsPreviewSection() {
-  const supabase = getServiceRoleSupabase()
-  const { data: allPosts } = await supabase
-    .from("final_copies")
-    .select("id, platform, language, status, products(name)")
-    .in("status", ["ready_for_operator_approval", "operator_approved"])
-    .order("updated_at", { ascending: false })
-    .limit(200)
-
-  if (!allPosts || allPosts.length === 0) return null
-
-  const grouped = new Map<string, typeof allPosts>()
-  for (const post of allPosts) {
-    const productRaw = post.products as unknown as { name: string } | { name: string }[] | null
-    const name = Array.isArray(productRaw) ? productRaw[0]?.name ?? "?" : productRaw?.name ?? "?"
-    const existing = grouped.get(name) ?? []
-    existing.push(post)
-    grouped.set(name, existing)
-  }
-
-  return (
-    <Card className="border-2 border-blue-400">
-      <CardHeader>
-        <CardTitle className="text-xl">כל הפוסטים — תצוגה מקדימה עם תמונה</CardTitle>
-        <CardDescription>
-          {allPosts.length} פוסטים (ready_for_operator_approval + operator_approved). לחץ על כפתור כחול כדי לראות את הפוסט המלא עם התמונה.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {Array.from(grouped.entries()).map(([productName, posts]) => (
-          <div key={productName} className="space-y-2">
-            <h3 className="font-bold text-base border-b pb-1">{productName}</h3>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {posts.map((post) => (
-                <Link
-                  key={post.id}
-                  href={`/dashboard/he/approve/preview/${post.id}`}
-                  className="flex items-center justify-between gap-2 rounded-lg border-2 border-blue-400 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
-                >
-                  <span>{PLATFORM_LABELS[post.platform] ?? post.platform}</span>
-                  <span className="text-xs">
-                    {post.language === "he" ? "עב" : "EN"}
-                    {post.status === "operator_approved" ? " · מאושר" : ""}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  )
 }
 
 function InternalTrafficEngineBanner({
