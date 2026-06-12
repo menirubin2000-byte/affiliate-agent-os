@@ -181,7 +181,7 @@ export async function uploadProductImageAction(formData: FormData) {
 export async function getVideoUploadSignedUrl(
   productId: string,
   ext: string,
-): Promise<{ signedUrl: string; storagePath: string } | { error: string }> {
+): Promise<{ token: string; storagePath: string } | { error: string }> {
   try {
     assertIntegrationConfigured("supabase")
     const supabase = getServiceRoleSupabase()
@@ -193,7 +193,7 @@ export async function getVideoUploadSignedUrl(
       .from("media")
       .createSignedUploadUrl(storagePath)
     if (error) return { error: error.message }
-    return { signedUrl: data.signedUrl, storagePath }
+    return { token: data.token, storagePath }
   } catch (error) {
     return { error: error instanceof Error ? error.message : "signed_url_failed" }
   }

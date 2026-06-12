@@ -3,11 +3,11 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { getBrowserSupabaseClient } from "@/lib/supabase/client"
 import { getVideoUploadSignedUrl, confirmVideoUpload } from "../../actions"
 
 export function VideoUploadClient({ productId }: { productId: string }) {
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle")
-  const [progress, setProgress] = useState(0)
   const [errorMsg, setErrorMsg] = useState("")
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -18,7 +18,6 @@ export function VideoUploadClient({ productId }: { productId: string }) {
     if (!file) return
 
     setStatus("uploading")
-    setProgress(0)
     setErrorMsg("")
 
     try {
@@ -30,20 +29,18 @@ export function VideoUploadClient({ productId }: { productId: string }) {
         return
       }
 
-      const xhr = new XMLHttpRequest()
-      await new Promise<void>((resolve, reject) => {
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100))
+      const supabase = getBrowserSupabaseClient()
+      const { error: uploadError } = await supabase.storage
+        .from("media")
+        .uploadToSignedUrl(result.storagePath, result.token, file, {
+          contentType: file.type || `video/${ext}`,
         })
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve()
-          else reject(new Error(`Upload failed: ${xhr.status}`))
-        })
-        xhr.addEventListener("error", () => reject(new Error("Upload network error")))
-        xhr.open("PUT", result.signedUrl)
-        xhr.setRequestHeader("Content-Type", file.type || `video/${ext}`)
-        xhr.send(file)
-      })
+
+      if (uploadError) {
+        setErrorMsg(uploadError.message)
+        setStatus("error")
+        return
+      }
 
       const confirm = await confirmVideoUpload(productId, result.storagePath)
       if ("error" in confirm) {
@@ -64,7 +61,7 @@ export function VideoUploadClient({ productId }: { productId: string }) {
     <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
       <input ref={fileRef} type="file" accept="video/*" required className="text-sm" />
       <Button type="submit" variant="outline" size="sm" disabled={status === "uploading"}>
-        {status === "uploading" ? `מעלה... ${progress}%` : "העלה וידאו"}
+        {status === "uploading" ? "מעלה..." : "העלה וידאו"}
       </Button>
       {status === "done" && (
         <span className="text-sm text-green-600 font-medium">הוידאו הועלה בהצלחה!</span>
