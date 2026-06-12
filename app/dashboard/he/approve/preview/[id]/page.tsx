@@ -13,8 +13,8 @@ import {
   deleteProductAction,
   updateFinalCopyBodyAction,
   uploadProductImageAction,
-  uploadProductVideoAction,
 } from "../../actions"
+import { VideoUploadClient } from "./video-upload-client"
 
 export const dynamic = "force-dynamic"
 
@@ -153,13 +153,7 @@ export default async function PreviewPage({
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">העלאת וידאו</h2>
-        <form action={uploadProductVideoAction} className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
-          <input type="hidden" name="productId" value={fc.product_id} />
-          <input type="file" name="video" accept="video/*" required className="text-sm" />
-          <Button type="submit" variant="outline" size="sm">
-            העלה וידאו
-          </Button>
-        </form>
+        <VideoUploadClient productId={fc.product_id} />
       </div>
 
       <div className="space-y-2">
