@@ -22,6 +22,7 @@ export interface FinalCopy {
   sourceContentId: string
   platformAdaptationId: string
   platform: CampaignPlatform
+  language: string
   title: string
   body: string
   contentHash: string

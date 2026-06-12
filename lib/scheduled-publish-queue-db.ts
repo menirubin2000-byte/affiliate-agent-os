@@ -186,7 +186,6 @@ export async function createOrUpdateScheduledPublishItemForFinalCopy(
 
 export async function listScheduledPublishQueue(): Promise<ScheduledPublishItem[]> {
   if (!isSupabaseConfigured()) return []
-  await refreshScheduledPublishQueueStatuses()
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("scheduled_publish_queue")

@@ -5,6 +5,7 @@ import { PlatformCapabilitiesPanel } from "@/components/dashboard/platform-capab
 import { PlatformConnectionsPanel } from "@/components/dashboard/platform-connections-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
+import { revalidateBlockedFinalCopies } from "@/lib/content-review-db"
 import { getSupabaseReadiness } from "@/lib/env"
 import { listPlatformConnections } from "@/lib/platform-connections-db"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
@@ -33,6 +34,7 @@ export default async function HebrewDashboardPage() {
     )
   }
 
+  await revalidateBlockedFinalCopies().catch(() => {})
   const [overview, connections] = await Promise.all([
     getPlatformRoutingOverview(),
     listPlatformConnections(),

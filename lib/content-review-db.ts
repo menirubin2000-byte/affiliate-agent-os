@@ -23,6 +23,7 @@ type FinalCopyRow = {
   source_content_id: string
   platform_adaptation_id: string
   platform: CampaignPlatform
+  language: string
   title: string
   body: string
   content_hash: string
@@ -69,6 +70,7 @@ function mapFinalCopy(row: FinalCopyRow, productName?: string | null): FinalCopy
     sourceContentId: row.source_content_id,
     platformAdaptationId: row.platform_adaptation_id,
     platform: row.platform,
+    language: row.language ?? "en",
     title: row.title,
     body: row.body,
     contentHash: row.content_hash,
@@ -181,6 +183,7 @@ export async function getFinalCopyValidation(finalCopy: FinalCopy) {
     body: finalCopy.body,
     platform: finalCopy.platform ?? "medium",
     finalAffiliateLink: finalCopy.affiliateLink ?? undefined,
+    language: finalCopy.language,
   })
   const productMedia = await getProductMedia(finalCopy.productId)
   const media = evaluatePlatformMediaReadiness(finalCopy.platform, productMedia)
@@ -212,6 +215,7 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
     body: finalCopy.body,
     platform: finalCopy.platform ?? "medium",
     finalAffiliateLink: finalCopy.affiliate_link ?? undefined,
+    language: finalCopy.language ?? "en",
   })
   if (validation.validationStatus !== "valid") {
     throw new Error(`Cannot approve invalid final copy: ${validation.blockingReasons.join(", ")}`)
@@ -303,4 +307,39 @@ export async function requestFinalCopySystemFix(finalCopyId: string): Promise<Fi
 
   if (updateError) throw new Error(`Unable to request final copy fix: ${updateError.message}`)
   return mapFinalCopy(updated as FinalCopyRow)
+}
+
+export async function revalidateBlockedFinalCopies(): Promise<number> {
+  if (!isSupabaseConfigured()) return 0
+  const supabase = getServiceRoleSupabase()
+
+  const { data, error } = await supabase
+    .from("final_copies")
+    .select("id, body, platform, language, affiliate_link, validation_status, status, blocking_reasons")
+    .in("validation_status", ["blocked", "fix_requested"])
+    .not("status", "in", '("published_verified","operator_rejected")')
+
+  if (error || !data?.length) return 0
+
+  let fixed = 0
+  for (const row of data) {
+    const validation = validateFinalCopyForPlatform({
+      body: row.body ?? "",
+      platform: row.platform ?? "medium",
+      finalAffiliateLink: row.affiliate_link ?? undefined,
+      language: row.language ?? "en",
+    })
+    if (validation.validationStatus === "valid" && row.validation_status !== "valid") {
+      await supabase
+        .from("final_copies")
+        .update({
+          validation_status: "valid",
+          blocking_reasons: [],
+          status: row.status === "needs_system_fix" ? "ready_for_operator_approval" : row.status,
+        })
+        .eq("id", row.id)
+      fixed += 1
+    }
+  }
+  return fixed
 }

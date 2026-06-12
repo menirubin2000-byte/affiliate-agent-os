@@ -133,8 +133,9 @@ export function validateFinalCopyForPlatform(input: {
   body: string
   platform: string
   finalAffiliateLink?: string
+  language?: string
 }): FinalContentValidation {
-  if (LONG_FORM_PLATFORMS.has(input.platform)) {
+  if (LONG_FORM_PLATFORMS.has(input.platform) && input.language !== "he") {
     return validateFinalMediumArticle(input)
   }
 
