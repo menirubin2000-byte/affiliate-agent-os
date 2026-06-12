@@ -98,12 +98,14 @@ export default async function HebrewApprovePage(props: {
   }
 
   const supabase = getServiceRoleSupabase()
-  const { data: allDirectPosts } = await supabase
+  const { data: allDirectPosts, error: directPostsError } = await supabase
     .from("final_copies")
     .select("id, platform, language, status, products(name)")
     .in("status", ["ready_for_operator_approval", "operator_approved"])
     .order("updated_at", { ascending: false })
     .limit(200)
+
+  const directPostsDebug = `query returned: ${allDirectPosts?.length ?? 'null'} posts, error: ${directPostsError?.message ?? 'none'}`
 
   const directPostsByProduct = new Map<string, typeof allDirectPosts>()
   for (const post of allDirectPosts ?? []) {
@@ -194,16 +196,20 @@ export default async function HebrewApprovePage(props: {
         }
       />
 
-      {(allDirectPosts?.length ?? 0) > 0 ? (
-        <Card className="border-2 border-blue-400">
-          <CardHeader>
-            <CardTitle className="text-xl">כל הפוסטים — תצוגה מקדימה עם תמונה</CardTitle>
-            <CardDescription>
-              {allDirectPosts!.length} פוסטים. לחץ על כפתור כחול כדי לראות את הפוסט המלא עם התמונה + עריכה + מחיקה.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Array.from(directPostsByProduct.entries()).map(([productName, posts]) => (
+      <Card className="border-2 border-blue-400">
+        <CardHeader>
+          <CardTitle className="text-xl">כל הפוסטים — תצוגה מקדימה עם תמונה</CardTitle>
+          <CardDescription>
+            {allDirectPosts?.length ?? 0} פוסטים. לחץ על כפתור כחול כדי לראות את הפוסט המלא עם התמונה + עריכה + מחיקה.
+            <br />
+            <span className="text-xs font-mono">{directPostsDebug}</span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {(allDirectPosts?.length ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground">אין פוסטים להצגה.</p>
+          ) : (
+            Array.from(directPostsByProduct.entries()).map(([productName, posts]) => (
               <div key={productName} className="space-y-2">
                 <h3 className="font-bold text-base border-b pb-1">{productName}</h3>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -222,10 +228,10 @@ export default async function HebrewApprovePage(props: {
                   ))}
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       {params.approved ? (
         <Card className="border-green-200 bg-green-50">
