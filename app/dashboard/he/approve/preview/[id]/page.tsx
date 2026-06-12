@@ -12,6 +12,7 @@ import {
   deleteFinalCopyAction,
   deleteProductAction,
   updateFinalCopyBodyAction,
+  updateAllProductPostsBodyAction,
   uploadProductImageAction,
 } from "../../actions"
 import { VideoUploadClient } from "./video-upload-client"
@@ -98,6 +99,10 @@ export default async function PreviewPage({
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
           הטקסט עודכן בהצלחה
         </div>
+      ) : sp.approved === "all_posts_updated" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          הטקסט עודכן בכל הפלטפורמות של המוצר הזה
+        </div>
       ) : null}
 
       <div className="rounded-lg border bg-card p-4 space-y-2 text-sm">
@@ -170,7 +175,7 @@ export default async function PreviewPage({
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">טקסט הפוסט</h2>
-        <form action={updateFinalCopyBodyAction}>
+        <form>
           <input type="hidden" name="finalCopyId" value={fc.id} />
           <textarea
             name="body"
@@ -178,9 +183,14 @@ export default async function PreviewPage({
             dir="auto"
             className="w-full min-h-[200px] rounded-lg border bg-muted/20 p-4 text-sm leading-relaxed font-mono"
           />
-          <Button type="submit" size="sm" variant="outline" className="mt-2">
-            שמור שינויים בטקסט
-          </Button>
+          <div className="mt-2 flex gap-3">
+            <Button type="submit" size="sm" variant="outline" formAction={updateFinalCopyBodyAction}>
+              שמור לפוסט הזה בלבד
+            </Button>
+            <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
+              שמור לכל הפלטפורמות של המוצר
+            </Button>
+          </div>
         </form>
       </div>
 

@@ -145,6 +145,38 @@ export async function updateFinalCopyBodyAction(formData: FormData) {
   redirect(`/dashboard/he/approve/preview/${finalCopyId}?approved=body_updated`)
 }
 
+export async function updateAllProductPostsBodyAction(formData: FormData) {
+  const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
+  const body = String(formData.get("body") ?? "")
+  if (!finalCopyId) fail("missing_final_copy_id")
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const { data: fc } = await supabase
+      .from("final_copies")
+      .select("product_id, language, status")
+      .eq("id", finalCopyId)
+      .single()
+    if (!fc) fail("post_not_found")
+    if (fc.status === "published_verified") fail("cannot_edit_published_post")
+
+    const { error, count } = await supabase
+      .from("final_copies")
+      .update({ body })
+      .eq("product_id", fc.product_id)
+      .eq("language", fc.language)
+      .neq("status", "published_verified")
+    if (error) fail(error.message)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "update_all_failed")
+  }
+
+  revalidatePath("/dashboard/he/approve")
+  redirect(`/dashboard/he/approve/preview/${finalCopyId}?approved=all_posts_updated`)
+}
+
 export async function uploadProductImageAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
   const language = String(formData.get("language") ?? "en")
