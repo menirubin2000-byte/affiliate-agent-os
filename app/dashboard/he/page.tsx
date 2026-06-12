@@ -73,6 +73,20 @@ export default async function HebrewDashboardPage() {
         </CardHeader>
       </Card>
 
+      <Card className="border-2 border-blue-400 bg-blue-50 dark:bg-blue-950">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="text-blue-700 dark:text-blue-300">כל הפוסטים — תצוגה מקדימה + עריכה + מחיקה</CardTitle>
+            <CardDescription>
+              צפייה בכל הפוסטים המוכנים עם תמונה, עריכת טקסט, העלאת תמונה, מחיקת פוסט ומוצר.
+            </CardDescription>
+          </div>
+          <Link href="/dashboard/he/all-posts" className={cn(buttonVariants({ variant: "default", size: "lg" }))}>
+            פתח את כל הפוסטים
+          </Link>
+        </CardHeader>
+      </Card>
+
       <PlatformRoutingStats overview={overview} />
 
       {nothingConnected ? (
