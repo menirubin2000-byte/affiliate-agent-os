@@ -109,7 +109,14 @@ export default async function HebrewDashboardPage() {
           ctaLabel="פתח תור אישור"
         />
         <NextActionCard
-          title="אושר ומוכן לפרסום"
+          title="תור תזמון פרסום"
+          count={totals.readyForExecutor}
+          description="פוסטים שאושרו נכנסים לתור תזמון. כאן רואים מתי כל פוסט מתוזמן, לאיזו פלטפורמה, ואפשר להשהות/לחדש/לפרסם עכשיו."
+          href="/dashboard/he/schedule"
+          ctaLabel="פתח תור תזמון"
+        />
+        <NextActionCard
+          title="מצב פרסום"
           count={totals.readyForExecutor}
           description="כבר אושר ע״י מני. ממתין למנוע הפרסום לבצע ולהחזיר URL מאומת."
           href="/dashboard/he/publish-ready"
