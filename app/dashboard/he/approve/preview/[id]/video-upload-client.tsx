@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { getBrowserSupabaseClient } from "@/lib/supabase/client"
+import { createBrowserClient } from "@supabase/ssr"
 import { getVideoUploadSignedUrl, confirmVideoUpload } from "../../actions"
 
 export function VideoUploadClient({ productId }: { productId: string }) {
@@ -29,7 +29,10 @@ export function VideoUploadClient({ productId }: { productId: string }) {
         return
       }
 
-      const supabase = getBrowserSupabaseClient()
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      )
       const { error: uploadError } = await supabase.storage
         .from("media")
         .uploadToSignedUrl(result.storagePath, result.token, file, {
