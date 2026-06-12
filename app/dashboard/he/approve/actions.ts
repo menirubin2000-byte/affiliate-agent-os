@@ -158,10 +158,10 @@ export async function uploadProductImageAction(formData: FormData) {
     const path = `product-images/${productId}/${language}.${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
     const { error: uploadError } = await supabase.storage
-      .from("assets")
+      .from("product-images")
       .upload(path, buffer, { contentType: file.type, upsert: true })
     if (uploadError) fail(uploadError.message)
-    const { data: urlData } = supabase.storage.from("assets").getPublicUrl(path)
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path)
     const col = language === "he" ? "image_url_he" : "image_url"
     const { error } = await supabase
       .from("products")
@@ -176,4 +176,35 @@ export async function uploadProductImageAction(formData: FormData) {
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/he/approve")
   redirect(`/dashboard/he/approve?approved=image_uploaded`)
+}
+
+export async function uploadProductVideoAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "").trim()
+  const file = formData.get("video") as File | null
+  if (!productId || !file || file.size === 0) fail("missing_video")
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const ext = file.name.split(".").pop() ?? "mp4"
+    const path = `product-videos/${productId}/video.${ext}`
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const { error: uploadError } = await supabase.storage
+      .from("media")
+      .upload(path, buffer, { contentType: file.type, upsert: true })
+    if (uploadError) fail(uploadError.message)
+    const { data: urlData } = supabase.storage.from("media").getPublicUrl(path)
+    const { error } = await supabase
+      .from("products")
+      .update({ video_url: urlData.publicUrl, video_status: "ready", asset_synced_at: new Date().toISOString() })
+      .eq("id", productId)
+    if (error) fail(error.message)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "video_upload_failed")
+  }
+
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/he/approve")
+  redirect(`/dashboard/he/approve?approved=video_uploaded`)
 }

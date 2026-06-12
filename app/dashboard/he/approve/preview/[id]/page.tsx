@@ -13,6 +13,7 @@ import {
   deleteProductAction,
   updateFinalCopyBodyAction,
   uploadProductImageAction,
+  uploadProductVideoAction,
 } from "../../actions"
 
 export const dynamic = "force-dynamic"
@@ -37,14 +38,14 @@ export default async function PreviewPage({
       id, body, platform, language, status,
       validation_status, blocking_reasons, affiliate_link,
       product_id,
-      products (name, image_url, image_url_he, slug)
+      products (name, image_url, image_url_he, slug, video_url, video_status)
     `)
     .eq("id", id)
     .single()
 
   if (!fc) return notFound()
 
-  const productRaw = fc.products as unknown as { name: string; image_url: string | null; image_url_he: string | null; slug: string | null } | { name: string; image_url: string | null; image_url_he: string | null; slug: string | null }[] | null
+  const productRaw = fc.products as unknown as { name: string; image_url: string | null; image_url_he: string | null; slug: string | null; video_url: string | null; video_status: string | null } | { name: string; image_url: string | null; image_url_he: string | null; slug: string | null; video_url: string | null; video_status: string | null }[] | null
   const product = Array.isArray(productRaw) ? productRaw[0] ?? null : productRaw
 
   const imageUrl = fc.language === "he"
@@ -130,6 +131,36 @@ export default async function PreviewPage({
           אין תמונה למוצר הזה
         </div>
       )}
+
+      {product?.video_url ? (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">וידאו</h2>
+          <div className="rounded-lg border overflow-hidden bg-black/5">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <video
+              src={product.video_url}
+              controls
+              className="mx-auto max-h-[500px] w-full"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">סטטוס: {product.video_status ?? "לא ידוע"}</p>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+          אין וידאו למוצר הזה
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">העלאת וידאו</h2>
+        <form action={uploadProductVideoAction} className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
+          <input type="hidden" name="productId" value={fc.product_id} />
+          <input type="file" name="video" accept="video/*" required className="text-sm" />
+          <Button type="submit" variant="outline" size="sm">
+            העלה וידאו
+          </Button>
+        </form>
+      </div>
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">העלאת תמונה</h2>
