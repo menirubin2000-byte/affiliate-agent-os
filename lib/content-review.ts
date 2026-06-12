@@ -139,7 +139,10 @@ export function validateFinalCopyForPlatform(input: {
   }
 
   const body = input.body.trim()
-  const disclosureIndex = body.toLowerCase().indexOf("affiliate disclosure")
+  const bodyLower = body.toLowerCase()
+  const disclosureIndex = bodyLower.indexOf("affiliate disclosure") >= 0
+    ? bodyLower.indexOf("affiliate disclosure")
+    : body.indexOf("גילוי נאות")
   const internalNotes = INTERNAL_NOTE_PATTERNS.some((pattern) => pattern.test(body))
   const incomeOrGuarantee = INCOME_OR_GUARANTEE_PATTERNS.some((pattern) => pattern.test(body))
   const hasLink = input.finalAffiliateLink ? body.includes(input.finalAffiliateLink) : true
