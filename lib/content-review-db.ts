@@ -231,7 +231,11 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
     .single()
 
   if (updateError) throw new Error(`Unable to approve final copy: ${updateError.message}`)
-  await createOrUpdateScheduledPublishItemForFinalCopy(finalCopyId)
+  try {
+    await createOrUpdateScheduledPublishItemForFinalCopy(finalCopyId)
+  } catch {
+    // Scheduling can fail without blocking the approval
+  }
   return mapFinalCopy(updated as FinalCopyRow)
 }
 
