@@ -14,6 +14,7 @@ import {
   updateFinalCopyBodyAction,
   updateAllProductPostsBodyAction,
   uploadProductImageAction,
+  addMissingPlatformPostsAction,
 } from "../../actions"
 import { VideoUploadClient } from "./video-upload-client"
 
@@ -211,6 +212,16 @@ export default async function PreviewPage({
           <input type="hidden" name="finalCopyId" value={fc.id} />
           <Button type="submit" variant="ghost" size="lg">
             דרוש תיקון מערכת
+          </Button>
+        </form>
+      </div>
+
+      <div className="flex flex-wrap gap-3 rounded-lg border border-blue-300 bg-blue-50 p-4 dark:bg-blue-950 dark:border-blue-800">
+        <h3 className="w-full text-sm font-bold text-blue-700 dark:text-blue-300">הוספת פלטפורמות חסרות</h3>
+        <form action={addMissingPlatformPostsAction}>
+          <input type="hidden" name="productId" value={fc.product_id} />
+          <Button type="submit" variant="default" size="sm">
+            הוסף פוסטים לכל הפלטפורמות החסרות
           </Button>
         </form>
       </div>

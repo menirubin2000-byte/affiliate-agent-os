@@ -23,6 +23,7 @@ import {
   approveFinalCopyAction,
   rejectFinalCopyAction,
   requestFinalCopyFixAction,
+  addMissingPostsForAllProductsAction,
 } from "./actions"
 
 export const dynamic = "force-dynamic"
@@ -233,7 +234,34 @@ export default async function HebrewApprovePage(props: {
         </CardContent>
       </Card>
 
-      {params.approved ? (
+      <Card className="border-blue-300 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="text-blue-700 dark:text-blue-300">הוספת פלטפורמות חסרות לכל המוצרים</CardTitle>
+            <CardDescription>
+              יוצר פוסטים חדשים לכל הפלטפורמות החסרות (Facebook, Instagram, LinkedIn, Medium, Substack, Pinterest, X) לכל מוצר שכבר יש לו לפחות פוסט אחד.
+            </CardDescription>
+          </div>
+          <form action={addMissingPostsForAllProductsAction}>
+            <Button type="submit" variant="default" size="sm">
+              הוסף פוסטים חסרים לכל המוצרים
+            </Button>
+          </form>
+        </CardHeader>
+      </Card>
+
+      {params.approved === "posts_added" || params.approved === "all_products_posts_added" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">פוסטים חדשים נוספו בהצלחה</CardTitle>
+            <CardDescription className="text-green-800">
+              {params.approved === "all_products_posts_added"
+                ? "נוספו פוסטים חסרים לכל המוצרים. רענן את הדף כדי לראות אותם."
+                : "נוספו פוסטים חסרים למוצר. רענן את הדף כדי לראות אותם."}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="text-green-950">הפוסט אושר ונכנס לתור תזמון</CardTitle>
