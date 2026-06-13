@@ -15,6 +15,7 @@ import {
   updateAllProductPostsBodyAction,
   uploadProductImageAction,
   addMissingPlatformPostsAction,
+  createTranslatedFinalCopyAction,
 } from "../../actions"
 import { VideoUploadClient } from "./video-upload-client"
 
@@ -70,6 +71,17 @@ export default async function PreviewPage({
     .limit(1)
     .maybeSingle()
 
+  const { data: languageCopies } = await supabase
+    .from("final_copies")
+    .select("id, language, status")
+    .eq("product_id", fc.product_id)
+    .eq("platform", fc.platform)
+    .neq("status", "published_verified")
+    .order("updated_at", { ascending: false })
+
+  const hebrewCopy = languageCopies?.find((copy) => copy.language === "he") ?? null
+  const englishCopy = languageCopies?.find((copy) => copy.language === "en") ?? null
+
   const platformNames: Record<string, string> = {
     facebook_page: "Facebook",
     instagram_professional: "Instagram",
@@ -83,6 +95,18 @@ export default async function PreviewPage({
     reddit: "Reddit",
     quora: "Quora",
   }
+  const communityPlatforms = new Set(["quora", "reddit"])
+  const videoPlatforms = new Set(["youtube", "tiktok"])
+  const bulkSaveLabel = communityPlatforms.has(fc.platform)
+    ? "שמור רק ל-Quora/Reddit של המוצר"
+    : videoPlatforms.has(fc.platform)
+      ? "שמור רק ל-YouTube/TikTok של המוצר"
+      : "שמור רק לפלטפורמות רגילות של המוצר"
+  const bulkSaveNote = communityPlatforms.has(fc.platform)
+    ? "קטגוריה נפרדת: לא משנה Facebook/Instagram/LinkedIn/Medium/Substack/Pinterest/X ולא וידאו."
+    : videoPlatforms.has(fc.platform)
+      ? "קטגוריית וידאו נפרדת: לא משנה פוסטים רגילים ולא Quora/Reddit."
+      : "לא כולל Quora/Reddit ולא כולל YouTube/TikTok."
 
   return (
     <div dir="rtl" className="mx-auto max-w-3xl space-y-6 p-6 text-right">
@@ -102,7 +126,11 @@ export default async function PreviewPage({
         </div>
       ) : sp.approved === "all_posts_updated" ? (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
-          הטקסט עודכן בכל הפלטפורמות של המוצר הזה
+          הטקסט עודכן רק בקבוצת הפלטפורמות המתאימה למוצר הזה
+        </div>
+      ) : sp.approved === "translated_created" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          נוצרה גרסה מתורגמת לשפה השנייה. לא נוצר פרסום ולא נוצר publish job.
         </div>
       ) : null}
 
@@ -118,6 +146,47 @@ export default async function PreviewPage({
         {campaignLink?.final_url ? (
           <p><strong>קישור UTM:</strong> <span className="font-mono text-xs break-all">{campaignLink.final_url}</span></p>
         ) : null}
+      </div>
+
+      <div className="rounded-lg border bg-card p-4 space-y-3 text-sm">
+        <div>
+          <h2 className="text-base font-semibold">שפות לפוסט הזה</h2>
+          <p className="text-xs text-muted-foreground">
+            מעבר בין עברית לאנגלית לא משנה תוכן. אם חסרה שפה, אפשר ליצור תרגום מאותו פוסט.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {hebrewCopy ? (
+            <Link
+              href={`/dashboard/he/approve/preview/${hebrewCopy.id}`}
+              className={cn(buttonVariants({ variant: fc.language === "he" ? "default" : "outline", size: "sm" }))}
+            >
+              עברית {hebrewCopy.status === "operator_approved" ? "· מאושר" : ""}
+            </Link>
+          ) : (
+            <form action={createTranslatedFinalCopyAction}>
+              <input type="hidden" name="finalCopyId" value={fc.id} />
+              <Button type="submit" size="sm" variant="outline">
+                צור עברית מתורגמת
+              </Button>
+            </form>
+          )}
+          {englishCopy ? (
+            <Link
+              href={`/dashboard/he/approve/preview/${englishCopy.id}`}
+              className={cn(buttonVariants({ variant: fc.language === "en" ? "default" : "outline", size: "sm" }))}
+            >
+              English {englishCopy.status === "operator_approved" ? "· approved" : ""}
+            </Link>
+          ) : (
+            <form action={createTranslatedFinalCopyAction}>
+              <input type="hidden" name="finalCopyId" value={fc.id} />
+              <Button type="submit" size="sm" variant="outline">
+                צור English מתורגם
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
 
       {imageUrl ? (
@@ -142,7 +211,6 @@ export default async function PreviewPage({
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">וידאו</h2>
           <div className="rounded-lg border overflow-hidden bg-black/5">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               src={product.video_url}
               controls
@@ -189,9 +257,10 @@ export default async function PreviewPage({
               שמור לפוסט הזה בלבד
             </Button>
             <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
-              שמור לכל הפלטפורמות של המוצר
+              {bulkSaveLabel}
             </Button>
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">{bulkSaveNote}</p>
         </form>
       </div>
 
@@ -221,9 +290,12 @@ export default async function PreviewPage({
         <form action={addMissingPlatformPostsAction}>
           <input type="hidden" name="productId" value={fc.product_id} />
           <Button type="submit" variant="default" size="sm">
-            הוסף פוסטים לכל הפלטפורמות החסרות
+            הוסף פוסטים חסרים לפלטפורמות רגילות בלבד
           </Button>
         </form>
+        <p className="w-full text-xs text-blue-700 dark:text-blue-300">
+          לא יוצר Quora/Reddit ולא יוצר YouTube/TikTok. אלה קטגוריות נפרדות.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3 rounded-lg border border-red-300 bg-red-50 p-4 dark:bg-red-950 dark:border-red-800">

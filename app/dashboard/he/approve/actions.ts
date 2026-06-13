@@ -1,5 +1,6 @@
 "use server"
 
+import OpenAI from "openai"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -11,11 +12,140 @@ import {
 } from "@/lib/content-review-db"
 import { validateFinalCopyForPlatform } from "@/lib/content-review"
 import { assertIntegrationConfigured } from "@/lib/env"
+import { requiresImageForPost, requiresVideoForPost } from "@/lib/post-media-policy"
 import { getServiceRoleSupabase } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 
 function fail(reason: string): never {
   redirect(`/dashboard/he/approve?error=${encodeURIComponent(reason)}`)
+}
+
+const NORMAL_POST_PLATFORMS: CampaignPlatform[] = [
+  "facebook_page",
+  "instagram_professional",
+  "linkedin",
+  "medium",
+  "substack",
+  "pinterest",
+  "x_twitter",
+]
+
+const COMMUNITY_POST_PLATFORMS: CampaignPlatform[] = ["quora", "reddit"]
+const VIDEO_POST_PLATFORMS: CampaignPlatform[] = ["youtube", "tiktok"]
+const NORMAL_POST_PLATFORM_SET = new Set<string>(NORMAL_POST_PLATFORMS)
+
+function getBulkEditPlatformGroup(platform: string): CampaignPlatform[] {
+  if (COMMUNITY_POST_PLATFORMS.includes(platform as CampaignPlatform)) return COMMUNITY_POST_PLATFORMS
+  if (VIDEO_POST_PLATFORMS.includes(platform as CampaignPlatform)) return VIDEO_POST_PLATFORMS
+  if (NORMAL_POST_PLATFORM_SET.has(platform)) return NORMAL_POST_PLATFORMS
+  return [platform as CampaignPlatform]
+}
+
+function oppositeLanguage(language: string | null | undefined): "en" | "he" {
+  return language === "he" ? "en" : "he"
+}
+
+function languageLabel(language: "en" | "he") {
+  return language === "he" ? "Hebrew" : "English"
+}
+
+async function translateFinalCopyText(input: {
+  title: string
+  body: string
+  platform: string
+  targetLanguage: "en" | "he"
+}) {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) fail("missing_openai_api_key_for_translation")
+
+  const client = new OpenAI({ apiKey })
+  const response = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: [
+      {
+        role: "system",
+        content:
+          "You translate affiliate post copy for an approval workflow. Return only compact JSON with title and body. Do not add claims, metrics, links, prices, reviews, or features that are not present. Preserve URLs exactly. Preserve affiliate disclosure. For Quora/Reddit, do not introduce direct affiliate links.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify({
+          target_language: languageLabel(input.targetLanguage),
+          platform: input.platform,
+          title: input.title,
+          body: input.body,
+        }),
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "translated_final_copy",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["title", "body"],
+          properties: {
+            title: { type: "string" },
+            body: { type: "string" },
+          },
+        },
+      },
+    },
+  })
+
+  const raw = response.output_text
+  const parsed = JSON.parse(raw) as { title?: string; body?: string }
+  const title = parsed.title?.trim()
+  const body = parsed.body?.trim()
+  if (!title || !body) fail("translation_missing_title_or_body")
+  return { title, body }
+}
+
+function mediaForTranslatedCopy(input: {
+  platform: string
+  language: "en" | "he"
+  currentMediaAssetUrl: string | null
+  currentImageUrl: string | null
+  product: {
+    image_url: string | null
+    image_url_he: string | null
+    video_url: string | null
+  }
+}) {
+  const imageRequired = requiresImageForPost(input.platform)
+  const videoRequired = requiresVideoForPost(input.platform)
+  const imageUrl = input.language === "he" ? input.product.image_url_he : input.product.image_url
+  const videoUrl = input.product.video_url ?? input.currentMediaAssetUrl
+
+  if (videoRequired) {
+    return {
+      image_url: imageUrl,
+      media_asset_url: videoUrl,
+      media_status: videoUrl ? "ready" : "missing_video",
+      needs_media_repair: !videoUrl,
+      blockingReasons: videoUrl ? [] : ["video_required_for_ready"],
+    }
+  }
+
+  if (imageRequired) {
+    return {
+      image_url: imageUrl,
+      media_asset_url: imageUrl,
+      media_status: imageUrl ? "ready" : "missing_image",
+      needs_media_repair: !imageUrl,
+      blockingReasons: imageUrl ? [] : ["image_required_for_ready"],
+    }
+  }
+
+  return {
+    image_url: imageUrl ?? input.currentImageUrl,
+    media_asset_url: input.currentMediaAssetUrl,
+    media_status: "not_required",
+    needs_media_repair: false,
+    blockingReasons: [],
+  }
 }
 
 export async function approveFinalCopyAction(formData: FormData) {
@@ -73,6 +203,136 @@ export async function requestFinalCopyFixAction(formData: FormData) {
   revalidatePath("/dashboard/he/content-review")
   revalidatePath("/dashboard/improvements")
   redirect("/dashboard/he/approve?fix=1")
+}
+
+export async function createTranslatedFinalCopyAction(formData: FormData) {
+  const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
+  if (!finalCopyId) fail("missing_final_copy_id")
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const { data: fc, error: fcError } = await supabase
+      .from("final_copies")
+      .select(`
+        id, product_id, affiliate_program_id, affiliate_link, source_content_id,
+        platform_adaptation_id, platform, title, body, language, status,
+        image_url, media_asset_url,
+        products (image_url, image_url_he, video_url)
+      `)
+      .eq("id", finalCopyId)
+      .single()
+    if (fcError) fail(fcError.message)
+    if (!fc) fail("post_not_found")
+    if (fc.status === "published_verified") fail("cannot_translate_published_post")
+
+    const targetLanguage = oppositeLanguage(fc.language)
+    const { data: existing, error: existingError } = await supabase
+      .from("final_copies")
+      .select("id")
+      .eq("product_id", fc.product_id)
+      .eq("platform", fc.platform)
+      .eq("language", targetLanguage)
+      .neq("status", "published_verified")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (existingError) fail(existingError.message)
+    if (existing?.id) {
+      revalidatePath("/dashboard/he/approve")
+      redirect(`/dashboard/he/approve/preview/${existing.id}`)
+    }
+
+    const translated = await translateFinalCopyText({
+      title: fc.title ?? "",
+      body: fc.body ?? "",
+      platform: fc.platform,
+      targetLanguage,
+    })
+
+    const contentHash = hashCampaignContent([
+      fc.product_id,
+      fc.source_content_id,
+      fc.platform,
+      targetLanguage,
+      translated.title,
+      translated.body,
+    ])
+
+    const { data: adaptation, error: adaptationError } = await supabase
+      .from("platform_adaptations")
+      .insert({
+        source_content_id: fc.source_content_id,
+        product_id: fc.product_id,
+        platform: fc.platform,
+        title: translated.title,
+        body: translated.body,
+        content_hash: contentHash,
+        campaign_approval_status: "campaign_approved",
+      })
+      .select("id")
+      .single()
+    if (adaptationError) fail(adaptationError.message)
+
+    const productRaw = fc.products as unknown as
+      | { image_url: string | null; image_url_he: string | null; video_url: string | null }
+      | Array<{ image_url: string | null; image_url_he: string | null; video_url: string | null }>
+      | null
+    const product = Array.isArray(productRaw) ? productRaw[0] : productRaw
+    const media = mediaForTranslatedCopy({
+      platform: fc.platform,
+      language: targetLanguage,
+      currentMediaAssetUrl: fc.media_asset_url,
+      currentImageUrl: fc.image_url,
+      product: {
+        image_url: product?.image_url ?? null,
+        image_url_he: product?.image_url_he ?? null,
+        video_url: product?.video_url ?? null,
+      },
+    })
+
+    const validation = validateFinalCopyForPlatform({
+      body: translated.body,
+      platform: fc.platform,
+      finalAffiliateLink: fc.affiliate_link ?? undefined,
+      language: targetLanguage,
+    })
+    const blockingReasons = [...validation.blockingReasons, ...media.blockingReasons]
+    const ready = validation.validationStatus === "valid" && blockingReasons.length === 0
+
+    const { data: created, error: insertError } = await supabase
+      .from("final_copies")
+      .insert({
+        product_id: fc.product_id,
+        affiliate_program_id: fc.affiliate_program_id,
+        affiliate_link: fc.affiliate_link,
+        source_content_id: fc.source_content_id,
+        platform_adaptation_id: adaptation.id,
+        platform: fc.platform,
+        title: translated.title,
+        body: translated.body,
+        content_hash: contentHash,
+        version: 1,
+        status: ready ? "ready_for_operator_approval" : "needs_system_fix",
+        validation_status: validation.validationStatus,
+        blocking_reasons: blockingReasons,
+        language: targetLanguage,
+        image_url: media.image_url,
+        media_asset_url: media.media_asset_url,
+        media_status: media.media_status,
+        needs_media_repair: media.needs_media_repair,
+      })
+      .select("id")
+      .single()
+    if (insertError) fail(insertError.message)
+
+    revalidatePath("/dashboard/he/approve")
+    revalidatePath("/dashboard/he/all-posts")
+    redirect(`/dashboard/he/approve/preview/${created.id}?approved=translated_created`)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "translation_failed")
+  }
 }
 
 export async function deleteFinalCopyAction(formData: FormData) {
@@ -158,17 +418,19 @@ export async function updateAllProductPostsBodyAction(formData: FormData) {
     const supabase = getServiceRoleSupabase()
     const { data: fc } = await supabase
       .from("final_copies")
-      .select("product_id, language, status")
+      .select("product_id, platform, language, status")
       .eq("id", finalCopyId)
       .single()
     if (!fc) fail("post_not_found")
     if (fc.status === "published_verified") fail("cannot_edit_published_post")
+    const platformGroup = getBulkEditPlatformGroup(fc.platform)
 
-    const { error, count } = await supabase
+    const { error } = await supabase
       .from("final_copies")
       .update({ body })
       .eq("product_id", fc.product_id)
       .eq("language", fc.language)
+      .in("platform", platformGroup)
       .neq("status", "published_verified")
     if (error) fail(error.message)
   } catch (error) {
@@ -255,16 +517,6 @@ export async function confirmVideoUpload(
   }
 }
 
-const ALL_POST_PLATFORMS: CampaignPlatform[] = [
-  "facebook_page",
-  "instagram_professional",
-  "linkedin",
-  "medium",
-  "substack",
-  "pinterest",
-  "x_twitter",
-]
-
 export async function addMissingPlatformPostsAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
   if (!productId) fail("missing_product_id")
@@ -283,15 +535,17 @@ export async function addMissingPlatformPostsAction(formData: FormData) {
 
     const templateByLang = new Map<string, typeof existing[0]>()
     for (const fc of existing) {
+      if (!NORMAL_POST_PLATFORM_SET.has(fc.platform)) continue
       const lang = fc.language ?? "en"
       if (!templateByLang.has(lang)) templateByLang.set(lang, fc)
     }
+    if (templateByLang.size === 0) fail("no_normal_platform_source_copy")
 
     const existingPlatforms = new Set(existing.map((fc) => `${fc.platform}::${fc.language ?? "en"}`))
 
     let created = 0
     for (const [lang, template] of templateByLang) {
-      for (const platform of ALL_POST_PLATFORMS) {
+      for (const platform of NORMAL_POST_PLATFORMS) {
         const key = `${platform}::${lang}`
         if (existingPlatforms.has(key)) continue
 
@@ -399,14 +653,16 @@ export async function addMissingPostsForAllProductsAction() {
 
       const templateByLang = new Map<string, typeof existing[0]>()
       for (const fc of existing) {
+        if (!NORMAL_POST_PLATFORM_SET.has(fc.platform)) continue
         const lang = fc.language ?? "en"
         if (!templateByLang.has(lang)) templateByLang.set(lang, fc)
       }
+      if (templateByLang.size === 0) continue
 
       const existingPlatforms = new Set(existing.map((fc) => `${fc.platform}::${fc.language ?? "en"}`))
 
       for (const [lang, template] of templateByLang) {
-        for (const platform of ALL_POST_PLATFORMS) {
+        for (const platform of NORMAL_POST_PLATFORMS) {
           const key = `${platform}::${lang}`
           if (existingPlatforms.has(key)) continue
 
