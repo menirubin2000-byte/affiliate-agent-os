@@ -70,9 +70,6 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
               סקירה ציבורית
             </p>
             <h1 className="text-4xl font-semibold tracking-normal">סקירת {product.name}</h1>
-            <p className="max-w-2xl text-lg leading-8 text-slate-700">
-              {review}
-            </p>
           </div>
 
           <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
@@ -83,23 +80,11 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-2xl font-semibold">סיכום קצר</h2>
-            <ul className="list-disc space-y-2 pr-5 text-slate-700">
-              <li>{product.name} מתאים לבדיקה למי שמחפש פתרון בתחום {product.category ?? "המוצר הזה"}.</li>
-              <li>לפני החלטה כדאי לבדוק התאמה לצורך, מחיר עדכני, משלוח ותנאים.</li>
-              <li>זו סקירת גישור קצרה, לא הבטחה לתוצאה ולא טענה לניסיון אישי.</li>
-            </ul>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-2xl font-semibold">למי זה יכול להתאים</h2>
-            <p className="leading-7 text-slate-700">
-              כדאי לבדוק את {product.name} אם הקטגוריה מתאימה לצורך שלכם ואתם רוצים
-              לעבור על ההצעה הרשמית לפני החלטה. תמיד מומלץ להשוות חלופות, מחיר ותנאים
-              ישירות בעמוד המוצר.
-            </p>
-          </section>
+          <div className="space-y-4 leading-7 text-slate-700">
+            {review.split(/\n{2,}/).map((paragraph: string, i: number) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+          </div>
 
           <a
             href={destinationUrl}
