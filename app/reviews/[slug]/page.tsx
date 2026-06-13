@@ -14,6 +14,7 @@ type ReviewProductRow = {
   notes: string | null
   target_keyword: string | null
   content_angle: string | null
+  public_review: string | null
   affiliate_link: string | null
   affiliate_url: string | null
   image_url: string | null
@@ -59,7 +60,9 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
   if (!destinationUrl) notFound()
 
   const imageUrl = product.image_url_he || product.image_url
-  const review = postBody || buildShortReview(product)
+  // Priority: operator-edited public_review (from the dashboard editor) wins over
+  // the auto-generated post body, which wins over the generic fallback.
+  const review = product.public_review?.trim() || postBody || buildShortReview(product)
 
   return (
     <PublicSiteShell active="home">
@@ -126,7 +129,7 @@ async function getReviewProduct(slug: string) {
   const supabase = getServiceRoleSupabase()
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, slug, brand, category, notes, target_keyword, content_angle, affiliate_link, affiliate_url, image_url, image_url_he")
+    .select("id, name, slug, brand, category, notes, target_keyword, content_angle, public_review, affiliate_link, affiliate_url, image_url, image_url_he")
     .eq("slug", slug)
     .maybeSingle()
 
