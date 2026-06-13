@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 
+import { PublicSiteShell } from "@/components/public-site-shell"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
@@ -32,10 +33,10 @@ type CampaignLinkRow = {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const product = await getReviewProduct(slug)
-  if (!product) return { title: "Review not found" }
+  if (!product) return { title: "סקירה לא נמצאה" }
   return {
-    title: `${product.name} Review - Affiliate Agent OS`,
-    description: `Short practical review of ${product.name}, including affiliate disclosure and product link.`,
+    title: `סקירת ${product.name} - Rubin-Q.S Reviews`,
+    description: `סקירה קצרה ופרקטית של ${product.name}, כולל גילוי אפיליאייט וקישור למוצר.`,
   }
 }
 
@@ -60,42 +61,42 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
   const review = buildShortReview(product)
 
   return (
-    <main className="min-h-screen bg-white text-slate-950">
-      <article className="mx-auto grid max-w-5xl gap-8 px-5 py-10 md:grid-cols-[minmax(0,1fr)_320px] md:px-8">
+    <PublicSiteShell active="home">
+      <article className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[minmax(0,1fr)_320px]">
         <section className="space-y-6">
           <div className="space-y-3">
             <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-              Public review
+              סקירה ציבורית
             </p>
-            <h1 className="text-4xl font-semibold tracking-normal">{product.name} Review</h1>
+            <h1 className="text-4xl font-semibold tracking-normal">סקירת {product.name}</h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-700">
               {review}
             </p>
           </div>
 
           <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-            <h2 className="font-semibold">Affiliate disclosure</h2>
+            <h2 className="font-semibold">גילוי אפיליאייט</h2>
             <p className="mt-1">
-              This page may contain an affiliate link. If you choose to sign up through the link,
-              the operator may earn a commission at no extra cost to you.
+              הדף עשוי לכלול קישור שותפים. אם תבחרו לרכוש או להירשם דרך הקישור,
+              ייתכן שתתקבל עמלה ללא עלות נוספת עבורכם.
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-2xl font-semibold">Quick take</h2>
-            <ul className="list-disc space-y-2 pl-5 text-slate-700">
-              <li>{product.name} is most relevant for teams evaluating {product.category ?? "software tools"}.</li>
-              <li>The main fit is practical: compare the workflow, pricing, and setup effort before committing.</li>
-              <li>This is a short bridge review, not a claim of personal results or guaranteed outcomes.</li>
+            <h2 className="text-2xl font-semibold">סיכום קצר</h2>
+            <ul className="list-disc space-y-2 pr-5 text-slate-700">
+              <li>{product.name} מתאים לבדיקה למי שמחפש פתרון בתחום {product.category ?? "המוצר הזה"}.</li>
+              <li>לפני החלטה כדאי לבדוק התאמה לצורך, מחיר עדכני, משלוח ותנאים.</li>
+              <li>זו סקירת גישור קצרה, לא הבטחה לתוצאה ולא טענה לניסיון אישי.</li>
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-2xl font-semibold">Who it may fit</h2>
+            <h2 className="text-2xl font-semibold">למי זה יכול להתאים</h2>
             <p className="leading-7 text-slate-700">
-              Consider {product.name} if the product category matches your current workflow and
-              you want to review the official offer before deciding. Always compare alternatives,
-              pricing, and terms directly on the product page.
+              כדאי לבדוק את {product.name} אם הקטגוריה מתאימה לצורך שלכם ואתם רוצים
+              לעבור על ההצעה הרשמית לפני החלטה. תמיד מומלץ להשוות חלופות, מחיר ותנאים
+              ישירות בעמוד המוצר.
             </p>
           </section>
 
@@ -105,7 +106,7 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
             rel="nofollow sponsored noreferrer"
             className="inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Review {product.name}
+            לבדיקה בעמוד המוצר
           </a>
         </section>
 
@@ -124,13 +125,13 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
           )}
           <div className="rounded-lg border p-4 text-sm text-slate-700">
             <div className="font-semibold text-slate-950">{product.name}</div>
-            {product.brand ? <div>Brand: {product.brand}</div> : null}
-            {product.category ? <div>Category: {product.category}</div> : null}
-            {program?.network ? <div>Network: {program.network}</div> : null}
+            {product.brand ? <div>מותג: {product.brand}</div> : null}
+            {product.category ? <div>קטגוריה: {product.category}</div> : null}
+            {program?.network ? <div>רשת שותפים: {program.network}</div> : null}
           </div>
         </aside>
       </article>
-    </main>
+    </PublicSiteShell>
   )
 }
 
@@ -187,5 +188,5 @@ function buildShortReview(product: ReviewProductRow) {
       .replace(/\s+/g, " ")
       .slice(0, 220)
   }
-  return `${product.name} is a ${product.category ?? "software"} option worth reviewing if it matches your workflow, budget, and implementation needs.`
+  return `${product.name} הוא מוצר שכדאי לבדוק אם הוא מתאים לצורך, לתקציב ולתנאי הקנייה שלכם.`
 }

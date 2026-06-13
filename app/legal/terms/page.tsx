@@ -1,99 +1,72 @@
-import Link from "next/link"
 import type { Metadata } from "next"
 
+import { PublicSiteShell } from "@/components/public-site-shell"
+
 export const metadata: Metadata = {
-  title: "Terms of Service - Rubin-Q.S Reviews",
-  description: "Terms of Service for the Rubin-Q.S Reviews website.",
+  title: "תנאי שימוש - Rubin-Q.S Reviews",
+  description: "תנאי השימוש באתר Rubin-Q.S Reviews.",
   robots: { index: true, follow: true },
 }
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-950">
-      <header className="border-b bg-white">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Link href="/" className="text-xl font-bold tracking-tight">
-            Rubin-Q.S Reviews
-          </Link>
-          <ul className="flex items-center gap-6 text-sm font-medium text-slate-600">
-            <li><Link href="/" className="hover:text-slate-950">Reviews</Link></li>
-            <li><Link href="/legal/terms" className="font-semibold text-slate-950">Terms</Link></li>
-            <li><Link href="/legal/privacy" className="hover:text-slate-950">Privacy</Link></li>
-            <li><Link href="/accessibility" className="hover:text-slate-950">Accessibility</Link></li>
-          </ul>
-        </nav>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="mb-6 text-3xl font-bold">Terms of Service</h1>
-        <p className="mb-4 text-sm text-slate-500">Last updated: June 5, 2026</p>
+    <PublicSiteShell active="terms">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="mb-6 text-3xl font-bold">תנאי שימוש</h1>
+        <p className="mb-4 text-sm text-slate-500">עדכון אחרון: יוני 2026</p>
 
         <section className="space-y-4 leading-7 text-slate-700">
           <p>
-            Rubin-Q.S Reviews (&quot;we&quot;, &quot;us&quot;, &quot;the site&quot;) is a
-            review and content site operated by Rubin Quantum Systems.
-            By accessing or using this site, you agree to these Terms of Service.
+            Rubin-Q.S Reviews (&quot;אנחנו&quot;, &quot;האתר&quot;) הוא אתר סקירות ותוכן
+            שמופעל על ידי Rubin Quantum Systems. שימוש באתר מהווה הסכמה לתנאים אלה.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">1. Purpose</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">1. מטרת האתר</h2>
           <p>
-            This site publishes practical software reviews, product comparisons, and
-            recommendations for creators and small businesses.
+            האתר מפרסם סקירות פרקטיות של תוכנות, מוצרים, השוואות וכלים שימושיים
+            לעסקים קטנים ויוצרי תוכן.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">2. Affiliate disclosure</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">2. גילוי אפיליאייט</h2>
           <p>
-            Some pages on this site contain affiliate links. If you click through and make a
-            purchase, we may earn a commission at no extra cost to you. Every page with affiliate
-            links includes a visible disclosure.
+            חלק מהדפים באתר מכילים קישורי שותפים (affiliate links). אם תלחצו ותבצעו
+            רכישה, ייתכן שנקבל עמלה ללא עלות נוספת עבורכם. כל דף עם קישורי שותפים
+            כולל גילוי נאות מפורש.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">3. Content accuracy</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">3. דיוק התוכן</h2>
           <p>
-            We strive to provide accurate and up-to-date information. However, product features,
-            pricing, and availability may change. Always verify details on the official product
-            page before making a purchase.
+            אנו שואפים לספק מידע מדויק ועדכני. עם זאת, תכונות מוצר, מחירים וזמינות
+            עשויים להשתנות. תמיד בדקו את הפרטים בעמוד הרשמי של המוצר לפני רכישה.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">4. Third-party links</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">4. קישורים חיצוניים</h2>
           <p>
-            This site links to third-party products and services. We are not responsible for the
-            content, policies, or practices of those external sites.
+            האתר מקשר למוצרים ושירותים של צדדים שלישיים. אנו לא אחראים לתוכן,
+            למדיניות או לפרקטיקות של אתרים חיצוניים אלה.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">5. No warranty</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">5. הגבלת אחריות</h2>
           <p>
-            This site and its content are provided &quot;as is&quot; without warranty of any kind.
-            We are not liable for any damages arising from the use of this site.
+            האתר והתוכן שלו מסופקים &quot;כמו שהם&quot; (as is) ללא אחריות מכל סוג.
+            אנו לא אחראים לנזקים הנובעים מהשימוש באתר.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">6. Changes</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">6. שינויים</h2>
           <p>
-            These terms may be updated at any time. The current version is always available at
-            this URL.
+            תנאים אלה עשויים להתעדכן בכל עת. הגרסה הנוכחית תמיד זמינה בכתובת זו.
           </p>
 
-          <h2 className="mt-6 text-xl font-semibold text-slate-950">7. Contact</h2>
+          <h2 className="mt-6 text-xl font-semibold text-slate-950">7. יצירת קשר</h2>
           <p>
-            For questions, contact us at{" "}
+            לשאלות, פנו אלינו בכתובת{" "}
             <a href="mailto:Rubin-Q.S@rsqs.net" className="text-blue-700 underline">
               Rubin-Q.S@rsqs.net
             </a>
             .
           </p>
         </section>
-      </main>
-
-      <footer className="border-t bg-slate-50">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-6 text-sm text-slate-500">
-          <p>&copy; {new Date().getFullYear()} Rubin Quantum Systems. All rights reserved.</p>
-          <ul className="flex gap-6">
-            <li><Link href="/legal/terms" className="hover:text-slate-950">Terms of Service</Link></li>
-            <li><Link href="/legal/privacy" className="hover:text-slate-950">Privacy Policy</Link></li>
-            <li><Link href="/accessibility" className="hover:text-slate-950">Accessibility</Link></li>
-          </ul>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </PublicSiteShell>
   )
 }
