@@ -169,15 +169,16 @@ async function getPostBody(productId: string) {
   const supabase = getServiceRoleSupabase()
   const { data } = await supabase
     .from("final_copies")
-    .select("body")
+    .select("body, language, status")
     .eq("product_id", productId)
-    .in("status", ["published", "approved", "pending_review"])
+    .not("body", "is", null)
     .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
-  if (!data?.body?.trim()) return null
-  return data.body.trim()
+  if (!data?.length) return null
+  const he = data.find((r) => r.language === "he" && r.body?.trim())
+  const any = data.find((r) => r.body?.trim())
+  const best = he || any
+  return best?.body?.trim() || null
 }
 
 function looksLikeJson(text: string) {
