@@ -23,6 +23,7 @@ const PHYSICAL_PRODUCT_HINTS = [
   "headphone",
   "headphones",
   "earbuds",
+  "earphones",
   "dock",
   "ssd",
   "hard drive",
