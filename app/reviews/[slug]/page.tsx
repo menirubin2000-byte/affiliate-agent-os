@@ -45,9 +45,10 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
   const product = await getReviewProduct(slug)
   if (!product) notFound()
 
-  const [program, campaignLink] = await Promise.all([
+  const [program, campaignLink, postBody] = await Promise.all([
     getAffiliateProgram(product.id),
     getCampaignLink(product.id),
+    getPostBody(product.id),
   ])
   const destinationUrl =
     campaignLink?.final_url?.trim() ||
@@ -58,7 +59,7 @@ export default async function PublicReviewPage({ params }: { params: Promise<{ s
   if (!destinationUrl) notFound()
 
   const imageUrl = product.image_url_he || product.image_url
-  const review = buildShortReview(product)
+  const review = postBody || buildShortReview(product)
 
   return (
     <PublicSiteShell active="home">
@@ -179,9 +180,30 @@ async function getCampaignLink(productId: string) {
   return data as CampaignLinkRow
 }
 
+async function getPostBody(productId: string) {
+  const supabase = getServiceRoleSupabase()
+  const { data } = await supabase
+    .from("final_copies")
+    .select("body")
+    .eq("product_id", productId)
+    .in("status", ["published", "approved", "pending_review"])
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data?.body?.trim()) return null
+  return data.body.trim()
+}
+
+function looksLikeJson(text: string) {
+  return /^[\s\[{"]/.test(text) && /["\]}]/.test(text) && text.includes('"')
+}
+
 function buildShortReview(product: ReviewProductRow) {
-  if (product.content_angle?.trim()) return product.content_angle.trim()
-  if (product.notes?.trim()) {
+  if (product.content_angle?.trim() && !looksLikeJson(product.content_angle)) {
+    return product.content_angle.trim()
+  }
+  if (product.notes?.trim() && !looksLikeJson(product.notes)) {
     return product.notes
       .trim()
       .split(/\n+/)[0]
