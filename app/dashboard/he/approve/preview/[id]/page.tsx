@@ -14,6 +14,7 @@ import {
   updateFinalCopyBodyAction,
   updateAllProductPostsBodyAction,
   uploadProductImageAction,
+  deleteProductVideoAction,
   addMissingPlatformPostsAction,
   createTranslatedFinalCopyAction,
 } from "../../actions"
@@ -123,6 +124,10 @@ export default async function PreviewPage({
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
           הטקסט עודכן רק בקבוצת הפלטפורמות המתאימה למוצר הזה
         </div>
+      ) : sp.approved === "video_deleted" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          הוידאו נמחק. אפשר להעלות וידאו חדש.
+        </div>
       ) : sp.approved === "translated_created" ? (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
           נוצרה גרסה מתורגמת לשפה השנייה. לא נוצר פרסום ולא נוצר publish job.
@@ -213,6 +218,13 @@ export default async function PreviewPage({
             />
           </div>
           <p className="text-xs text-muted-foreground">סטטוס: {product.video_status ?? "לא ידוע"}</p>
+          <form action={deleteProductVideoAction}>
+            <input type="hidden" name="productId" value={fc.product_id} />
+            <input type="hidden" name="finalCopyId" value={fc.id} />
+            <Button type="submit" variant="destructive" size="sm">
+              מחק וידאו
+            </Button>
+          </form>
         </div>
       ) : (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">

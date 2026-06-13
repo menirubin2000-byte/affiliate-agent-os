@@ -523,6 +523,53 @@ export async function confirmVideoUpload(
   }
 }
 
+export async function deleteProductVideoAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "").trim()
+  const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
+  if (!productId) fail("missing_product_id")
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+
+    // Best-effort remove the stored object so the slot is free for re-upload.
+    const { data: prod } = await supabase
+      .from("products")
+      .select("video_url")
+      .eq("id", productId)
+      .single()
+    const url = prod?.video_url ?? ""
+    const marker = "/media/"
+    const idx = url.indexOf(marker)
+    if (idx >= 0) {
+      const path = url.slice(idx + marker.length)
+      if (path) {
+        try {
+          await supabase.storage.from("media").remove([path])
+        } catch {
+          // Storage cleanup is best-effort; clearing the DB pointer is what matters.
+        }
+      }
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .update({ video_url: null, video_status: null })
+      .eq("id", productId)
+    if (error) fail(error.message)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "delete_video_failed")
+  }
+
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/he/approve")
+  if (finalCopyId) {
+    redirect(`/dashboard/he/approve/preview/${finalCopyId}?approved=video_deleted`)
+  }
+  redirect("/dashboard/he/approve?approved=video_deleted")
+}
+
 export async function addMissingPlatformPostsAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
   if (!productId) fail("missing_product_id")
