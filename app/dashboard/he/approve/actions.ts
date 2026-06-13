@@ -34,11 +34,17 @@ const COMMUNITY_POST_PLATFORMS: CampaignPlatform[] = ["quora", "reddit"]
 const VIDEO_POST_PLATFORMS: CampaignPlatform[] = ["youtube", "tiktok"]
 const NORMAL_POST_PLATFORM_SET = new Set<string>(NORMAL_POST_PLATFORMS)
 
+// Two bulk-edit groups only: community (Quora/Reddit — special no-direct-link
+// rules) and general (everything else, including video). Editing one group
+// never touches the other.
+const GENERAL_POST_PLATFORMS: CampaignPlatform[] = [
+  ...NORMAL_POST_PLATFORMS,
+  ...VIDEO_POST_PLATFORMS,
+]
+
 function getBulkEditPlatformGroup(platform: string): CampaignPlatform[] {
   if (COMMUNITY_POST_PLATFORMS.includes(platform as CampaignPlatform)) return COMMUNITY_POST_PLATFORMS
-  if (VIDEO_POST_PLATFORMS.includes(platform as CampaignPlatform)) return VIDEO_POST_PLATFORMS
-  if (NORMAL_POST_PLATFORM_SET.has(platform)) return NORMAL_POST_PLATFORMS
-  return [platform as CampaignPlatform]
+  return GENERAL_POST_PLATFORMS
 }
 
 function oppositeLanguage(language: string | null | undefined): "en" | "he" {

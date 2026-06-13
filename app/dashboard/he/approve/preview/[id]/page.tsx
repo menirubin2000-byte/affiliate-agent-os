@@ -96,17 +96,12 @@ export default async function PreviewPage({
     quora: "Quora",
   }
   const communityPlatforms = new Set(["quora", "reddit"])
-  const videoPlatforms = new Set(["youtube", "tiktok"])
   const bulkSaveLabel = communityPlatforms.has(fc.platform)
     ? "שמור רק ל-Quora/Reddit של המוצר"
-    : videoPlatforms.has(fc.platform)
-      ? "שמור רק ל-YouTube/TikTok של המוצר"
-      : "שמור רק לפלטפורמות רגילות של המוצר"
+    : "שמור לכל הפלטפורמות (חוץ מ-Quora/Reddit)"
   const bulkSaveNote = communityPlatforms.has(fc.platform)
-    ? "קטגוריה נפרדת: לא משנה Facebook/Instagram/LinkedIn/Medium/Substack/Pinterest/X ולא וידאו."
-    : videoPlatforms.has(fc.platform)
-      ? "קטגוריית וידאו נפרדת: לא משנה פוסטים רגילים ולא Quora/Reddit."
-      : "לא כולל Quora/Reddit ולא כולל YouTube/TikTok."
+    ? "קבוצה נפרדת: משנה רק את Quora ו-Reddit, לא נוגע בשאר."
+    : "משנה את כל הפלטפורמות כולל YouTube/TikTok. לא כולל Quora/Reddit."
 
   return (
     <div dir="rtl" className="mx-auto max-w-3xl space-y-6 p-6 text-right">
