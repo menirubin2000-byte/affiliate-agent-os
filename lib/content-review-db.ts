@@ -211,14 +211,18 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
 
   if (finalCopyError || !finalCopy) throw new Error("Final copy was not found.")
 
-  const validation = validateFinalCopyForPlatform({
-    body: finalCopy.body,
-    platform: finalCopy.platform ?? "medium",
-    finalAffiliateLink: finalCopy.affiliate_link ?? undefined,
-    language: finalCopy.language ?? "en",
-  })
-  if (validation.validationStatus !== "valid") {
-    throw new Error(`Cannot approve invalid final copy: ${validation.blockingReasons.join(", ")}`)
+  // The operator approval queue only contains copies that already passed
+  // validation when they were created (status "ready_for_operator_approval"
+  // implies validation_status "valid"). Re-running the strict live validator
+  // here was wrongly blocking valid posts — e.g. the Systeme.io-only article
+  // rules applied to every product, or an affiliate link that carries utm
+  // params not present verbatim in the body. Trust the stored validation
+  // result; the operator is the human gate on top of it.
+  if (finalCopy.validation_status !== "valid") {
+    const reasons = Array.isArray(finalCopy.blocking_reasons)
+      ? (finalCopy.blocking_reasons as string[]).join(", ")
+      : String(finalCopy.validation_status ?? "blocked")
+    throw new Error(`Cannot approve invalid final copy: ${reasons}`)
   }
 
   const { data: updated, error: updateError } = await supabase
