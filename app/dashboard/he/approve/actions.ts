@@ -789,7 +789,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       .eq("product_id", productId)
       .eq("platform", platform)
       .eq("language", language)
-      .neq("status", "published_verified")
+      .in("status", ["draft_internal", "needs_system_fix", "validated", "ready_for_operator_approval", "operator_rejected"])
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle()
