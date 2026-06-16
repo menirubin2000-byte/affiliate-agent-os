@@ -853,6 +853,19 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       adaptationId = newAdaptation.id
     }
 
+    let nextVersion = 1
+    if (adaptationId) {
+      const { data: latestVersion, error: latestVersionError } = await supabase
+        .from("final_copies")
+        .select("version")
+        .eq("platform_adaptation_id", adaptationId)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (latestVersionError) fail(latestVersionError.message)
+      nextVersion = Number(latestVersion?.version ?? 0) + 1
+    }
+
     const productRaw = template.products as unknown as
       | { image_url: string | null; image_url_he: string | null; video_url: string | null }
       | Array<{ image_url: string | null; image_url_he: string | null; video_url: string | null }>
@@ -904,7 +917,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
         title: template.title ?? "",
         body: template.body,
         content_hash: contentHash,
-        version: 1,
+        version: nextVersion,
         status: ready ? "ready_for_operator_approval" : "needs_system_fix",
         validation_status: validation.validationStatus,
         blocking_reasons: blockingReasons,
