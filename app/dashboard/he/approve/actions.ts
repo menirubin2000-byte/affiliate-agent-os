@@ -42,6 +42,17 @@ const GENERAL_POST_PLATFORMS: CampaignPlatform[] = [
   ...VIDEO_POST_PLATFORMS,
 ]
 
+// Every platform the "add missing platforms" action can create for a product —
+// normal social, video (YouTube/TikTok) and community (Quora/Reddit). Community
+// and video copies are created from the normal post body and start as
+// needs_system_fix when their stricter rules (no direct link / video required)
+// are not yet met, so they appear and can be adapted instead of being skipped.
+const ALL_POST_PLATFORMS: CampaignPlatform[] = [
+  ...NORMAL_POST_PLATFORMS,
+  ...VIDEO_POST_PLATFORMS,
+  ...COMMUNITY_POST_PLATFORMS,
+]
+
 function getBulkEditPlatformGroup(platform: string): CampaignPlatform[] {
   if (COMMUNITY_POST_PLATFORMS.includes(platform as CampaignPlatform)) return COMMUNITY_POST_PLATFORMS
   return GENERAL_POST_PLATFORMS
@@ -670,7 +681,7 @@ export async function addMissingPlatformPostsAction(formData: FormData) {
 
     let created = 0
     for (const [lang, template] of templateByLang) {
-      for (const platform of NORMAL_POST_PLATFORMS) {
+      for (const platform of ALL_POST_PLATFORMS) {
         const key = `${platform}::${lang}`
         if (existingPlatforms.has(key)) continue
 
@@ -732,9 +743,14 @@ export async function addMissingPlatformPostsAction(formData: FormData) {
             body: template.body,
             content_hash: fcContentHash,
             version: 1,
-            status: validation.validationStatus === "valid"
-              ? "ready_for_operator_approval"
-              : "needs_system_fix",
+            // Community posts (Quora/Reddit) must never start ready with a
+            // direct affiliate link copied from the source — they need
+            // indirect-link adaptation first, so force them to needs_system_fix.
+            status:
+              validation.validationStatus === "valid" &&
+              !COMMUNITY_POST_PLATFORMS.includes(platform)
+                ? "ready_for_operator_approval"
+                : "needs_system_fix",
             validation_status: validation.validationStatus,
             blocking_reasons: validation.blockingReasons,
           })
@@ -787,7 +803,7 @@ export async function addMissingPostsForAllProductsAction() {
       const existingPlatforms = new Set(existing.map((fc) => `${fc.platform}::${fc.language ?? "en"}`))
 
       for (const [lang, template] of templateByLang) {
-        for (const platform of NORMAL_POST_PLATFORMS) {
+        for (const platform of ALL_POST_PLATFORMS) {
           const key = `${platform}::${lang}`
           if (existingPlatforms.has(key)) continue
 
@@ -849,9 +865,11 @@ export async function addMissingPostsForAllProductsAction() {
               body: template.body,
               content_hash: fcContentHash,
               version: 1,
-              status: validation.validationStatus === "valid"
-                ? "ready_for_operator_approval"
-                : "needs_system_fix",
+              status:
+                validation.validationStatus === "valid" &&
+                !COMMUNITY_POST_PLATFORMS.includes(platform)
+                  ? "ready_for_operator_approval"
+                  : "needs_system_fix",
               validation_status: validation.validationStatus,
               blocking_reasons: validation.blockingReasons,
             })

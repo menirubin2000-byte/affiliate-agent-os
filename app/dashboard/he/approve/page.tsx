@@ -239,7 +239,7 @@ export default async function HebrewApprovePage(props: {
           <div>
             <CardTitle className="text-blue-700 dark:text-blue-300">הוספת פלטפורמות חסרות לכל המוצרים</CardTitle>
             <CardDescription>
-              יוצר פוסטים חדשים לכל הפלטפורמות החסרות (Facebook, Instagram, LinkedIn, Medium, Substack, Pinterest, X) לכל מוצר שכבר יש לו לפחות פוסט אחד.
+              יוצר פוסטים חדשים לכל הפלטפורמות החסרות (Facebook, Instagram, LinkedIn, Medium, Substack, Pinterest, X, YouTube, TikTok, Quora, Reddit) לכל מוצר שכבר יש לו לפחות פוסט אחד.
             </CardDescription>
           </div>
           <form action={addMissingPostsForAllProductsAction}>

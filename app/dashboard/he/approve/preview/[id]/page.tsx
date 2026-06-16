@@ -335,11 +335,11 @@ export default async function PreviewPage({
         <form action={addMissingPlatformPostsAction}>
           <input type="hidden" name="productId" value={fc.product_id} />
           <Button type="submit" variant="default" size="sm">
-            הוסף פוסטים חסרים לפלטפורמות רגילות בלבד
+            הוסף פוסטים חסרים לכל הפלטפורמות
           </Button>
         </form>
         <p className="w-full text-xs text-blue-700 dark:text-blue-300">
-          לא יוצר Quora/Reddit ולא יוצר YouTube/TikTok. אלה קטגוריות נפרדות.
+          יוצר את כל הפלטפורמות החסרות — כולל YouTube/TikTok ו-Quora/Reddit. פוסטים שדורשים וידאו או ניסוח בלי קישור ישיר ייווצרו כטיוטה לתיקון (needs_system_fix) במקום להידלג.
         </p>
       </div>
 
