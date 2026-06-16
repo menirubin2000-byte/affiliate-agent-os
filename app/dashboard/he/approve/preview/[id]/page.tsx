@@ -17,6 +17,7 @@ import {
   deleteProductVideoAction,
   addMissingPlatformPostsAction,
   createTranslatedFinalCopyAction,
+  markPublishedByOperatorAction,
 } from "../../actions"
 import { VideoUploadClient } from "./video-upload-client"
 
@@ -131,6 +132,14 @@ export default async function PreviewPage({
       ) : sp.approved === "translated_created" ? (
         <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
           נוצרה גרסה מתורגמת לשפה השנייה. לא נוצר פרסום ולא נוצר publish job.
+        </div>
+      ) : sp.approved === "marked_published" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          ✓ סומן כפורסם על ידי מני. הפוסט יצא מתור הפרסום ולא יתפרסם שוב.
+        </div>
+      ) : sp.approved === "already_published" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          הפוסט כבר מסומן כפורסם.
         </div>
       ) : null}
 
@@ -291,6 +300,35 @@ export default async function PreviewPage({
           </Button>
         </form>
       </div>
+
+      {fc.status === "published_verified" ? (
+        <div className="rounded-lg border border-green-400 bg-green-50 p-4 text-sm font-semibold text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300">
+          ✓ פוסט זה מסומן כפורסם. הוא לא בתור הפרסום ולא יתפרסם שוב.
+        </div>
+      ) : (
+        <form
+          action={markPublishedByOperatorAction}
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-4 dark:bg-green-950 dark:border-green-800"
+        >
+          <input type="hidden" name="finalCopyId" value={fc.id} />
+          <h3 className="w-full text-sm font-bold text-green-800 dark:text-green-300">
+            פרסמת את הפוסט הזה ידנית?
+          </h3>
+          <p className="w-full text-xs text-green-700 dark:text-green-400">
+            לחיצה תסמן אותו כפורסם — הוא יצא מתור הפרסום ולא יתפרסם שוב. אפשר להדביק את קישור הפוסט (לא חובה).
+          </p>
+          <input
+            type="url"
+            name="liveUrl"
+            dir="ltr"
+            placeholder="קישור לפוסט שפרסמת (אופציונלי)"
+            className="min-w-0 flex-1 rounded border bg-background px-3 py-2 text-sm"
+          />
+          <Button type="submit" size="lg" variant="default">
+            ✓ פורסם על ידי מני
+          </Button>
+        </form>
+      )}
 
       <div className="flex flex-wrap gap-3 rounded-lg border border-blue-300 bg-blue-50 p-4 dark:bg-blue-950 dark:border-blue-800">
         <h3 className="w-full text-sm font-bold text-blue-700 dark:text-blue-300">הוספת פלטפורמות חסרות</h3>
