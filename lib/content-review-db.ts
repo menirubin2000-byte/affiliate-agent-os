@@ -219,10 +219,60 @@ export async function approveFinalCopy(finalCopyId: string): Promise<FinalCopy> 
   // params not present verbatim in the body. Trust the stored validation
   // result; the operator is the human gate on top of it.
   if (finalCopy.validation_status !== "valid") {
-    const reasons = Array.isArray(finalCopy.blocking_reasons)
-      ? (finalCopy.blocking_reasons as string[]).join(", ")
-      : String(finalCopy.validation_status ?? "blocked")
-    throw new Error(`Cannot approve invalid final copy: ${reasons}`)
+    const blockingReasons = Array.isArray(finalCopy.blocking_reasons)
+      ? (finalCopy.blocking_reasons as string[])
+      : []
+    const canRepairDisclosureOnly =
+      blockingReasons.length === 1 && blockingReasons[0] === "missingDisclosure"
+
+    if (!canRepairDisclosureOnly) {
+      const reasons = blockingReasons.length
+        ? blockingReasons.join(", ")
+        : String(finalCopy.validation_status ?? "blocked")
+      throw new Error(`Cannot approve invalid final copy: ${reasons}`)
+    }
+
+    const language = finalCopy.language === "he" ? "he" : "en"
+    const trimmedBody = String(finalCopy.body ?? "").trim()
+    const disclosure =
+      language === "he"
+        ? "גילוי נאות: הפוסט כולל קישור שותפים, ואם תרכשו דרכו ייתכן שאקבל עמלה ללא עלות נוספת עבורכם."
+        : "Affiliate disclosure: This post includes an affiliate link. If you buy through it, I may earn a commission at no extra cost to you."
+    const repairedBody =
+      trimmedBody.toLowerCase().includes("affiliate disclosure") || trimmedBody.includes("גילוי נאות")
+        ? trimmedBody
+        : `${disclosure}\n\n${trimmedBody}`
+    const repairedValidation = validateFinalCopyForPlatform({
+      body: repairedBody,
+      platform: finalCopy.platform,
+      finalAffiliateLink: finalCopy.affiliate_link ?? undefined,
+      language,
+    })
+
+    if (repairedValidation.validationStatus !== "valid") {
+      throw new Error(`Cannot approve invalid final copy: ${repairedValidation.blockingReasons.join(", ")}`)
+    }
+
+    const repairedHash = buildFinalContentHash({
+      productId: finalCopy.product_id,
+      sourceContentId: finalCopy.source_content_id,
+      adaptationId: finalCopy.platform_adaptation_id,
+      platform: finalCopy.platform,
+      title: finalCopy.title,
+      body: repairedBody,
+    })
+
+    const { error: repairError } = await supabase
+      .from("final_copies")
+      .update({
+        body: repairedBody,
+        content_hash: repairedHash,
+        validation_status: "valid",
+        blocking_reasons: [],
+      })
+      .eq("id", finalCopyId)
+
+    if (repairError) throw new Error(`Unable to repair final copy disclosure: ${repairError.message}`)
   }
 
   const { data: updated, error: updateError } = await supabase

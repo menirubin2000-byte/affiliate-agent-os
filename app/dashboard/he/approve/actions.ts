@@ -66,6 +66,19 @@ function languageLabel(language: "en" | "he") {
   return language === "he" ? "Hebrew" : "English"
 }
 
+function ensureAffiliateDisclosure(body: string, language: "en" | "he") {
+  const trimmed = body.trim()
+  const lower = trimmed.toLowerCase()
+  if (lower.includes("affiliate disclosure") || trimmed.includes("גילוי נאות")) return trimmed
+
+  const disclosure =
+    language === "he"
+      ? "גילוי נאות: הפוסט כולל קישור שותפים, ואם תרכשו דרכו ייתכן שאקבל עמלה ללא עלות נוספת עבורכם."
+      : "Affiliate disclosure: This post includes an affiliate link. If you buy through it, I may earn a commission at no extra cost to you."
+
+  return `${disclosure}\n\n${trimmed}`
+}
+
 async function translateFinalCopyText(input: {
   title: string
   body: string
@@ -818,6 +831,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       existing.find((fc) => NORMAL_POST_PLATFORM_SET.has(fc.platform)) ??
       existing[0]
     if (!template?.body || !template.source_content_id) fail("no_source_copy_for_selected_platform")
+    const body = ensureAffiliateDisclosure(template.body, language)
 
     let sourceContentId = template.source_content_id
     let adaptationId = template.platform_adaptation_id
@@ -835,7 +849,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       adaptationId = existingAdaptation.id
       sourceContentId = existingAdaptation.source_content_id
     } else {
-      const adaptationHash = hashCampaignContent([productId, sourceContentId, platform, language, template.body])
+      const adaptationHash = hashCampaignContent([productId, sourceContentId, platform, language, body])
       const { data: newAdaptation, error: adaptError } = await supabase
         .from("platform_adaptations")
         .insert({
@@ -843,7 +857,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
           product_id: productId,
           platform,
           title: template.title ?? "",
-          body: template.body,
+          body,
           content_hash: adaptationHash,
           campaign_approval_status: "campaign_approved",
         })
@@ -884,7 +898,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
     })
 
     const validation = validateFinalCopyForPlatform({
-      body: template.body,
+      body,
       platform,
       finalAffiliateLink: template.affiliate_link ?? undefined,
       language,
@@ -901,7 +915,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       adaptationId,
       platform,
       language,
-      template.body,
+      body,
     ])
 
     const { data: created, error: insertError } = await supabase
@@ -915,7 +929,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
         platform,
         language,
         title: template.title ?? "",
-        body: template.body,
+        body,
         content_hash: contentHash,
         version: nextVersion,
         status: ready ? "ready_for_operator_approval" : "needs_system_fix",
