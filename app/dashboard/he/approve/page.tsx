@@ -23,6 +23,7 @@ import {
   approveFinalCopyAction,
   rejectFinalCopyAction,
   requestFinalCopyFixAction,
+  addSelectedPlatformPostAction,
   addMissingPostsForAllProductsAction,
 } from "./actions"
 
@@ -63,6 +64,21 @@ type ReadyCandidate = {
   selectionSource: "aaos_signal" | "robin_traffic_engine" | "fallback"
 }
 
+type DirectPost = {
+  id: string
+  product_id: string
+  platform: string
+  language: string | null
+  status: string
+  products: { name: string } | { name: string }[] | null
+}
+
+type DirectPostGroup = {
+  productId: string
+  productName: string
+  posts: DirectPost[]
+}
+
 export default async function HebrewApprovePage(props: {
   searchParams: Promise<{ approved?: string; rejected?: string; fix?: string; error?: string }>
 }) {
@@ -101,20 +117,24 @@ export default async function HebrewApprovePage(props: {
   const supabase = getServiceRoleSupabase()
   const { data: allDirectPosts, error: directPostsError } = await supabase
     .from("final_copies")
-    .select("id, platform, language, status, products(name)")
+    .select("id, product_id, platform, language, status, products(name)")
     .in("status", ["ready_for_operator_approval", "operator_approved"])
     .order("updated_at", { ascending: false })
     .limit(200)
 
   const directPostsDebug = `query returned: ${allDirectPosts?.length ?? 'null'} posts, error: ${directPostsError?.message ?? 'none'}`
 
-  const directPostsByProduct = new Map<string, typeof allDirectPosts>()
-  for (const post of allDirectPosts ?? []) {
+  const directPostsByProduct = new Map<string, DirectPostGroup>()
+  for (const post of (allDirectPosts ?? []) as DirectPost[]) {
     const productRaw = post.products as unknown as { name: string } | { name: string }[] | null
     const name = Array.isArray(productRaw) ? productRaw[0]?.name ?? "?" : productRaw?.name ?? "?"
-    const existing = directPostsByProduct.get(name) ?? []
-    existing.push(post)
-    directPostsByProduct.set(name, existing)
+    const existing = directPostsByProduct.get(post.product_id) ?? {
+      productId: post.product_id,
+      productName: name,
+      posts: [],
+    }
+    existing.posts.push(post)
+    directPostsByProduct.set(post.product_id, existing)
   }
 
   try {
@@ -210,11 +230,49 @@ export default async function HebrewApprovePage(props: {
           {(allDirectPosts?.length ?? 0) === 0 ? (
             <p className="text-sm text-muted-foreground">אין פוסטים להצגה.</p>
           ) : (
-            Array.from(directPostsByProduct.entries()).map(([productName, posts]) => (
-              <div key={productName} className="space-y-2">
-                <h3 className="font-bold text-base border-b pb-1">{productName}</h3>
+            Array.from(directPostsByProduct.values()).map((group) => (
+              <div key={group.productId} className="space-y-2 rounded-lg border p-3">
+                <div className="flex flex-col gap-3 border-b pb-2 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <h3 className="font-bold text-base">{group.productName}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      בחר פלטפורמה חסרה או קיימת. אם היא קיימת - נפתח אותה לעריכה, אם חסרה - ניצור עותק חדש.
+                    </p>
+                  </div>
+                  <form action={addSelectedPlatformPostAction} className="flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="productId" value={group.productId} />
+                    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                      הוסף פלטפורמה
+                      <select
+                        name="platform"
+                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                        defaultValue="linkedin"
+                      >
+                        {PLATFORM_OPTIONS.map((platform) => (
+                          <option key={platform.key} value={platform.key}>
+                            {platform.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                      שפה
+                      <select
+                        name="language"
+                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                        defaultValue={group.posts.some((post) => post.language === "he") ? "he" : "en"}
+                      >
+                        <option value="he">עברית</option>
+                        <option value="en">English</option>
+                      </select>
+                    </label>
+                    <Button type="submit" size="sm">
+                      הוסף / פתח לעריכה
+                    </Button>
+                  </form>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {posts!.map((post) => (
+                  {group.posts.map((post) => (
                     <Link
                       key={post.id}
                       href={`/dashboard/he/approve/preview/${post.id}`}
@@ -437,6 +495,20 @@ const PLATFORM_LABELS: Record<string, string> = {
   reddit: "Reddit",
   quora: "Quora",
 }
+
+const PLATFORM_OPTIONS = [
+  { key: "facebook_page", label: "Facebook" },
+  { key: "instagram_professional", label: "Instagram" },
+  { key: "linkedin", label: "LinkedIn" },
+  { key: "medium", label: "Medium" },
+  { key: "substack", label: "Substack" },
+  { key: "pinterest", label: "Pinterest" },
+  { key: "x_twitter", label: "X / Twitter" },
+  { key: "youtube", label: "YouTube" },
+  { key: "tiktok", label: "TikTok" },
+  { key: "quora", label: "Quora" },
+  { key: "reddit", label: "Reddit" },
+]
 
 function InternalTrafficEngineBanner({
   connected,
