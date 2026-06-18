@@ -20,6 +20,7 @@ import { updateTaskStatusAction } from "@/app/dashboard/improvements/actions"
 import { AffiliateProgramList } from "@/components/affiliate-programs/affiliate-program-list"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { ClaudePromptHelper } from "@/components/products/claude-prompt-helper"
+import { YouTubeDistributionWorkflowCard } from "@/components/products/youtube-distribution-workflow-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button"
@@ -44,6 +45,8 @@ import {
 } from "@/lib/db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn, formatCurrency, formatDateTime, formatPercent, truncate } from "@/lib/utils"
+import { getYouTubeDistributionWorkflowByProductId } from "@/lib/youtube-distribution-workflow-db"
+import { buildYouTubeDistributionWorkflowView } from "@/lib/youtube-distribution-workflow"
 
 export const dynamic = "force-dynamic"
 
@@ -79,8 +82,10 @@ const signalVariantMap = {
 
 export default async function ProductWorkspacePage(props: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string; distributionSaved?: string }>
 }) {
   const { id } = await props.params
+  const searchParams = await props.searchParams
 
   if (!isSupabaseConfigured()) {
     return (
@@ -115,7 +120,7 @@ export default async function ProductWorkspacePage(props: {
     )
   }
 
-  const [drafts, records, tasks, campaignLinks, affiliatePrograms, allSignals, recommendations] = await Promise.all([
+  const [drafts, records, tasks, campaignLinks, affiliatePrograms, allSignals, recommendations, distributionWorkflow] = await Promise.all([
     listDraftsForProduct(id),
     listPerformanceRecordsForProduct(id),
     listImprovementTasksForProduct(id),
@@ -123,6 +128,7 @@ export default async function ProductWorkspacePage(props: {
     listAffiliateProgramsForProduct(id),
     getProductPerformanceSignals(),
     listRecommendations({ limit: 20 }),
+    getYouTubeDistributionWorkflowByProductId(id),
   ])
 
   const summary = buildProductWorkspaceSummary({ drafts, records, tasks })
@@ -142,6 +148,12 @@ export default async function ProductWorkspacePage(props: {
 
   const activeTasks = tasks.filter((t) => t.status === "open" || t.status === "in_progress")
   const activeCampaignLinks = campaignLinks.filter((l) => l.status === "active")
+  const youtubeDistributionView = buildYouTubeDistributionWorkflowView({
+    product,
+    workflow: distributionWorkflow,
+    campaignLinks,
+    records,
+  })
 
   return (
     <>
@@ -167,6 +179,28 @@ export default async function ProductWorkspacePage(props: {
           </div>
         }
       />
+
+      {searchParams.error ? (
+        <Card className="border-destructive/30 bg-destructive/5 shadow-sm">
+          <CardHeader>
+            <CardTitle>Workflow error</CardTitle>
+            <CardDescription className="text-destructive/80">
+              {searchParams.error}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
+
+      {searchParams.distributionSaved === "1" ? (
+        <Card className="border-emerald-200 bg-emerald-50 shadow-sm">
+          <CardHeader>
+            <CardTitle>YouTube workflow saved</CardTitle>
+            <CardDescription className="text-emerald-900/80">
+              The YouTube-first distribution workflow was updated for this product.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       {/* Summary card */}
       <Card className="border-border/70 bg-card/90 shadow-sm">
@@ -200,6 +234,12 @@ export default async function ProductWorkspacePage(props: {
           </div>
         </CardContent>
       </Card>
+
+      <YouTubeDistributionWorkflowCard
+        productId={product.id}
+        view={youtubeDistributionView}
+        campaignLinks={campaignLinks}
+      />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_400px]">
         {/* Left column */}
