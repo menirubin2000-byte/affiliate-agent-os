@@ -3,6 +3,7 @@ import {
   getInstagramOfficialApiCapability,
 } from "@/lib/meta-official-api"
 import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
+import { getCurrentPublishingSchedulePolicy } from "@/lib/publishing-schedule-policy-db"
 import {
   deriveScheduledPublishStatus,
   getPlatformQueuePriority,
@@ -326,6 +327,8 @@ async function createPublishJobForScheduledItem(item: ScheduledPublishItem) {
 
   const executorState = getPlatformGate(item.platform, Boolean(item.mediaAssetUrl))
   const status = executorState.executorReady ? "pending_operator_confirmation" : "approved_waiting_executor"
+  const policy = await getCurrentPublishingSchedulePolicy()
+  const notes = schedulePolicyNotes(item.platform, policy)
   const { data, error } = await supabase
     .from("publish_jobs")
     .insert({
@@ -337,9 +340,9 @@ async function createPublishJobForScheduledItem(item: ScheduledPublishItem) {
       blocking_reason: null,
       approval_id: item.approvalId,
       scheduled_at: item.publishAt,
-      schedule_policy_version: schedulePolicyNotes(item.platform)[0].replace("policy=", ""),
+      schedule_policy_version: notes[0].replace("policy=", ""),
       schedule_notes: [
-        ...schedulePolicyNotes(item.platform),
+        ...notes,
         `platform_priority_reason=${getPlatformQueuePriorityReason(item.platform)}`,
       ],
       live_url: null,
@@ -384,6 +387,7 @@ async function planPublishAt(finalCopy: Pick<FinalCopyScheduleRow, "id" | "produ
       .eq("verification_status", "verified"),
   ])
 
+  const policy = await getCurrentPublishingSchedulePolicy()
   return planScheduledPublishTime({
     productId: finalCopy.product_id,
     platform: finalCopy.platform,
@@ -398,6 +402,7 @@ async function planPublishAt(finalCopy: Pick<FinalCopyScheduleRow, "id" | "produ
       platform: row.platform,
       publishedAt: row.verified_at,
     })),
+    policy,
   }).scheduledAt
 }
 

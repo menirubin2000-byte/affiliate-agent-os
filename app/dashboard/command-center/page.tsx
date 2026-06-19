@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Command,
   FileText,
+  Settings,
   ShieldAlert,
 } from "lucide-react"
 
@@ -179,6 +180,13 @@ export default async function CommandCenterPage({
         description="One advisory surface for the next manual operator actions across products, drafts, campaigns, performance, quality, recommendations, and improvements."
         actions={
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/settings"
+              className={cn(buttonVariants({ variant: "default" }))}
+            >
+              <Settings className="size-4" />
+              Publishing Policy Settings
+            </Link>
             <Link
               href="/dashboard/data-quality"
               className={cn(buttonVariants({ variant: "outline" }))}

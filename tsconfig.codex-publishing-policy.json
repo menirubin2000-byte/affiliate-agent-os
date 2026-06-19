@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "app/dashboard/settings/actions.ts",
+    "app/dashboard/settings/page.tsx",
+    "app/dashboard/command-center/page.tsx",
+    "app/dashboard/he/schedule/page.tsx",
+    "lib/publishing-schedule-policy.ts",
+    "lib/publishing-schedule-policy-db.ts",
+    "lib/production-publishing-scheduler.ts",
+    "lib/scheduled-publish-queue-db.ts",
+    "tests/publishing-schedule-policy.test.ts"
+  ]
+}

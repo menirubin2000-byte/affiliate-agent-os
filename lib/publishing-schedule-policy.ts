@@ -2,9 +2,44 @@ import type { CampaignPlatform } from "@/types/campaign-workflow"
 
 export const PUBLISHING_SCHEDULE_POLICY_VERSION = "2026-06-08-v1"
 
-export const PUBLISHING_SCHEDULE_POLICY = {
+export type PublishingSchedulePolicyConfig = {
+  version: string
+  minimumTargetPostsPerDayPerActivePlatform: number
+  platformDailyTargets: Partial<Record<CampaignPlatform, number>>
+  samePlatformMinimumGapMinutes: number
+  globalMinimumGapMinutes: number
+  rotateProducts: boolean
+  oneProductPerPlatformPerDay: boolean
+  noPublishingWithoutMeniApproval: true
+  pinterestPinsPerDay: { min: number; max: number }
+  xTwitterPostsPerDay: { min: number; max: number }
+  youtubeVideosPerDay: number
+  videoOnlyPlatforms: CampaignPlatform[]
+  longFormPlatforms: CampaignPlatform[]
+  longFormDailyCapIfQualityDrops: number
+  redditQuoraManualOnly: boolean
+  mediumManualBrowserOnly: boolean
+  notes: string
+}
+
+export const DEFAULT_PLATFORM_DAILY_TARGETS: Record<CampaignPlatform, number> = {
+  linkedin: 2,
+  facebook_page: 2,
+  instagram_professional: 2,
+  pinterest: 5,
+  x_twitter: 3,
+  medium: 2,
+  substack: 2,
+  tiktok: 1,
+  youtube: 1,
+  quora: 0,
+  reddit: 0,
+}
+
+export const PUBLISHING_SCHEDULE_POLICY: PublishingSchedulePolicyConfig = {
   version: PUBLISHING_SCHEDULE_POLICY_VERSION,
   minimumTargetPostsPerDayPerActivePlatform: 2,
+  platformDailyTargets: DEFAULT_PLATFORM_DAILY_TARGETS,
   samePlatformMinimumGapMinutes: 4 * 60,
   globalMinimumGapMinutes: 15,
   rotateProducts: true,
@@ -12,12 +47,17 @@ export const PUBLISHING_SCHEDULE_POLICY = {
   noPublishingWithoutMeniApproval: true,
   pinterestPinsPerDay: { min: 5, max: 10 },
   xTwitterPostsPerDay: { min: 3, max: 5 },
-  videoOnlyPlatforms: ["tiktok", "youtube"] satisfies CampaignPlatform[],
-  longFormPlatforms: ["medium", "substack"] satisfies CampaignPlatform[],
+  youtubeVideosPerDay: 1,
+  videoOnlyPlatforms: ["tiktok", "youtube"],
+  longFormPlatforms: ["medium", "substack"],
   longFormDailyCapIfQualityDrops: 1,
-} as const
+  redditQuoraManualOnly: true,
+  mediumManualBrowserOnly: true,
+  notes:
+    "No publishing before MENI approval. Reddit and Quora stay manual/community-safe. Medium can use manual browser flow when extension flow is not appropriate.",
+}
 
-export type PublishingSchedulePolicy = typeof PUBLISHING_SCHEDULE_POLICY
+export type PublishingSchedulePolicy = PublishingSchedulePolicyConfig
 
 export type ScheduleStatus =
   | "approved_waiting_executor"
@@ -46,6 +86,7 @@ export type SchedulePlanInput = {
   existingJobs?: ScheduledPublishItem[]
   publishedRecords?: PublishedItem[]
   longFormQualityDrops?: boolean
+  policy?: PublishingSchedulePolicy
 }
 
 export type SchedulePlan = {
@@ -71,20 +112,35 @@ export function platformRequiresVideo(platform: CampaignPlatform): boolean {
 
 export function getPlatformDailyPolicy(
   platform: CampaignPlatform,
-  options: { longFormQualityDrops?: boolean } = {},
+  options: { longFormQualityDrops?: boolean; policy?: PublishingSchedulePolicy } = {},
 ): { targetMin: number; targetMax: number | null; note: string } {
+  const policy = options.policy ?? PUBLISHING_SCHEDULE_POLICY
   if (platform === "pinterest") {
     return {
-      targetMin: PUBLISHING_SCHEDULE_POLICY.pinterestPinsPerDay.min,
-      targetMax: PUBLISHING_SCHEDULE_POLICY.pinterestPinsPerDay.max,
-      note: "Pinterest may publish 5-10 Pins/day after MENI approval.",
+      targetMin: policy.pinterestPinsPerDay.min,
+      targetMax: policy.pinterestPinsPerDay.max,
+      note: `Pinterest may publish ${policy.pinterestPinsPerDay.min}-${policy.pinterestPinsPerDay.max} Pins/day after MENI approval.`,
     }
   }
   if (platform === "x_twitter") {
     return {
-      targetMin: PUBLISHING_SCHEDULE_POLICY.xTwitterPostsPerDay.min,
-      targetMax: PUBLISHING_SCHEDULE_POLICY.xTwitterPostsPerDay.max,
-      note: "X/Twitter may publish 3-5 posts/day when connected.",
+      targetMin: policy.xTwitterPostsPerDay.min,
+      targetMax: policy.xTwitterPostsPerDay.max,
+      note: `X/Twitter may publish ${policy.xTwitterPostsPerDay.min}-${policy.xTwitterPostsPerDay.max} posts/day when connected.`,
+    }
+  }
+  if (platform === "youtube") {
+    return {
+      targetMin: policy.youtubeVideosPerDay,
+      targetMax: policy.youtubeVideosPerDay,
+      note: `YouTube target is ${policy.youtubeVideosPerDay}/day and still requires a real video asset plus MENI approval.`,
+    }
+  }
+  if ((platform === "reddit" || platform === "quora") && policy.redditQuoraManualOnly) {
+    return {
+      targetMin: policy.platformDailyTargets[platform] ?? 0,
+      targetMax: policy.platformDailyTargets[platform] ?? 0,
+      note: `${platform === "reddit" ? "Reddit" : "Quora"} is manual-only; this target is advisory and never auto-posts.`,
     }
   }
   if (
@@ -93,30 +149,33 @@ export function getPlatformDailyPolicy(
   ) {
     return {
       targetMin: 1,
-      targetMax: PUBLISHING_SCHEDULE_POLICY.longFormDailyCapIfQualityDrops,
-      note: "Medium/Substack are capped at 1/day when long-form quality drops.",
+      targetMax: policy.longFormDailyCapIfQualityDrops,
+      note: `Medium/Substack are capped at ${policy.longFormDailyCapIfQualityDrops}/day when long-form quality drops.`,
     }
   }
+  const target = policy.platformDailyTargets[platform] ?? policy.minimumTargetPostsPerDayPerActivePlatform
   return {
-    targetMin: PUBLISHING_SCHEDULE_POLICY.minimumTargetPostsPerDayPerActivePlatform,
+    targetMin: target,
     targetMax: null,
-    note: "Default active-platform target is at least 2 posts/day.",
+    note: `Default active-platform target is at least ${target} post${target === 1 ? "" : "s"}/day.`,
   }
 }
 
-export function listPublishingScheduleRules(): Array<{ title: string; description: string }> {
+export function listPublishingScheduleRules(
+  policy: PublishingSchedulePolicy = PUBLISHING_SCHEDULE_POLICY,
+): Array<{ title: string; description: string }> {
   return [
     {
       title: "Minimum target",
-      description: "2 posts per day per active platform.",
+      description: `${policy.minimumTargetPostsPerDayPerActivePlatform} posts per day per active platform by default.`,
     },
     {
       title: "Same-platform spacing",
-      description: "Never schedule two items on the same platform at the same time; keep at least 4 hours between posts on the same platform.",
+      description: `Never schedule two items on the same platform at the same time; keep at least ${policy.samePlatformMinimumGapMinutes} minutes between posts on the same platform.`,
     },
     {
       title: "Global spacing",
-      description: "Keep at least 15 minutes between any two posts across all platforms.",
+      description: `Keep at least ${policy.globalMinimumGapMinutes} minutes between any two posts across all platforms.`,
     },
     {
       title: "Product rotation",
@@ -128,7 +187,7 @@ export function listPublishingScheduleRules(): Array<{ title: string; descriptio
     },
     {
       title: "Platform targets",
-      description: "Pinterest: 5-10 Pins/day. X/Twitter: 3-5/day when connected. Medium/Substack can cap at 1/day if long-form quality drops.",
+      description: `Pinterest: ${policy.pinterestPinsPerDay.min}-${policy.pinterestPinsPerDay.max} Pins/day. X/Twitter: ${policy.xTwitterPostsPerDay.min}-${policy.xTwitterPostsPerDay.max}/day. YouTube: ${policy.youtubeVideosPerDay}/day. Medium/Substack can cap at ${policy.longFormDailyCapIfQualityDrops}/day if long-form quality drops.`,
     },
     {
       title: "Media and approval gates",
@@ -138,21 +197,23 @@ export function listPublishingScheduleRules(): Array<{ title: string; descriptio
 }
 
 export function planNextPublishSlot(input: SchedulePlanInput): SchedulePlan {
+  const policy = input.policy ?? PUBLISHING_SCHEDULE_POLICY
   const now = input.now ?? new Date()
   const dailyPolicy = getPlatformDailyPolicy(input.platform, {
     longFormQualityDrops: input.longFormQualityDrops,
+    policy,
   })
   const activeJobs = (input.existingJobs ?? []).filter((job) =>
     job.scheduledAt && (!job.status || ACTIVE_SCHEDULE_STATUSES.has(job.status)),
   )
   const publishedRecords = (input.publishedRecords ?? []).filter((record) => record.publishedAt)
   const reasons = [
-    `policy=${PUBLISHING_SCHEDULE_POLICY_VERSION}`,
+    `policy=${policy.version}`,
     `daily_target_min=${dailyPolicy.targetMin}`,
   ]
   if (dailyPolicy.targetMax !== null) reasons.push(`daily_target_max=${dailyPolicy.targetMax}`)
 
-  let candidate = roundUpToMinute(new Date(now.getTime() + PUBLISHING_SCHEDULE_POLICY.globalMinimumGapMinutes * MINUTE_MS))
+  let candidate = roundUpToMinute(new Date(now.getTime() + policy.globalMinimumGapMinutes * MINUTE_MS))
   const searchLimit = new Date(now.getTime() + 45 * DAY_MS)
 
   while (candidate <= searchLimit) {
@@ -189,13 +250,17 @@ export function planNextPublishSlot(input: SchedulePlanInput): SchedulePlan {
         job.platform === input.platform &&
         job.scheduledAt &&
         Math.abs(new Date(job.scheduledAt).getTime() - candidate.getTime()) <
-          PUBLISHING_SCHEDULE_POLICY.samePlatformMinimumGapMinutes * MINUTE_MS,
+          policy.samePlatformMinimumGapMinutes * MINUTE_MS,
     )
     if (samePlatformConflict?.scheduledAt) {
       candidate = roundUpToMinute(
-        new Date(new Date(samePlatformConflict.scheduledAt).getTime() + PUBLISHING_SCHEDULE_POLICY.samePlatformMinimumGapMinutes * MINUTE_MS),
+        new Date(new Date(samePlatformConflict.scheduledAt).getTime() + policy.samePlatformMinimumGapMinutes * MINUTE_MS),
       )
-      reasons.push("same_platform_gap_4h")
+      reasons.push(
+        policy.samePlatformMinimumGapMinutes === 240
+          ? "same_platform_gap_4h"
+          : `same_platform_gap_${policy.samePlatformMinimumGapMinutes}m`,
+      )
       continue
     }
 
@@ -203,13 +268,13 @@ export function planNextPublishSlot(input: SchedulePlanInput): SchedulePlan {
       (job) =>
         job.scheduledAt &&
         Math.abs(new Date(job.scheduledAt).getTime() - candidate.getTime()) <
-          PUBLISHING_SCHEDULE_POLICY.globalMinimumGapMinutes * MINUTE_MS,
+          policy.globalMinimumGapMinutes * MINUTE_MS,
     )
     if (globalConflict?.scheduledAt) {
       candidate = roundUpToMinute(
-        new Date(new Date(globalConflict.scheduledAt).getTime() + PUBLISHING_SCHEDULE_POLICY.globalMinimumGapMinutes * MINUTE_MS),
+        new Date(new Date(globalConflict.scheduledAt).getTime() + policy.globalMinimumGapMinutes * MINUTE_MS),
       )
-      reasons.push("global_gap_15m")
+      reasons.push(`global_gap_${policy.globalMinimumGapMinutes}m`)
       continue
     }
 

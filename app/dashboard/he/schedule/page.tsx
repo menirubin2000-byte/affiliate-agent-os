@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Pause, Play, RotateCw, Zap } from "lucide-react"
 
 import {
@@ -8,12 +9,12 @@ import {
 } from "@/app/dashboard/he/schedule/actions"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { comparePlatformQueuePriority, getPlatformQueuePriorityReason } from "@/lib/production-publishing-scheduler"
 import { listScheduledPublishQueue, summarizeScheduledPublishQueue } from "@/lib/scheduled-publish-queue-db"
-import { formatDateTime } from "@/lib/utils"
+import { cn, formatDateTime } from "@/lib/utils"
 import type { ScheduledPublishItem, ScheduledPublishStatus } from "@/types/scheduled-publish"
 
 export const dynamic = "force-dynamic"
@@ -64,6 +65,11 @@ export default async function HebrewSchedulePage(props: {
         eyebrow="Production Scheduler"
         title="תור תזמון פרסום"
         description="פוסטים שאושרו על ידי MENI נכנסים לכאן. publish_job נוצר רק כשהגיע זמן הפרסום והפלטפורמה מוכנה."
+        actions={
+          <Link href="/dashboard/settings" className={cn(buttonVariants({ variant: "outline" }))}>
+            Publishing Policy Settings
+          </Link>
+        }
       />
 
       {params.error ? <Notice tone="error" title="שגיאה" description={params.error} /> : null}

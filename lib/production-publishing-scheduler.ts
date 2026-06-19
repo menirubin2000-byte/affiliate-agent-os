@@ -2,6 +2,7 @@ import { evaluatePlatformMediaReadiness } from "@/lib/platform-media-rules"
 import {
   PUBLISHING_SCHEDULE_POLICY_VERSION,
   planNextPublishSlot,
+  type PublishingSchedulePolicy,
   type PublishedItem,
   type ScheduledPublishItem as SchedulePolicyItem,
 } from "@/lib/publishing-schedule-policy"
@@ -114,13 +115,14 @@ export function planScheduledPublishTime(input: {
   existingQueue: SchedulePolicyItem[]
   publishedRecords: PublishedItem[]
   now?: Date
+  policy?: PublishingSchedulePolicy
 }) {
   const existingJobs = input.existingQueue.map((item) => ({
       ...item,
       status: normalizeQueueStatusForSchedulePolicy(item.status),
     }))
   let searchFrom = input.now ?? new Date()
-  const capacity = PLATFORM_DAILY_CAPACITY[input.platform]
+  const capacity = getPlatformDailyCapacity(input.platform, input.policy)
 
   for (let attempt = 0; attempt < 70; attempt += 1) {
     const plan = planNextPublishSlot({
@@ -129,6 +131,7 @@ export function planScheduledPublishTime(input: {
       existingJobs,
       publishedRecords: input.publishedRecords,
       now: searchFrom,
+      policy: input.policy,
     })
     const day = plan.scheduledAt.slice(0, 10)
     const platformItemsToday = existingJobs.filter(
@@ -148,7 +151,24 @@ export function planScheduledPublishTime(input: {
     existingJobs,
     publishedRecords: input.publishedRecords,
     now: searchFrom,
+    policy: input.policy,
   })
+}
+
+function getPlatformDailyCapacity(platform: CampaignPlatform, policy?: PublishingSchedulePolicy) {
+  if (!policy) return PLATFORM_DAILY_CAPACITY[platform]
+  if (platform === "pinterest") return policy.pinterestPinsPerDay
+  if (platform === "x_twitter") return policy.xTwitterPostsPerDay
+  if (platform === "youtube") return { min: policy.youtubeVideosPerDay, max: policy.youtubeVideosPerDay }
+  if (platform === "medium" || platform === "substack") {
+    const target = policy.platformDailyTargets[platform] ?? policy.minimumTargetPostsPerDayPerActivePlatform
+    return {
+      min: Math.min(target, policy.longFormDailyCapIfQualityDrops),
+      max: policy.longFormDailyCapIfQualityDrops,
+    }
+  }
+  const target = policy.platformDailyTargets[platform] ?? policy.minimumTargetPostsPerDayPerActivePlatform
+  return { min: target, max: target }
 }
 
 function normalizeQueueStatusForSchedulePolicy(status?: string | null) {
@@ -182,16 +202,17 @@ export function isQueueStatusMaterializable(status: ScheduledPublishStatus) {
   return status === "ready_to_publish" || status === "scheduled" || status === "waiting_executor"
 }
 
-export function schedulePolicyNotes(platform: CampaignPlatform) {
-  const capacity = PLATFORM_DAILY_CAPACITY[platform]
+export function schedulePolicyNotes(platform: CampaignPlatform, policy?: PublishingSchedulePolicy) {
+  const capacity = getPlatformDailyCapacity(platform, policy)
   const queuePriority = PLATFORM_QUEUE_PRIORITY[platform]
   return [
-    `policy=${PUBLISHING_SCHEDULE_POLICY_VERSION}`,
+    `policy=${policy?.version ?? PUBLISHING_SCHEDULE_POLICY_VERSION}`,
     `platform_priority=${getPlatformQueuePriority(platform)}`,
     queuePriority ? `platform_priority_label=${queuePriority.label}` : "platform_priority_label=default",
     capacity ? `daily_capacity=${capacity.min}-${capacity.max}` : "daily_capacity=default",
-    "same_platform_gap=240m",
-    "global_gap=15m",
-    "rotate_products=true",
+    `same_platform_gap=${policy?.samePlatformMinimumGapMinutes ?? 240}m`,
+    `global_gap=${policy?.globalMinimumGapMinutes ?? 15}m`,
+    `rotate_products=${policy?.rotateProducts ?? true}`,
+    `meni_approval_required=${policy?.noPublishingWithoutMeniApproval ?? true}`,
   ]
 }
