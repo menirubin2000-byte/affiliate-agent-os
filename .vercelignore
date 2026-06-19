@@ -1,0 +1,25 @@
+.git
+.next
+node_modules
+
+# Local operator media/raw captures. Assets used by the app are stored in Supabase Storage.
+תמונות מוצרים
+media
+tmp
+
+# Large local artifacts.
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.zip
+*.tgz
+*.tar
+*.7z
+*.rar
+
+# Local-only logs and exports.
+*.log
+*.tmp
+audit-out.txt

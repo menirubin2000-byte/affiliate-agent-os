@@ -1,7 +1,7 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 
-type ActivePage = "home" | "software" | "products" | "terms" | "privacy" | "accessibility"
+type ActivePage = "home" | "software" | "products" | "guides" | "terms" | "privacy" | "accessibility"
 
 export function PublicSiteShell({
   active,
@@ -26,6 +26,11 @@ export function PublicSiteShell({
             <li>
               <Link href="/products" className={active === "products" ? "font-semibold text-slate-950" : "hover:text-slate-950"}>
                 מוצרים
+              </Link>
+            </li>
+            <li>
+              <Link href="/guides" className={active === "guides" ? "font-semibold text-slate-950" : "hover:text-slate-950"}>
+                Guides
               </Link>
             </li>
             <li>

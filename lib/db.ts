@@ -996,6 +996,7 @@ export async function createProduct(input: CreateProductInput) {
       slug: normalizedSlug,
       brand: input.brand?.trim() || null,
       category: input.category?.trim() || null,
+      affiliate_link: input.affiliateLink?.trim() || affiliateUrl,
       affiliate_url: affiliateUrl,
       price: input.price ?? null,
       commission_rate: input.commissionRate ?? null,

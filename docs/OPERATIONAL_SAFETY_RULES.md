@@ -30,6 +30,10 @@ final_copy
 
 ## Platform Rules
 
+- New platform copy must be based on an existing `final_copies` row for the same product and language when one exists.
+- Do not invent a new structure or placeholder copy for a platform if usable product copy already exists.
+- If no source copy exists for that product/language, report that the source is missing and get explicit approval before writing new copy.
+- Placeholder instructions such as "video structure" are not valid final copy.
 - Quora: no direct affiliate links.
 - Reddit: verify subreddit/community rules before publish readiness.
 - TikTok: video/script only, no text-post publishing.

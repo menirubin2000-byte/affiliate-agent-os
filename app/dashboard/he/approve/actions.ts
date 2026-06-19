@@ -12,6 +12,7 @@ import {
 } from "@/lib/content-review-db"
 import { validateFinalCopyForPlatform } from "@/lib/content-review"
 import { assertIntegrationConfigured } from "@/lib/env"
+import { recordVerifiedManualPublishForFinalCopy } from "@/lib/manual-publish-reconciliation"
 import { requiresImageForPost, requiresVideoForPost } from "@/lib/post-media-policy"
 import { getServiceRoleSupabase } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
@@ -239,62 +240,14 @@ export async function markPublishedByOperatorAction(formData: FormData) {
   const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
   const liveUrlInput = String(formData.get("liveUrl") ?? "").trim()
   if (!finalCopyId) fail("missing_final_copy_id")
+  if (!liveUrlInput) fail("missing_live_url")
 
   try {
     assertIntegrationConfigured("supabase")
-    const supabase = getServiceRoleSupabase()
-    const { data: fc, error: fcError } = await supabase
-      .from("final_copies")
-      .select(
-        "id, product_id, source_content_id, platform_adaptation_id, platform, media_asset_url, status",
-      )
-      .eq("id", finalCopyId)
-      .single()
-    if (fcError) fail(fcError.message)
-    if (!fc) fail("post_not_found")
-    if (fc.status === "published_verified") {
-      revalidatePath("/dashboard/he/approve")
-      redirect(`/dashboard/he/approve/preview/${finalCopyId}?approved=already_published`)
-    }
-
-    // Operator published this post manually (e.g. via LinkedIn). Record it so
-    // the system stops treating it as pending and never double-publishes.
-    // live_url is required by published_records and must be unique per
-    // platform; fall back to an honest manual marker when no URL is given.
-    const liveUrl = liveUrlInput || `manual-meni:${finalCopyId}`
-
-    // Best-effort published_records row for routing/dedup. The table only
-    // accepts the 6 community/long-form platforms, so for other platforms the
-    // insert is rejected and the final_copies status below is the source of
-    // truth. We intentionally ignore that error.
-    if (fc.source_content_id && fc.platform_adaptation_id) {
-      await supabase.from("published_records").upsert(
-        {
-          product_id: fc.product_id,
-          source_content_id: fc.source_content_id,
-          platform_adaptation_id: fc.platform_adaptation_id,
-          platform: fc.platform,
-          live_url: liveUrl,
-          verification_status: "verified",
-          verified_at: new Date().toISOString(),
-          final_copy_id: fc.id,
-          media_asset_url: fc.media_asset_url,
-          media_status: fc.media_asset_url ? "ready" : "not_required",
-          needs_media_repair: false,
-        },
-        { onConflict: "platform,live_url" },
-      )
-    }
-
-    const { error: updateError } = await supabase
-      .from("final_copies")
-      .update({
-        status: "published_verified",
-        approved_by: "MENI",
-        approved_at: new Date().toISOString(),
-      })
-      .eq("id", finalCopyId)
-    if (updateError) fail(updateError.message)
+    await recordVerifiedManualPublishForFinalCopy({
+      finalCopyId,
+      liveUrl: liveUrlInput,
+    })
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
     fail(error instanceof Error ? error.message : "mark_published_failed")

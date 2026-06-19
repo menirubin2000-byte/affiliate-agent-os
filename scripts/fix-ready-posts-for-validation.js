@@ -120,9 +120,7 @@ function rebuildBody({ originalBody, language, productName, finalLink }) {
     "",
     cta.heading,
     "",
-    lead,
-    "",
-    finalLink,
+    `${lead} ${finalLink}`,
   ].join("\n").replace(/\n{3,}/g, "\n\n").trim()
 }
 

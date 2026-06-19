@@ -110,7 +110,7 @@ export function evaluatePlatformPolicy(input: PolicyInput): PlatformPolicyCheck 
       platform: input.platform,
       status: "allowed",
       publishMode: "browser_helper",
-      notes: "Medium publishing is treated as permission-dependent. Browser helper/manual fallback is the safe default.",
+      notes: "Medium publishing is treated as permission-dependent and image-required. Every Medium post must include a real image before publish; browser helper/manual fallback is the safe default.",
       blocker: null,
     })
   }

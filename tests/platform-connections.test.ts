@@ -79,6 +79,7 @@ test("YouTube connection payload stores metadata without raw secrets or publishi
     connectedBy: "MENI",
     now: new Date("2026-06-06T10:00:00.000Z"),
     apiAccessReady: "false",
+    tokenEncryptionKey: "test-encryption-key",
   })
 
   const serialized = JSON.stringify(payload)
@@ -89,8 +90,10 @@ test("YouTube connection payload stores metadata without raw secrets or publishi
   assert.equal(payload.refresh_token_present, true)
   assert.equal(payload.metadata.channel_id, "UC123")
   assert.equal(payload.metadata.raw_token_stored, false)
-  assert.equal(payload.metadata.publishing_enabled, false)
+  assert.equal(payload.metadata.encrypted_token_stored, true)
+  assert.equal(payload.metadata.publishing_enabled, true)
   assert.equal(payload.metadata.video_required, true)
+  assert.equal(typeof payload.metadata.encrypted_refresh_token, "string")
   assert.equal(serialized.includes("raw-youtube-access-token"), false)
   assert.equal(serialized.includes("raw-youtube-refresh-token"), false)
   assert.equal(serialized.includes("publish_job"), false)

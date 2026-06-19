@@ -48,6 +48,7 @@ export interface FinalContentValidation {
     noInternalNotes: boolean
     noPersonalExperienceClaim: boolean
     noIncomeOrGuaranteeClaim: boolean
+    languageMatchesDeclared?: boolean
     mediaReady?: boolean
     imageReady?: boolean
     videoReady?: boolean

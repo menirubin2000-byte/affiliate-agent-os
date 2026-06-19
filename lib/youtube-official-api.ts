@@ -27,7 +27,7 @@ export type YouTubeOfficialApiCapability = {
   configured: boolean
   oauthAppConfigured: boolean
   requiredScopes: typeof YOUTUBE_REQUIRED_SCOPES
-  tokenStorage: "platform_connection_metadata_only"
+  tokenStorage: "encrypted_platform_connection_metadata"
   authorizeEndpoint: typeof YOUTUBE_AUTHORIZE_ENDPOINT
   tokenEndpoint: typeof YOUTUBE_TOKEN_ENDPOINT
   channelsEndpoint: typeof YOUTUBE_CHANNELS_ENDPOINT
@@ -114,7 +114,7 @@ export function getYouTubeOfficialApiCapability(
     configured: missingKeys.length === 0 && invalidReasons.length === 0,
     oauthAppConfigured,
     requiredScopes: YOUTUBE_REQUIRED_SCOPES,
-    tokenStorage: "platform_connection_metadata_only",
+    tokenStorage: "encrypted_platform_connection_metadata",
     authorizeEndpoint: YOUTUBE_AUTHORIZE_ENDPOINT,
     tokenEndpoint: YOUTUBE_TOKEN_ENDPOINT,
     channelsEndpoint: YOUTUBE_CHANNELS_ENDPOINT,

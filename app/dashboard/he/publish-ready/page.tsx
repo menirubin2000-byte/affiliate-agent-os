@@ -4,17 +4,24 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import {
   getLinkedInOfficialApiCapability,
   LINKEDIN_CURRENT_BLOCKING_REASON,
 } from "@/lib/linkedin-official-api"
+import { supportsVerifiedManualPublishUrl } from "@/lib/manual-publish-reconciliation"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { cn, formatDateTime } from "@/lib/utils"
 import type { PublishJobStatus } from "@/types/publish-job"
 
 import { PlatformRegistryTable, PlatformRoutingStats, RoutingNavActions } from "../platform-routing-view"
-import { confirmLinkedInOfficialPublishAction, confirmPreparedPublishJobAction } from "./actions"
+import {
+  confirmLinkedInOfficialPublishAction,
+  confirmPreparedPublishJobAction,
+  recordManualPublishUrlAction,
+  runManualPublishReconciliationAction,
+} from "./actions"
 
 export const dynamic = "force-dynamic"
 
@@ -76,6 +83,18 @@ function jobStatusLabel(job: { status: PublishJobStatus; blockingReason: string 
   return statusLabels[job.status]
 }
 
+function canRecordManualPublishUrl(job: {
+  status: PublishJobStatus
+  platform: string
+  liveUrl: string | null
+}) {
+  return (
+    !job.liveUrl &&
+    supportsVerifiedManualPublishUrl(job.platform) &&
+    (job.status === "pending_operator_confirmation" || job.status === "waiting_url_verification")
+  )
+}
+
 function blockerLabel(reason: string) {
   const labels: Record<string, string> = {
     executor_not_connected: "מנוע פרסום לא מחובר",
@@ -93,13 +112,37 @@ function blockerLabel(reason: string) {
   return labels[reason] ?? reason
 }
 
-export default async function HebrewPublishReadyPage() {
+export default async function HebrewPublishReadyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    confirmed?: string
+    linkedin_published?: string
+    meta_published?: string
+    manual_url_recorded?: string
+    reconciled?: string
+    imported?: string
+    existing?: string
+    synced?: string
+    queues?: string
+    skipped?: string
+    invalid?: string
+    error?: string
+  }>
+}) {
+  const sp = (await searchParams) ?? {}
   const [jobs, overview] = await Promise.all([
     listPublishJobsForHebrewDashboard(),
     getPlatformRoutingOverview(),
   ])
   const linkedinCapability = getLinkedInOfficialApiCapability()
   const hasLinkedInJobs = jobs.some((job) => job.platform === "linkedin" && job.status !== "verified")
+  const reconcileImported = Number(sp.imported ?? 0)
+  const reconcileExisting = Number(sp.existing ?? 0)
+  const reconcileSynced = Number(sp.synced ?? 0)
+  const reconcileQueues = Number(sp.queues ?? 0)
+  const reconcileSkipped = Number(sp.skipped ?? 0)
+  const reconcileInvalid = Number(sp.invalid ?? 0)
 
   return (
     <div dir="rtl" className="space-y-6 text-right">
@@ -110,6 +153,30 @@ export default async function HebrewPublishReadyPage() {
         actions={<RoutingNavActions />}
       />
 
+      {sp.error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {sp.error}
+        </div>
+      ) : null}
+
+      {sp.confirmed === "1" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          Final publish action confirmed.
+        </div>
+      ) : null}
+
+      {sp.linkedin_published === "1" || sp.meta_published === "1" || sp.manual_url_recorded === "1" ? (
+        <div className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-900">
+          Verified live URL recorded successfully.
+        </div>
+      ) : null}
+
+      {sp.reconciled === "1" ? (
+        <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-primary">
+          import={reconcileImported} | existing={reconcileExisting} | jobs_synced={reconcileSynced} | queues_synced={reconcileQueues} | skipped={reconcileSkipped} | invalid={reconcileInvalid}
+        </div>
+      ) : null}
+
       <PlatformRoutingStats overview={overview} />
 
       <Card className="border-primary/30 bg-primary/5">
@@ -119,6 +186,25 @@ export default async function HebrewPublishReadyPage() {
             MENI מאשר בלבד. אם אין executor או API בטוח, הפריט נשאר חסום ומוצג עם סיבה. Published Record נוצר רק אחרי URL חי מאומת.
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      <Card className="border-border/70">
+        <CardHeader>
+          <CardTitle>Manual Publish Reconciliation</CardTitle>
+          <CardDescription>
+            Import verified URLs from the existing docs publish logs, then sync stale publish jobs and queue rows from `published_records`.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={runManualPublishReconciliationAction} className="flex flex-wrap items-center gap-3">
+            <Button type="submit" variant="outline">
+              Import Logs + Sync Gaps
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Safe mode only: no placeholder URLs, no guessing when a log cannot be matched to one final copy.
+            </p>
+          </form>
+        </CardContent>
       </Card>
 
       <PlatformRegistryTable overview={overview} />
@@ -232,6 +318,11 @@ export default async function HebrewPublishReadyPage() {
                         ? "מנוע הפרסום מוכן לפעולה סופית. MENI מאשר פעולה בלבד; אין העתקה, אין הדבקה ואין טיפול URL."
                         : "הפריט מאושר אך עוד לא הגיע זמן הפרסום לפי מדיניות התזמון."}
                     </p>
+                    {isScheduledJobDue(job) && job.platform === "medium" ? (
+                      <p className="text-xs text-amber-700">
+                        Medium: חובה לפרסם עם תמונה אמיתית בתוך הפוסט לפני האישור הסופי.
+                      </p>
+                    ) : null}
                     {isScheduledJobDue(job) && (job.platform === "medium" || job.platform === "substack") ? (
                       <form action={confirmPreparedPublishJobAction}>
                         <input type="hidden" name="jobId" value={job.id} />
@@ -244,6 +335,28 @@ export default async function HebrewPublishReadyPage() {
                         <Button type="submit">אשר פעולה סופית</Button>
                       </form>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {canRecordManualPublishUrl(job) ? (
+                  <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+                    <p>
+                      MENI already published outside the app? Paste the real live URL here to reconcile this job safely.
+                    </p>
+                    <form action={recordManualPublishUrlAction} className="flex flex-col gap-2 md:flex-row">
+                      <input type="hidden" name="jobId" value={job.id} />
+                      <Input
+                        type="url"
+                        name="liveUrl"
+                        dir="ltr"
+                        required
+                        placeholder="https://..."
+                        className="md:flex-1"
+                      />
+                      <Button type="submit" variant="outline">
+                        Record Verified URL
+                      </Button>
+                    </form>
                   </div>
                 ) : null}
 

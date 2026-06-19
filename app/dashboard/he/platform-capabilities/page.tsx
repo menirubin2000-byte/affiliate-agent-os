@@ -270,7 +270,7 @@ function getYouTubeBlockingReason(status: StoredConnectionStatus) {
   if (status === "not_connected") {
     return "לא מחובר - MENI צריך ללחוץ על חבר YouTube רשמי ולהשלים OAuth מול Google."
   }
-  return "מחובר דרך Google OAuth. פרסום עדיין חסום עד שיש Final Copy מאושר עם וידאו אמיתי ואישור מפורש."
+  return "מחובר דרך Google OAuth. פרסום מותר רק ל-Final Copy מאושר עם וידאו אמיתי ו-URL חי מאומת."
 }
 
 function YouTubeConnectionPanel({
@@ -286,6 +286,8 @@ function YouTubeConnectionPanel({
   const channelTitle = typeof connection?.metadata.channel_title === "string"
     ? connection.metadata.channel_title
     : null
+  const encryptedTokenStored = connection?.metadata.encrypted_token_stored === true
+  const publishingEnabled = connection?.metadata.publishing_enabled === true
 
   return (
     <div className="rounded-lg border bg-muted/20 p-4 text-sm">
@@ -304,10 +306,12 @@ function YouTubeConnectionPanel({
           <CapabilityDetail label="expires_at" value={connection.expiresAt ?? "not provided"} />
           <CapabilityDetail label="channel_id" value={channelId ?? "not detected"} />
           <CapabilityDetail label="channel_title" value={channelTitle ?? "not detected"} />
+          <CapabilityDetail label="encrypted_token" value={encryptedTokenStored ? "stored" : "missing"} />
+          <CapabilityDetail label="publishing_enabled" value={publishingEnabled ? "true" : "false"} />
         </div>
       ) : null}
       <div className="mt-3 text-xs text-muted-foreground">
-        הטוקנים לא מוצגים במסך ולא נשמרים בשדות ציבוריים. YouTube נשאר וידאו בלבד, בלי פרסום טקסט.
+        הטוקנים לא מוצגים במסך ולא נשמרים בשדות ציבוריים. Refresh token נשמר רק מוצפן בצד שרת. YouTube נשאר וידאו בלבד, בלי פרסום טקסט.
       </div>
     </div>
   )

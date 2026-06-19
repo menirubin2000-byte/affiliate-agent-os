@@ -135,7 +135,7 @@ function fixBody(body, affiliateLink) {
     : `Affiliate disclosure: This content is for informational purposes.`;
 
   const cta = affiliateLink
-    ? `## Call to Action\n\nCheck current price and availability here:\n\n${affiliateLink}`
+    ? `## Call to Action\n\nCheck current price and availability here: ${affiliateLink}`
     : "";
 
   fixed = `${disclosure}\n\n${fixed}${cta ? "\n\n" + cta : ""}`;

@@ -4,6 +4,7 @@ import test from "node:test"
 import {
   cleanupMediumArticle,
   SYSTEME_IO_MEDIUM_FINAL_LINK,
+  validateFinalCopyForPlatform,
   validateFinalMediumArticle,
 } from "../lib/content-review"
 
@@ -45,6 +46,12 @@ test("cleanupMediumArticle creates one stable CTA and one affiliate URL", () => 
   assert.equal(cleaned.body.match(/## Call to Action/g)?.length, 1)
   assert.equal(cleaned.body.includes("No fake personal experience"), false)
   assert.equal(cleaned.body.includes("https://systeme.io/?sa=old"), false)
+  assert.equal(
+    cleaned.body.includes(
+      `To see the current features, plan details, and setup options, try Systeme.io here: ${SYSTEME_IO_MEDIUM_FINAL_LINK}`,
+    ),
+    true,
+  )
 })
 
 test("validateFinalMediumArticle blocks duplicate URLs and internal notes", () => {
@@ -76,4 +83,40 @@ test("validateFinalMediumArticle accepts cleaned Systeme.io Medium copy", () => 
 
   assert.equal(validation.validationStatus, "valid")
   assert.deepEqual(validation.blockingReasons, [])
+})
+
+test("validateFinalCopyForPlatform blocks English content that is actually Hebrew", () => {
+  const validation = validateFinalCopyForPlatform({
+    platform: "pinterest",
+    language: "en",
+    finalAffiliateLink: "https://example.com/item",
+    body: `גילוי נאות: הקישור הוא קישור שותפים.
+
+הבעיה:
+הטקסט הזה כתוב בעברית אבל מסומן כאנגלית.
+
+לבדיקה: https://example.com/item`,
+  })
+
+  assert.equal(validation.validationStatus, "blocked")
+  assert.equal(validation.blockingReasons.includes("languageMismatch"), true)
+  assert.equal(validation.checks.languageMatchesDeclared, false)
+})
+
+test("validateFinalCopyForPlatform blocks Hebrew content that is actually English", () => {
+  const validation = validateFinalCopyForPlatform({
+    platform: "pinterest",
+    language: "he",
+    finalAffiliateLink: "https://example.com/item",
+    body: `Affiliate disclosure: This post includes an affiliate link.
+
+The problem:
+This copy is entirely in English even though the row is marked as Hebrew.
+
+Check it here: https://example.com/item`,
+  })
+
+  assert.equal(validation.validationStatus, "blocked")
+  assert.equal(validation.blockingReasons.includes("languageMismatch"), true)
+  assert.equal(validation.checks.languageMatchesDeclared, false)
 })

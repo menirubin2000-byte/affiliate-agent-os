@@ -28,8 +28,8 @@ export function ProductForm() {
               <Input id="name" name="name" placeholder="Example: Acme SEO Suite" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
-              <Input id="slug" name="slug" placeholder="acme-seo-suite" required />
+              <Label htmlFor="slug">Slug (optional)</Label>
+              <Input id="slug" name="slug" placeholder="auto-generated from product name" />
             </div>
           </div>
 
@@ -57,7 +57,7 @@ export function ProductForm() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="price">Price (USD)</Label>
+              <Label htmlFor="price">Price</Label>
               <Input id="price" name="price" inputMode="decimal" placeholder="99.00" />
             </div>
             <div className="grid gap-2">

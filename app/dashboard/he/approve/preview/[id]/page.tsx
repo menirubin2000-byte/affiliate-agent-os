@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Button } from "@/components/ui/button"
+import { supportsVerifiedManualPublishUrl } from "@/lib/manual-publish-reconciliation"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import {
@@ -98,6 +99,8 @@ export default async function PreviewPage({
     quora: "Quora",
   }
   const communityPlatforms = new Set(["quora", "reddit"])
+  const canVerifyManualUrl = supportsVerifiedManualPublishUrl(fc.platform)
+  const isMedium = fc.platform === "medium"
   const bulkSaveLabel = communityPlatforms.has(fc.platform)
     ? "שמור רק ל-Quora/Reddit של המוצר"
     : "שמור לכל הפלטפורמות (חוץ מ-Quora/Reddit)"
@@ -209,11 +212,23 @@ export default async function PreviewPage({
               className="mx-auto max-h-[500px] w-auto object-contain"
             />
           </div>
+          {isMedium ? (
+            <p className="text-xs text-amber-700">
+              Medium: חובה לפרסם את הפוסט עם תמונה אמיתית. בלי תמונה לא מאשרים ולא מסמנים published.
+            </p>
+          ) : null}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+        <>
+          <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           אין תמונה למוצר הזה
-        </div>
+          </div>
+          {isMedium ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              אין תמונה למוצר הזה. ב-Medium אי אפשר לאשר או לפרסם בלי תמונה.
+            </div>
+          ) : null}
+        </>
       )}
 
       {product?.video_url ? (
@@ -305,7 +320,7 @@ export default async function PreviewPage({
         <div className="rounded-lg border border-green-400 bg-green-50 p-4 text-sm font-semibold text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300">
           ✓ פוסט זה מסומן כפורסם. הוא לא בתור הפרסום ולא יתפרסם שוב.
         </div>
-      ) : (
+      ) : canVerifyManualUrl ? (
         <form
           action={markPublishedByOperatorAction}
           className="flex flex-wrap items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-4 dark:bg-green-950 dark:border-green-800"
@@ -315,19 +330,29 @@ export default async function PreviewPage({
             פרסמת את הפוסט הזה ידנית?
           </h3>
           <p className="w-full text-xs text-green-700 dark:text-green-400">
-            לחיצה תסמן אותו כפורסם — הוא יצא מתור הפרסום ולא יתפרסם שוב. אפשר להדביק את קישור הפוסט (לא חובה).
+            Manual publish reconciliation now requires a real live URL. Without a verified platform URL, no Published Record will be created.
           </p>
+          {isMedium ? (
+            <p className="w-full text-xs text-green-700 dark:text-green-400">
+              Medium requires a real image in the published story before this item can be reconciled as published.
+            </p>
+          ) : null}
           <input
             type="url"
             name="liveUrl"
             dir="ltr"
-            placeholder="קישור לפוסט שפרסמת (אופציונלי)"
+            required
+            placeholder="https://..."
             className="min-w-0 flex-1 rounded border bg-background px-3 py-2 text-sm"
           />
           <Button type="submit" size="lg" variant="default">
             ✓ פורסם על ידי מני
           </Button>
         </form>
+      ) : (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          Manual URL verification is not enabled for this platform yet.
+        </div>
       )}
 
       <div className="flex flex-wrap gap-3 rounded-lg border border-blue-300 bg-blue-50 p-4 dark:bg-blue-950 dark:border-blue-800">
