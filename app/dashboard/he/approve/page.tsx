@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { MENI_CONFIRM_TOKEN, type ProductApprovalWorkflowSummary } from "@/lib/draft-approval-workflow"
+import { getDraftApprovalWorkflowProducts } from "@/lib/draft-approval-workflow-db"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import type { PlatformRoute } from "@/lib/platform-routing"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
@@ -25,6 +27,9 @@ import {
   requestFinalCopyFixAction,
   addSelectedPlatformPostAction,
   addMissingPostsForAllProductsAction,
+  approveAllReadyPostsForProductAction,
+  createMissingDraftsForProductAction,
+  generateMissingLanguageContentForProductAction,
 } from "./actions"
 
 export const dynamic = "force-dynamic"
@@ -103,6 +108,7 @@ export default async function HebrewApprovePage(props: {
   let platformBlockedRoutes: PlatformRoute[] = []
   let legacyDraftsCount = 0
   let topCandidates: ReadyCandidate[] = []
+  let productWorkflowRows: ProductApprovalWorkflowSummary[] = []
   let trafficConnected = false
   let trafficError: string | null = null
   let internalConnected = false
@@ -120,7 +126,7 @@ export default async function HebrewApprovePage(props: {
     .select("id, product_id, platform, language, status, products(name)")
     .in("status", ["ready_for_operator_approval", "operator_approved"])
     .order("updated_at", { ascending: false })
-    .limit(200)
+    .limit(1000)
 
   const directPostsDebug = `query returned: ${allDirectPosts?.length ?? 'null'} posts, error: ${directPostsError?.message ?? 'none'}`
 
@@ -138,6 +144,7 @@ export default async function HebrewApprovePage(props: {
   }
 
   try {
+    productWorkflowRows = await getDraftApprovalWorkflowProducts()
     const overview = await getPlatformRoutingOverview()
     const allRoutes = overview.products.flatMap((p) => p.routes)
 
@@ -216,6 +223,25 @@ export default async function HebrewApprovePage(props: {
           </div>
         }
       />
+
+      <Card className="border-primary/30">
+        <CardHeader>
+          <CardTitle>Approval Workflow By Product</CardTitle>
+          <CardDescription>
+            {productWorkflowRows.length} active products. Every active product is visible here even if drafts or final copies do not exist yet.
+            MENI is the approval authority. No external approval is required. `MENI_CONFIRM` is required only for bulk approval.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {productWorkflowRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No active products found.</p>
+          ) : (
+            productWorkflowRows.map((product) => (
+              <ProductWorkflowCard key={product.productId} product={product} />
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-2 border-blue-400">
         <CardHeader>
@@ -308,7 +334,34 @@ export default async function HebrewApprovePage(props: {
         </CardHeader>
       </Card>
 
-      {params.approved === "posts_added" || params.approved === "all_products_posts_added" ? (
+      {params.approved === "product_drafts_created" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">Missing drafts created</CardTitle>
+            <CardDescription className="text-green-800">
+              New final copies were created for the selected product without duplicating existing platform/language content.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "product_languages_created" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">Missing language content generated</CardTitle>
+            <CardDescription className="text-green-800">
+              Missing Hebrew/English final copies were generated for the selected product.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "product_bulk_approved" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">All ready posts approved</CardTitle>
+            <CardDescription className="text-green-800">
+              MENI approved all ready posts for the selected product. Nothing was auto-published.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "posts_added" || params.approved === "all_products_posts_added" ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="text-green-950">פוסטים חדשים נוספו בהצלחה</CardTitle>
@@ -509,6 +562,114 @@ const PLATFORM_OPTIONS = [
   { key: "quora", label: "Quora" },
   { key: "reddit", label: "Reddit" },
 ]
+
+function ProductWorkflowCard({ product }: { product: ProductApprovalWorkflowSummary }) {
+  const canCreateMissingDrafts =
+    product.statusLabel === "no_drafts_created" || product.missingEnglishContent > 0
+  const canGenerateMissingLanguage =
+    product.finalCopiesCount > 0 && (product.missingEnglishContent > 0 || product.missingHebrewContent > 0)
+
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="flex flex-col gap-3 border-b pb-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-semibold">{product.productName}</h3>
+            <Badge className={approvalStatusClassName(product.statusLabel)}>{product.statusLabel}</Badge>
+            <Badge variant={product.hasAffiliateUrl ? "default" : "destructive"}>
+              affiliate_url: {product.hasAffiliateUrl ? "yes" : "no"}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">Next action: {product.nextAction}</p>
+          {product.statusLabel === "no_drafts_created" ? (
+            <p className="text-sm font-medium text-amber-700">No drafts created yet.</p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {product.previewFinalCopyId ? (
+            <Link
+              href={`/dashboard/he/approve/preview/${product.previewFinalCopyId}`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              Open latest draft
+            </Link>
+          ) : null}
+          <Link
+            href={`/dashboard/products/${product.productId}`}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Open product workspace
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-4 xl:grid-cols-7">
+        <ProductWorkflowMetric label="Drafts count" value={product.draftsCount} />
+        <ProductWorkflowMetric label="Final copies count" value={product.finalCopiesCount} />
+        <ProductWorkflowMetric label="Missing Hebrew" value={product.missingHebrewContent} />
+        <ProductWorkflowMetric label="Missing English" value={product.missingEnglishContent} />
+        <ProductWorkflowMetric label="Pending approval" value={product.pendingApprovalCount} />
+        <ProductWorkflowMetric label="Approved" value={product.approvedCount} />
+        <ProductWorkflowMetric label="Rejected / blocked" value={product.blockedCount} />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <form action={createMissingDraftsForProductAction} className="flex">
+          <input type="hidden" name="productId" value={product.productId} />
+          <Button type="submit" size="sm" disabled={!canCreateMissingDrafts}>
+            Create missing drafts
+          </Button>
+        </form>
+
+        <form action={generateMissingLanguageContentForProductAction} className="flex">
+          <input type="hidden" name="productId" value={product.productId} />
+          <Button type="submit" size="sm" variant="outline" disabled={!canGenerateMissingLanguage}>
+            Generate all missing Hebrew/English content
+          </Button>
+        </form>
+
+        <form action={approveAllReadyPostsForProductAction} className="flex flex-wrap items-center gap-2">
+          <input type="hidden" name="productId" value={product.productId} />
+          <input
+            type="text"
+            name="confirmation"
+            placeholder={MENI_CONFIRM_TOKEN}
+            className="h-9 w-40 rounded-md border bg-background px-3 text-sm"
+          />
+          <Button type="submit" size="sm" variant="secondary" disabled={product.pendingApprovalCount === 0}>
+            Approve all ready posts
+          </Button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function ProductWorkflowMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+      <div className="text-muted-foreground">{label}</div>
+      <div className="mt-1 text-lg font-semibold">{value}</div>
+    </div>
+  )
+}
+
+function approvalStatusClassName(status: ProductApprovalWorkflowSummary["statusLabel"]) {
+  switch (status) {
+    case "pending_operator_approval":
+      return "bg-blue-600 text-white"
+    case "no_drafts_created":
+      return "bg-amber-500 text-black"
+    case "drafts_missing":
+      return "bg-amber-100 text-amber-900"
+    case "partially_approved":
+      return "bg-violet-100 text-violet-900"
+    case "fully_approved":
+      return "bg-green-600 text-white"
+    case "rejected_or_blocked":
+      return "bg-red-600 text-white"
+  }
+}
 
 function InternalTrafficEngineBanner({
   connected,
