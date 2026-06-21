@@ -37,11 +37,23 @@ const NORMAL_POST_PLATFORMS: CampaignPlatform[] = [
   "substack",
   "pinterest",
   "x_twitter",
+  "mastodon",
+  "threads",
 ]
 
 const COMMUNITY_POST_PLATFORMS: CampaignPlatform[] = ["quora", "reddit"]
 const VIDEO_POST_PLATFORMS: CampaignPlatform[] = ["youtube", "tiktok"]
 const NORMAL_POST_PLATFORM_SET = new Set<string>(NORMAL_POST_PLATFORMS)
+const NON_PUBLISHED_FINAL_COPY_STATUSES = new Set<string>([
+  "draft_internal",
+  "needs_system_fix",
+  "validated",
+  "ready_for_operator_approval",
+  "operator_rejected",
+  "operator_approved",
+  "ready_for_manual_publish",
+  "published_verified",
+])
 
 // Two bulk-edit groups only: community (Quora/Reddit — special no-direct-link
 // rules) and general (everything else, including video). Editing one group
@@ -61,6 +73,25 @@ const ALL_POST_PLATFORMS: CampaignPlatform[] = [
   ...VIDEO_POST_PLATFORMS,
   ...COMMUNITY_POST_PLATFORMS,
 ]
+
+type FinalCopyTemplateRow = {
+  id: string
+  platform: CampaignPlatform
+  language: string | null
+  status: string
+  title: string | null
+  body: string | null
+  source_content_id: string | null
+  platform_adaptation_id: string | null
+  affiliate_program_id: string | null
+  affiliate_link: string | null
+  image_url: string | null
+  media_asset_url: string | null
+  products:
+    | { image_url: string | null; image_url_he: string | null; video_url: string | null }
+    | Array<{ image_url: string | null; image_url_he: string | null; video_url: string | null }>
+    | null
+}
 
 function getBulkEditPlatformGroup(platform: string): CampaignPlatform[] {
   if (COMMUNITY_POST_PLATFORMS.includes(platform as CampaignPlatform)) return COMMUNITY_POST_PLATFORMS
@@ -86,6 +117,148 @@ function ensureAffiliateDisclosure(body: string, language: "en" | "he") {
       : "Affiliate disclosure: This post includes an affiliate link. If you buy through it, I may earn a commission at no extra cost to you."
 
   return `${disclosure}\n\n${trimmed}`
+}
+
+function getRequestedPlatforms(formData: FormData): CampaignPlatform[] {
+  const requested = [
+    ...formData.getAll("platforms").map((value) => String(value ?? "").trim()),
+    String(formData.get("platform") ?? "").trim(),
+  ].filter(Boolean)
+
+  const unique = Array.from(new Set(requested))
+  if (!unique.length) return []
+  if (unique.some((value) => !ALL_POST_PLATFORMS.includes(value as CampaignPlatform))) {
+    fail("unsupported_platform")
+  }
+
+  return unique as CampaignPlatform[]
+}
+
+async function createFinalCopyForSelectedPlatform(input: {
+  supabase: ReturnType<typeof getServiceRoleSupabase>
+  productId: string
+  platform: CampaignPlatform
+  language: "en" | "he"
+  existingCopies: FinalCopyTemplateRow[]
+}) {
+  const template =
+    input.existingCopies.find((fc) => fc.language === input.language && NORMAL_POST_PLATFORM_SET.has(fc.platform)) ??
+    input.existingCopies.find((fc) => fc.language === input.language) ??
+    input.existingCopies.find((fc) => NORMAL_POST_PLATFORM_SET.has(fc.platform)) ??
+    input.existingCopies[0]
+
+  if (!template?.body || !template.source_content_id) fail("no_source_copy_for_selected_platform")
+  const body = ensureAffiliateDisclosure(template.body, input.language)
+
+  let sourceContentId = template.source_content_id
+  let adaptationId = template.platform_adaptation_id
+
+  const { data: existingAdaptation, error: existingAdaptationError } = await input.supabase
+    .from("platform_adaptations")
+    .select("id, source_content_id")
+    .eq("product_id", input.productId)
+    .eq("platform", input.platform)
+    .limit(1)
+    .maybeSingle()
+  if (existingAdaptationError) fail(existingAdaptationError.message)
+
+  if (existingAdaptation) {
+    adaptationId = existingAdaptation.id
+    sourceContentId = existingAdaptation.source_content_id
+  } else {
+    const adaptationHash = hashCampaignContent([input.productId, sourceContentId, input.platform, input.language, body])
+    const { data: newAdaptation, error: adaptError } = await input.supabase
+      .from("platform_adaptations")
+      .insert({
+        source_content_id: sourceContentId,
+        product_id: input.productId,
+        platform: input.platform,
+        title: template.title ?? "",
+        body,
+        content_hash: adaptationHash,
+        campaign_approval_status: "campaign_approved",
+      })
+      .select("id")
+      .single()
+    if (adaptError) fail(adaptError.message)
+    adaptationId = newAdaptation.id
+  }
+
+  let nextVersion = 1
+  if (adaptationId) {
+    const { data: latestVersion, error: latestVersionError } = await input.supabase
+      .from("final_copies")
+      .select("version")
+      .eq("platform_adaptation_id", adaptationId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (latestVersionError) fail(latestVersionError.message)
+    nextVersion = Number(latestVersion?.version ?? 0) + 1
+  }
+
+  const productRaw = template.products
+  const product = Array.isArray(productRaw) ? productRaw[0] : productRaw
+  const media = mediaForTranslatedCopy({
+    platform: input.platform,
+    language: input.language,
+    currentMediaAssetUrl: template.media_asset_url,
+    currentImageUrl: template.image_url,
+    product: {
+      image_url: product?.image_url ?? null,
+      image_url_he: product?.image_url_he ?? null,
+      video_url: product?.video_url ?? null,
+    },
+  })
+
+  const validation = validateFinalCopyForPlatform({
+    body,
+    platform: input.platform,
+    finalAffiliateLink: template.affiliate_link ?? undefined,
+    language: input.language,
+  })
+  const blockingReasons = [...validation.blockingReasons, ...media.blockingReasons]
+  const ready =
+    validation.validationStatus === "valid" &&
+    blockingReasons.length === 0 &&
+    !COMMUNITY_POST_PLATFORMS.includes(input.platform)
+
+  const contentHash = hashCampaignContent([
+    input.productId,
+    sourceContentId,
+    adaptationId,
+    input.platform,
+    input.language,
+    body,
+  ])
+
+  const { data: created, error: insertError } = await input.supabase
+    .from("final_copies")
+    .insert({
+      product_id: input.productId,
+      affiliate_program_id: template.affiliate_program_id,
+      affiliate_link: template.affiliate_link,
+      source_content_id: sourceContentId,
+      platform_adaptation_id: adaptationId,
+      platform: input.platform,
+      language: input.language,
+      title: template.title ?? "",
+      body,
+      content_hash: contentHash,
+      version: nextVersion,
+      status: ready ? "ready_for_operator_approval" : "needs_system_fix",
+      validation_status: validation.validationStatus,
+      blocking_reasons: blockingReasons,
+      image_url: media.image_url,
+      media_asset_url: media.media_asset_url,
+      media_status: media.media_status,
+      needs_media_repair: media.needs_media_repair,
+    })
+    .select("id")
+    .single()
+  if (insertError) fail(insertError.message)
+
+  return created.id
 }
 
 async function translateFinalCopyText(input: {
@@ -689,6 +862,50 @@ export async function approveAllReadyPostsForProductAction(formData: FormData) {
   redirect("/dashboard/he/approve?approved=product_bulk_approved")
 }
 
+export async function approveSelectedPostsAction(formData: FormData) {
+  const selectedIds = Array.from(
+    new Set(formData.getAll("finalCopyIds").map((value) => String(value ?? "").trim()).filter(Boolean)),
+  )
+  const confirmation = String(formData.get("confirmation") ?? "").trim()
+
+  if (selectedIds.length === 0) fail("no_posts_selected")
+
+  try {
+    assertIntegrationConfigured("supabase")
+    assertMeniConfirmToken(confirmation)
+    const supabase = getServiceRoleSupabase()
+    const { data: readyCopies, error } = await supabase
+      .from("final_copies")
+      .select("id")
+      .in("id", selectedIds)
+      .eq("status", "ready_for_operator_approval")
+      .eq("validation_status", "valid")
+    if (error) fail(error.message)
+    if (!readyCopies?.length) fail("no_selected_ready_posts")
+
+    for (const copy of readyCopies as Array<{ id: string }>) {
+      await approveFinalCopy(copy.id)
+    }
+
+    const params = new URLSearchParams({
+      approved: "selected_posts_approved",
+      approvedCount: String(readyCopies.length),
+      skipped: String(selectedIds.length - readyCopies.length),
+    })
+
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/he")
+    revalidatePath("/dashboard/he/approve")
+    revalidatePath("/dashboard/he/schedule")
+    revalidatePath("/dashboard/he/publish-ready")
+    revalidatePath("/dashboard/he/content-review")
+    redirect(`/dashboard/he/approve?${params.toString()}`)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "approve_selected_posts_failed")
+  }
+}
+
 export async function deleteFinalCopyAction(formData: FormData) {
   const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
   if (!finalCopyId) fail("missing_final_copy_id")
@@ -1037,173 +1254,102 @@ export async function addMissingPlatformPostsAction(formData: FormData) {
 
 export async function addSelectedPlatformPostAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
-  const platform = String(formData.get("platform") ?? "").trim() as CampaignPlatform
+  const requestedPlatforms = getRequestedPlatforms(formData)
   const languageInput = String(formData.get("language") ?? "he").trim()
   const language = languageInput === "en" ? "en" : "he"
 
   if (!productId) fail("missing_product_id")
-  if (!ALL_POST_PLATFORMS.includes(platform)) fail("unsupported_platform")
+  if (requestedPlatforms.length === 0) fail("no_platform_selected")
 
   try {
     assertIntegrationConfigured("supabase")
     const supabase = getServiceRoleSupabase()
 
-    const { data: existingTarget, error: existingTargetError } = await supabase
-      .from("final_copies")
-      .select("id")
-      .eq("product_id", productId)
-      .eq("platform", platform)
-      .eq("language", language)
-      .in("status", ["draft_internal", "needs_system_fix", "validated", "ready_for_operator_approval", "operator_rejected"])
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (existingTargetError) fail(existingTargetError.message)
-    if (existingTarget?.id) {
-      revalidatePath("/dashboard/he/approve")
-      redirect(`/dashboard/he/approve/preview/${existingTarget.id}?approved=platform_already_opened`)
-    }
-
     const { data: existing, error: existingError } = await supabase
       .from("final_copies")
       .select(`
-        id, platform, language, title, body, source_content_id,
+        id, platform, language, status, title, body, source_content_id,
         platform_adaptation_id, affiliate_program_id, affiliate_link,
         image_url, media_asset_url, products (image_url, image_url_he, video_url)
       `)
       .eq("product_id", productId)
-      .neq("status", "published_verified")
       .order("updated_at", { ascending: false })
     if (existingError) fail(existingError.message)
     if (!existing?.length) fail("no_existing_posts_to_copy_from")
 
-    const template =
-      existing.find((fc) => fc.language === language && NORMAL_POST_PLATFORM_SET.has(fc.platform)) ??
-      existing.find((fc) => fc.language === language) ??
-      existing.find((fc) => NORMAL_POST_PLATFORM_SET.has(fc.platform)) ??
-      existing[0]
-    if (!template?.body || !template.source_content_id) fail("no_source_copy_for_selected_platform")
-    const body = ensureAffiliateDisclosure(template.body, language)
+    const existingCopies = existing as FinalCopyTemplateRow[]
+    const dedupeCandidates = existingCopies
+      .filter((row) => NON_PUBLISHED_FINAL_COPY_STATUSES.has(row.status))
+      .map((row) => ({
+        id: row.id,
+        productId,
+        platform: row.platform,
+        language: row.language,
+        status: row.status,
+      }))
+    const missingSelections = buildMissingPlatformLanguageDrafts({
+      existingFinalCopies: dedupeCandidates,
+      platforms: requestedPlatforms,
+      languages: [language],
+    })
+    const selectedPlatforms = missingSelections.map((row) => row.platform)
+    const skippedCount = requestedPlatforms.length - selectedPlatforms.length
 
-    let sourceContentId = template.source_content_id
-    let adaptationId = template.platform_adaptation_id
-
-    const { data: existingAdaptation, error: existingAdaptationError } = await supabase
-      .from("platform_adaptations")
-      .select("id, source_content_id")
-      .eq("product_id", productId)
-      .eq("platform", platform)
-      .limit(1)
-      .maybeSingle()
-    if (existingAdaptationError) fail(existingAdaptationError.message)
-
-    if (existingAdaptation) {
-      adaptationId = existingAdaptation.id
-      sourceContentId = existingAdaptation.source_content_id
-    } else {
-      const adaptationHash = hashCampaignContent([productId, sourceContentId, platform, language, body])
-      const { data: newAdaptation, error: adaptError } = await supabase
-        .from("platform_adaptations")
-        .insert({
-          source_content_id: sourceContentId,
-          product_id: productId,
-          platform,
-          title: template.title ?? "",
-          body,
-          content_hash: adaptationHash,
-          campaign_approval_status: "campaign_approved",
-        })
-        .select("id")
-        .single()
-      if (adaptError) fail(adaptError.message)
-      adaptationId = newAdaptation.id
+    if (selectedPlatforms.length === 0) {
+      const params = new URLSearchParams({
+        approved: "selected_platforms_already_exist",
+        skipped: String(skippedCount),
+      })
+      revalidatePath("/dashboard/he/approve")
+      redirect(`/dashboard/he/approve?${params.toString()}`)
     }
 
-    let nextVersion = 1
-    if (adaptationId) {
-      const { data: latestVersion, error: latestVersionError } = await supabase
-        .from("final_copies")
-        .select("version")
-        .eq("platform_adaptation_id", adaptationId)
-        .order("version", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (latestVersionError) fail(latestVersionError.message)
-      nextVersion = Number(latestVersion?.version ?? 0) + 1
-    }
-
-    const productRaw = template.products as unknown as
-      | { image_url: string | null; image_url_he: string | null; video_url: string | null }
-      | Array<{ image_url: string | null; image_url_he: string | null; video_url: string | null }>
-      | null
-    const product = Array.isArray(productRaw) ? productRaw[0] : productRaw
-    const media = mediaForTranslatedCopy({
-      platform,
-      language,
-      currentMediaAssetUrl: template.media_asset_url,
-      currentImageUrl: template.image_url,
-      product: {
-        image_url: product?.image_url ?? null,
-        image_url_he: product?.image_url_he ?? null,
-        video_url: product?.video_url ?? null,
-      },
-    })
-
-    const validation = validateFinalCopyForPlatform({
-      body,
-      platform,
-      finalAffiliateLink: template.affiliate_link ?? undefined,
-      language,
-    })
-    const blockingReasons = [...validation.blockingReasons, ...media.blockingReasons]
-    const ready =
-      validation.validationStatus === "valid" &&
-      blockingReasons.length === 0 &&
-      !COMMUNITY_POST_PLATFORMS.includes(platform)
-
-    const contentHash = hashCampaignContent([
-      productId,
-      sourceContentId,
-      adaptationId,
-      platform,
-      language,
-      body,
-    ])
-
-    const { data: created, error: insertError } = await supabase
-      .from("final_copies")
-      .insert({
-        product_id: productId,
-        affiliate_program_id: template.affiliate_program_id,
-        affiliate_link: template.affiliate_link,
-        source_content_id: sourceContentId,
-        platform_adaptation_id: adaptationId,
+    let createdCount = 0
+    for (const platform of selectedPlatforms) {
+      await createFinalCopyForSelectedPlatform({
+        supabase,
+        productId,
         platform,
         language,
-        title: template.title ?? "",
-        body,
-        content_hash: contentHash,
-        version: nextVersion,
-        status: ready ? "ready_for_operator_approval" : "needs_system_fix",
-        validation_status: validation.validationStatus,
-        blocking_reasons: blockingReasons,
-        image_url: media.image_url,
-        media_asset_url: media.media_asset_url,
-        media_status: media.media_status,
-        needs_media_repair: media.needs_media_repair,
+        existingCopies,
       })
-      .select("id")
-      .single()
-    if (insertError) fail(insertError.message)
+      createdCount += 1
+    }
 
     revalidatePath("/dashboard")
     revalidatePath("/dashboard/he")
     revalidatePath("/dashboard/he/approve")
     revalidatePath("/dashboard/he/all-posts")
-    redirect(`/dashboard/he/approve/preview/${created.id}?approved=platform_created`)
+    const params = new URLSearchParams({
+      approved: "selected_platforms_added",
+      created: String(createdCount),
+      skipped: String(skippedCount),
+    })
+    redirect(`/dashboard/he/approve?${params.toString()}`)
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
     fail(error instanceof Error ? error.message : "add_selected_platform_failed")
+  }
+}
+
+export async function addAllMissingPlatformPostsForProductAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "").trim()
+  const languageInput = String(formData.get("language") ?? "he").trim()
+  const language = languageInput === "en" ? "en" : "he"
+
+  if (!productId) fail("missing_product_id")
+
+  try {
+    const nextFormData = new FormData()
+    nextFormData.set("productId", productId)
+    nextFormData.set("language", language)
+    for (const platform of ALL_POST_PLATFORMS) {
+      nextFormData.append("platforms", platform)
+    }
+    await addSelectedPlatformPostAction(nextFormData)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "add_all_missing_platforms_failed")
   }
 }
 

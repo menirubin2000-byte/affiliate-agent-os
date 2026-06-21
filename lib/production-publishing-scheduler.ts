@@ -88,6 +88,16 @@ export const PLATFORM_QUEUE_PRIORITY: Record<CampaignPlatform, { priority: numbe
     label: "community bridge only",
     reason: "Reddit is excluded from the normal auto queue and uses public review bridge links only.",
   },
+  mastodon: {
+    priority: 75,
+    label: "open social, fast rotation",
+    reason: "Mastodon has a permanent token, no approval, and supports image + link posts at good cadence.",
+  },
+  threads: {
+    priority: 85,
+    label: "Meta social reach",
+    reason: "Threads (via Meta) reaches a large audience for short image + link posts once the token is connected.",
+  },
 }
 
 export function isAutoQueuePlatform(platform: CampaignPlatform) {

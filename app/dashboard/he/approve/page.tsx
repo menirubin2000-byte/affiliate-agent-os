@@ -4,7 +4,11 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MENI_CONFIRM_TOKEN, type ProductApprovalWorkflowSummary } from "@/lib/draft-approval-workflow"
+import {
+  MENI_CONFIRM_HEBREW_TOKEN,
+  MENI_CONFIRM_TOKEN,
+  type ProductApprovalWorkflowSummary,
+} from "@/lib/draft-approval-workflow"
 import { getDraftApprovalWorkflowProducts } from "@/lib/draft-approval-workflow-db"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import type { PlatformRoute } from "@/lib/platform-routing"
@@ -23,6 +27,8 @@ import { cn, truncate } from "@/lib/utils"
 
 import {
   approveFinalCopyAction,
+  approveSelectedPostsAction,
+  addAllMissingPlatformPostsForProductAction,
   rejectFinalCopyAction,
   requestFinalCopyFixAction,
   addSelectedPlatformPostAction,
@@ -85,9 +91,20 @@ type DirectPostGroup = {
 }
 
 export default async function HebrewApprovePage(props: {
-  searchParams: Promise<{ approved?: string; rejected?: string; fix?: string; error?: string }>
+  searchParams: Promise<{
+    approved?: string
+    rejected?: string
+    fix?: string
+    error?: string
+    created?: string
+    skipped?: string
+    approvedCount?: string
+  }>
 }) {
   const params = (await props.searchParams) ?? {}
+  const createdCount = Number.parseInt(params.created ?? "0", 10)
+  const skippedCount = Number.parseInt(params.skipped ?? "0", 10)
+  const approvedCount = Number.parseInt(params.approvedCount ?? "0", 10)
 
   if (!isSupabaseConfigured()) {
     return (
@@ -124,9 +141,16 @@ export default async function HebrewApprovePage(props: {
   const { data: allDirectPosts, error: directPostsError } = await supabase
     .from("final_copies")
     .select("id, product_id, platform, language, status, products(name)")
-    .in("status", ["ready_for_operator_approval", "operator_approved"])
+    .in("status", [
+      "needs_system_fix",
+      "operator_rejected",
+      "ready_for_operator_approval",
+      "operator_approved",
+      "ready_for_manual_publish",
+      "published_verified",
+    ])
     .order("updated_at", { ascending: false })
-    .limit(1000)
+    .limit(3000)
 
   const directPostsDebug = `query returned: ${allDirectPosts?.length ?? 'null'} posts, error: ${directPostsError?.message ?? 'none'}`
 
@@ -224,12 +248,26 @@ export default async function HebrewApprovePage(props: {
         }
       />
 
+      <Card className="border-amber-300 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/20">
+        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <CardTitle>Quick product intake</CardTitle>
+            <CardDescription>
+              Product link + finished post + image/video URL creates approval copies for all platforms immediately.
+            </CardDescription>
+          </div>
+          <Link href="/dashboard/products/new" className={cn(buttonVariants({ variant: "default" }))}>
+            Add ready product
+          </Link>
+        </CardHeader>
+      </Card>
+
       <Card className="border-primary/30">
         <CardHeader>
           <CardTitle>Approval Workflow By Product</CardTitle>
           <CardDescription>
             {productWorkflowRows.length} active products. Every active product is visible here even if drafts or final copies do not exist yet.
-            MENI is the approval authority. No external approval is required. `MENI_CONFIRM` is required only for bulk approval.
+            MENI is the approval authority. No external approval is required. `MENI_CONFIRM` or `מאושר` is required only for bulk approval.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -262,56 +300,133 @@ export default async function HebrewApprovePage(props: {
                   <div>
                     <h3 className="font-bold text-base">{group.productName}</h3>
                     <p className="text-xs text-muted-foreground">
-                      בחר פלטפורמה חסרה או קיימת. אם היא קיימת - נפתח אותה לעריכה, אם חסרה - ניצור עותק חדש.
+                      סמן כמה פלטפורמות ביחד. המערכת תיצור רק את מה שחסר לשפה שנבחרה, ותדלג אוטומטית על כפילויות.
                     </p>
                   </div>
-                  <form action={addSelectedPlatformPostAction} className="flex flex-wrap items-end gap-2">
+                  <form action={addSelectedPlatformPostAction} className="w-full space-y-3 lg:max-w-3xl">
+                    <input type="hidden" name="productId" value={group.productId} />
+                    <div className="grid gap-3 md:grid-cols-[180px_1fr]">
+                      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                        שפה
+                        <select
+                          name="language"
+                          className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                          defaultValue={group.posts.some((post) => post.language === "he") ? "he" : "en"}
+                        >
+                          <option value="he">עברית</option>
+                          <option value="en">English</option>
+                        </select>
+                      </label>
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">סמן פלטפורמות</p>
+                        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                          {PLATFORM_OPTIONS.map((platform) => {
+                            const coverage = getPlatformCoverage(group.posts, platform.key)
+
+                            return (
+                              <label
+                                key={platform.key}
+                                className="flex items-start gap-3 rounded-lg border bg-background px-3 py-2 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40 dark:hover:bg-blue-950/30"
+                              >
+                                <input
+                                  type="checkbox"
+                                  name="platforms"
+                                  value={platform.key}
+                                  className="mt-1 h-4 w-4 rounded border border-blue-300 accent-blue-600"
+                                />
+                                <span className="flex min-w-0 flex-1 flex-col">
+                                  <span className="text-sm font-semibold text-foreground">{platform.label}</span>
+                                  <span className="text-xs text-muted-foreground">{formatPlatformCoverage(coverage)}</span>
+                                </span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button type="submit" size="sm">
+                        הוסף מסומנות
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        פוסטים שכבר קיימים פותחים מהכפתורים הכחולים למטה. כאן יוצרים כמה חסרות במכה אחת.
+                      </span>
+                    </div>
+                  </form>
+                  <form action={addAllMissingPlatformPostsForProductAction} className="flex flex-wrap items-end gap-2 rounded-lg border bg-amber-50/60 p-3 dark:bg-amber-950/20">
                     <input type="hidden" name="productId" value={group.productId} />
                     <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                      הוסף פלטפורמה
-                      <select
-                        name="platform"
-                        className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
-                        defaultValue="linkedin"
-                      >
-                        {PLATFORM_OPTIONS.map((platform) => (
-                          <option key={platform.key} value={platform.key}>
-                            {platform.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                      שפה
+                      Complete language
                       <select
                         name="language"
                         className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
                         defaultValue={group.posts.some((post) => post.language === "he") ? "he" : "en"}
                       >
-                        <option value="he">עברית</option>
+                        <option value="he">Hebrew</option>
                         <option value="en">English</option>
                       </select>
                     </label>
-                    <Button type="submit" size="sm">
-                      הוסף / פתח לעריכה
+                    <Button type="submit" size="sm" variant="secondary">
+                      Complete all missing platforms
                     </Button>
+                    <span className="text-xs text-muted-foreground">
+                      Creates every missing platform for the selected language and skips duplicates.
+                    </span>
                   </form>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {group.posts.map((post) => (
-                    <Link
-                      key={post.id}
-                      href={`/dashboard/he/approve/preview/${post.id}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border-2 border-blue-400 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+                <form action={approveSelectedPostsAction} className="space-y-3">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.posts.map((post) => {
+                      const canApprove = post.status === "ready_for_operator_approval"
+
+                      return (
+                        <div
+                          key={post.id}
+                          className={directPostCardClassName(post.status)}
+                        >
+                          <input
+                            type="checkbox"
+                            name="finalCopyIds"
+                            value={post.id}
+                            disabled={!canApprove}
+                            className="h-4 w-4 rounded border border-blue-300 accent-blue-600 disabled:opacity-40"
+                          />
+                          <Link
+                            href={`/dashboard/he/approve/preview/${post.id}`}
+                            className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-1 py-1 hover:bg-blue-100 dark:hover:bg-blue-900"
+                          >
+                            <span className="truncate">{PLATFORM_LABELS[post.platform] ?? post.platform}</span>
+                            <span className="shrink-0 text-xs">
+                              {post.language === "he" ? "עב" : "EN"}
+                              {" · "}
+                              {directPostStatusLabel(post.status)}
+                            </span>
+                          </Link>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="flex flex-wrap items-end gap-2 rounded-lg border bg-muted/30 p-3">
+                    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                      אישור מני
+                      <input
+                        name="confirmation"
+                        placeholder={`${MENI_CONFIRM_HEBREW_TOKEN} / ${MENI_CONFIRM_TOKEN}`}
+                        className="h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+                      />
+                    </label>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!group.posts.some((post) => post.status === "ready_for_operator_approval")}
                     >
-                      <span>{PLATFORM_LABELS[post.platform] ?? post.platform}</span>
-                      <span className="text-xs">
-                        {post.language === "he" ? "עב" : "EN"}
-                        {post.status === "operator_approved" ? " · מאושר" : ""}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
+                      אשר מסומנים
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      מסמן כמה פוסטים מוכנים ומאשר אותם יחד. פוסטים שכבר מאושרים לא נשלחים שוב.
+                    </span>
+                  </div>
+                </form>
               </div>
             ))
           )}
@@ -358,6 +473,44 @@ export default async function HebrewApprovePage(props: {
             <CardTitle className="text-green-950">All ready posts approved</CardTitle>
             <CardDescription className="text-green-800">
               MENI approved all ready posts for the selected product. Nothing was auto-published.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "selected_posts_approved" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">פוסטים מסומנים אושרו</CardTitle>
+            <CardDescription className="text-green-800">
+              אושרו {approvedCount || 0} פוסטים מסומנים
+              {skippedCount > 0 ? `, ודולגו ${skippedCount} שלא היו מוכנים לאישור.` : "."}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "product_ready_posts_created" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">המוצר נכנס לאישור</CardTitle>
+            <CardDescription className="text-green-800">
+              נוצרו {createdCount || 0} פוסטים מהמוצר החדש לכל הפלטפורמות. מה שמוכן מופיע לאישור, ומה שחסר לו וידאו/תיקון נשאר גלוי ולא נעלם.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "selected_platforms_added" ? (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-950">פלטפורמות מסומנות נוספו</CardTitle>
+            <CardDescription className="text-green-800">
+              נוצרו {createdCount || 0} פלטפורמות חדשות
+              {skippedCount > 0 ? `, ודולגו ${skippedCount} שכבר היו קיימות.` : "."}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : params.approved === "selected_platforms_already_exist" ? (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-blue-950">אין מה ליצור</CardTitle>
+            <CardDescription className="text-blue-800">
+              כל {skippedCount || 0} הפלטפורמות שסומנו כבר קיימות לשפה שנבחרה, לכן לא נוצרו כפילויות.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -547,6 +700,8 @@ const PLATFORM_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   reddit: "Reddit",
   quora: "Quora",
+  mastodon: "Mastodon",
+  threads: "Threads",
 }
 
 const PLATFORM_OPTIONS = [
@@ -561,7 +716,81 @@ const PLATFORM_OPTIONS = [
   { key: "tiktok", label: "TikTok" },
   { key: "quora", label: "Quora" },
   { key: "reddit", label: "Reddit" },
+  { key: "mastodon", label: "Mastodon" },
+  { key: "threads", label: "Threads" },
 ]
+
+function getPlatformCoverage(posts: DirectPost[], platform: string) {
+  const platformPosts = posts.filter((post) => post.platform === platform)
+
+  return {
+    hasHebrew: platformPosts.some((post) => post.language === "he"),
+    hasEnglish: platformPosts.some((post) => post.language === "en" || post.language == null),
+    approvedCount: platformPosts.filter((post) => post.status === "operator_approved").length,
+    publishedCount: platformPosts.filter((post) => post.status === "published_verified").length,
+    readyCount: platformPosts.filter((post) => post.status === "ready_for_operator_approval").length,
+    blockedCount: platformPosts.filter((post) =>
+      ["needs_system_fix", "operator_rejected"].includes(post.status),
+    ).length,
+  }
+}
+
+function formatPlatformCoverage(coverage: ReturnType<typeof getPlatformCoverage>) {
+  const languageSummary =
+    coverage.hasHebrew && coverage.hasEnglish
+      ? "קיים: עברית + EN"
+      : coverage.hasHebrew
+        ? "קיים: עברית"
+        : coverage.hasEnglish
+          ? "קיים: EN"
+          : "חסר כרגע"
+
+  const statusSummary = [
+    coverage.readyCount > 0 ? `${coverage.readyCount} ready` : null,
+    coverage.approvedCount > 0 ? `${coverage.approvedCount} approved` : null,
+    coverage.publishedCount > 0 ? `${coverage.publishedCount} published` : null,
+    coverage.blockedCount > 0 ? `${coverage.blockedCount} blocked` : null,
+  ].filter(Boolean)
+
+  return statusSummary.length > 0 ? `${languageSummary} · ${statusSummary.join(" · ")}` : languageSummary
+}
+
+function directPostStatusLabel(status: string) {
+  switch (status) {
+    case "ready_for_operator_approval":
+      return "ready"
+    case "operator_approved":
+      return "approved"
+    case "ready_for_manual_publish":
+      return "manual publish"
+    case "published_verified":
+      return "published"
+    case "needs_system_fix":
+      return "blocked"
+    case "operator_rejected":
+      return "rejected"
+    default:
+      return status
+  }
+}
+
+function directPostCardClassName(status: string) {
+  const base = "flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm font-semibold"
+  switch (status) {
+    case "ready_for_operator_approval":
+      return `${base} border-blue-400 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300`
+    case "operator_approved":
+    case "ready_for_manual_publish":
+      return `${base} border-emerald-400 bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300`
+    case "published_verified":
+      return `${base} border-slate-300 bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300`
+    case "needs_system_fix":
+    case "operator_rejected":
+      return `${base} border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300`
+    default:
+      return `${base} border-muted bg-muted/30 text-foreground`
+  }
+}
 
 function ProductWorkflowCard({ product }: { product: ProductApprovalWorkflowSummary }) {
   const canCreateMissingDrafts =
@@ -633,7 +862,7 @@ function ProductWorkflowCard({ product }: { product: ProductApprovalWorkflowSumm
           <input
             type="text"
             name="confirmation"
-            placeholder={MENI_CONFIRM_TOKEN}
+            placeholder={`${MENI_CONFIRM_HEBREW_TOKEN} / ${MENI_CONFIRM_TOKEN}`}
             className="h-9 w-40 rounded-md border bg-background px-3 text-sm"
           />
           <Button type="submit" size="sm" variant="secondary" disabled={product.pendingApprovalCount === 0}>

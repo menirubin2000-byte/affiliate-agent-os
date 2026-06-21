@@ -40,9 +40,13 @@ export const IMAGE_REQUIRED_FOR_READY = [
   "facebook_page",
   "medium",
   "substack",
+  "quora",
+  "reddit",
   "instagram_professional",
   "pinterest",
   "x_twitter",
+  "mastodon",
+  "threads",
 ] as const
 
 export const VIDEO_REQUIRED_FOR_READY = ["tiktok", "youtube"] as const
