@@ -67,6 +67,33 @@ function getBulkEditPlatformGroup(platform: string): CampaignPlatform[] {
   return GENERAL_POST_PLATFORMS
 }
 
+// Per-platform body length limits (chars). 0 = no limit.
+// "Save to all platforms" filters out platforms whose limit the new body
+// would exceed, so a long Substack body doesn't overwrite the X/Pinterest
+// copies. Each filtered platform stays editable on its own page.
+const PLATFORM_BODY_LIMIT: Record<string, number> = {
+  x_twitter: 280,
+  pinterest: 500,
+  instagram_professional: 2200,
+  linkedin: 3000,
+  tiktok: 4000,
+  youtube: 5000,
+  facebook_page: 63206,
+  medium: 0,
+  substack: 0,
+  quora: 0,
+  reddit: 40000,
+}
+
+function platformsWithinBodyLimit(platforms: CampaignPlatform[], body: string): CampaignPlatform[] {
+  const len = body.length
+  return platforms.filter((p) => {
+    const limit = PLATFORM_BODY_LIMIT[p] ?? 0
+    return limit === 0 || len <= limit
+  })
+}
+
+
 function oppositeLanguage(language: string | null | undefined): "en" | "he" {
   return language === "he" ? "en" : "he"
 }
@@ -778,13 +805,17 @@ export async function updateAllProductPostsBodyAction(formData: FormData) {
     if (!fc) fail("post_not_found")
     if (fc.status === "published_verified") fail("cannot_edit_published_post")
     const platformGroup = getBulkEditPlatformGroup(fc.platform)
+    // Skip platforms whose length limit the new body would exceed (X/Pinterest/etc.)
+    // so a long copy doesn't overwrite a shorter platform-specific version.
+    const eligiblePlatforms = platformsWithinBodyLimit(platformGroup, body)
+    if (eligiblePlatforms.length === 0) fail("body_too_long_for_all_platforms_in_group")
 
     const { error } = await supabase
       .from("final_copies")
       .update({ body })
       .eq("product_id", fc.product_id)
       .eq("language", fc.language)
-      .in("platform", platformGroup)
+      .in("platform", eligiblePlatforms)
       .neq("status", "published_verified")
     if (error) fail(error.message)
   } catch (error) {
