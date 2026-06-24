@@ -1,5 +1,6 @@
 import crypto from "node:crypto"
 
+import { encryptSecret, getServerTokenEncryptionSecret } from "@/lib/secret-crypto"
 import type { XOAuthTokenResponse } from "@/lib/x-official-api"
 import type { YouTubeChannel, YouTubeOAuthTokenResponse } from "@/lib/youtube-official-api"
 import type { PlatformConnectionStatus } from "@/types/platform-connection"
@@ -143,12 +144,20 @@ export function buildYouTubeConnectionUpsert(input: {
   channel: YouTubeChannel | null
   now?: Date
   apiAccessReady?: string
+  tokenEncryptionKey?: string
 }): YouTubeConnectionUpsert {
   const now = input.now ?? new Date()
   const expiresAt = input.token.expires_in
     ? new Date(now.getTime() + input.token.expires_in * 1000).toISOString()
     : null
   const scopes = input.token.scope?.split(/\s+/).filter(Boolean) ?? []
+  const encryptionSecret = input.tokenEncryptionKey ?? getServerTokenEncryptionSecret()
+  const encryptedAccessToken = input.token.access_token && encryptionSecret
+    ? encryptSecret(input.token.access_token, encryptionSecret)
+    : null
+  const encryptedRefreshToken = input.token.refresh_token && encryptionSecret
+    ? encryptSecret(input.token.refresh_token, encryptionSecret)
+    : null
 
   return {
     provider: "youtube",
@@ -167,7 +176,11 @@ export function buildYouTubeConnectionUpsert(input: {
     metadata: {
       source: "official_google_youtube_oauth",
       raw_token_stored: false,
-      publishing_enabled: false,
+      encrypted_token_stored: Boolean(encryptedRefreshToken),
+      publishing_enabled: Boolean(encryptedRefreshToken),
+      encrypted_access_token: encryptedAccessToken,
+      encrypted_refresh_token: encryptedRefreshToken,
+      token_expires_at: expiresAt,
       channel_id: input.channel?.id ?? null,
       channel_title: input.channel?.title ?? null,
       video_required: true,

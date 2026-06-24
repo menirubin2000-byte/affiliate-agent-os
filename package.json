@@ -17,11 +17,13 @@
     "sync:review-pack": "node scripts/export-review-pack.js",
     "sync:images": "node scripts/sync-product-images.js",
     "sync:all": "npm run sync:publish && npm run sync:truth && npm run sync:review-pack",
+    "publish:youtube": "node scripts/publish-youtube-approved.js",
     "ops:status": "node scripts/ops/status.mjs",
     "ops:health": "node scripts/ops/health.mjs",
     "ops:db": "node scripts/ops/db-query.mjs",
     "ops:logs": "powershell -File scripts/ops/logs.ps1",
-    "ops:restart": "powershell -File scripts/ops/docker-restart.ps1"
+    "ops:restart": "powershell -File scripts/ops/docker-restart.ps1",
+    "fix:hebrew-posts": "node scripts/fix-bad-hebrew-posts.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
@@ -51,6 +53,7 @@
     "pg": "^8.21.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.3",
+    "twitter-api-v2": "^1.29.0",
     "typescript": "^5",
     "ws": "^8.21.0"
   }

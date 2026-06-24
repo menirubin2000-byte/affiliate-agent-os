@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 
 import { PublicSiteShell } from "@/components/public-site-shell"
+import { listPublicGuides } from "@/lib/public-guides"
 import { listPublicReviewCards } from "@/lib/public-review-catalog"
 
 export const dynamic = "force-dynamic"
@@ -15,8 +16,10 @@ export const metadata: Metadata = {
 
 export default async function PublicHomePage() {
   const reviews = await listPublicReviewCards()
+  const guides = listPublicGuides()
   const softwareCount = reviews.filter((review) => review.kind === "software").length
   const productCount = reviews.filter((review) => review.kind === "product").length
+  const guideCount = guides.length
 
   return (
     <PublicSiteShell active="home">
@@ -33,7 +36,7 @@ export default async function PublicHomePage() {
         </p>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 md:grid-cols-3">
         <CategoryCard
           href="/software"
           eyebrow="Software"
@@ -47,6 +50,13 @@ export default async function PublicHomePage() {
           title="מוצרים פיזיים וגאדג׳טים"
           description="מוצרים מ-AliExpress, Amazon וחנויות שותפים: ציוד מחשב, אביזרים, אוזניות ועוד."
           count={productCount}
+        />
+        <CategoryCard
+          href="/guides"
+          eyebrow="Guides"
+          title="Guides and Top Picks"
+          description="Comparison articles, best-of roundups, and shortlist pages for visitors who want a fast answer before reading a full review."
+          count={guideCount}
         />
       </section>
     </PublicSiteShell>

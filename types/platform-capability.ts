@@ -5,6 +5,8 @@ export type ResearchedPlatform =
   | "pinterest"
   | "x_twitter"
   | "youtube"
+  | "mastodon"
+  | "threads"
 
 export type PlatformApiAvailability = "official_api_available" | "no_official_publish_api"
 

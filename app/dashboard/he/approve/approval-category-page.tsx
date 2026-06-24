@@ -21,7 +21,6 @@ import {
   createMissingDraftsForProductAction,
   updateSelectedProductPostsBodyAction,
 } from "./actions"
-import { WorkTabs, type WorkProduct } from "./work-tabs"
 
 export const dynamic = "force-dynamic"
 
@@ -210,24 +209,26 @@ export async function ApprovalCategoryPage({
           </CardHeader>
         </Card>
       ) : (
-        <WorkTabs
-          basePath={basePath}
-          initialProductId={searchParams.p}
-          products={products.map(
-            (product): WorkProduct => ({
-              productId: product.productId,
-              productName: product.productName,
-              readyCount: product.pendingApprovalCount,
-              posts: product.posts.map((post) => ({
-                id: post.id,
-                platform: post.platform,
-                language: post.language,
-                status: post.status,
-                body: post.body,
-              })),
-            }),
-          )}
-        />
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {products.map((product) => (
+            <Link
+              key={product.productId}
+              href={`${basePath}/${product.productId}`}
+              className="block rounded-xl border bg-card p-4 transition hover:border-primary hover:bg-muted/30"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-semibold leading-tight">{product.productName}</h2>
+                {product.category ? <Badge variant="secondary">{product.category}</Badge> : null}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                <span>טיוטות: <strong>{product.finalCopiesCount}</strong></span>
+                <span className="text-blue-600">מוכנים: <strong>{product.pendingApprovalCount}</strong></span>
+                <span className="text-emerald-600">מאושרים: <strong>{product.approvedCount}</strong></span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">לחץ לפתיחת דף המוצר עם כל הפלטפורמות ←</p>
+            </Link>
+          ))}
+        </section>
       )}
     </div>
   )

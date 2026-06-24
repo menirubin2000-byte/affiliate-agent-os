@@ -1,0 +1,21 @@
+.git
+.next
+.vercel
+node_modules
+.claude
+.local
+tmp
+docs
+tests
+browser-extension
+publish-ready
+scripts
+תמונות מוצרים
+*.zip
+*.pdf
+.env*
+*.bak
+*.bak-*
+facebook-pages.private.json
+client_secret_*.json
+*.txt

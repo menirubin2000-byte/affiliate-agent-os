@@ -101,6 +101,9 @@ interface ProductRow {
   category: string | null
   affiliate_link?: string | null
   affiliate_url: string
+  image_url?: string | null
+  image_url_he?: string | null
+  video_url?: string | null
   price: number | string | null
   commission_rate: number | string | null
   notes: string | null
@@ -286,6 +289,9 @@ function mapProduct(row: ProductRow): Product {
     category: row.category,
     affiliateLink: row.affiliate_link ?? row.affiliate_url,
     affiliateUrl: row.affiliate_url,
+    imageUrl: row.image_url ?? null,
+    imageUrlHe: row.image_url_he ?? null,
+    videoUrl: row.video_url ?? null,
     price: toNullableNumber(row.price),
     commissionRate: toNullableNumber(row.commission_rate),
     notes: row.notes,
@@ -996,7 +1002,11 @@ export async function createProduct(input: CreateProductInput) {
       slug: normalizedSlug,
       brand: input.brand?.trim() || null,
       category: input.category?.trim() || null,
+      affiliate_link: input.affiliateLink?.trim() || affiliateUrl,
       affiliate_url: affiliateUrl,
+      image_url: input.imageUrl?.trim() || null,
+      image_url_he: input.imageUrlHe?.trim() || null,
+      video_url: input.videoUrl?.trim() || null,
       price: input.price ?? null,
       commission_rate: input.commissionRate ?? null,
       notes: input.notes?.trim() || null,

@@ -3,7 +3,11 @@ import { notFound } from "next/navigation"
 
 import { buttonVariants } from "@/components/ui/button"
 import { Button } from "@/components/ui/button"
+import { supportsVerifiedManualPublishUrl } from "@/lib/manual-publish-reconciliation"
+import { requiresImageForPost } from "@/lib/post-media-policy"
+import { getPlatformCharLimit, countCharsForPlatform } from "@/lib/platform-char-limits"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
+import type { CampaignPlatform } from "@/types/campaign-workflow"
 import { cn } from "@/lib/utils"
 import {
   approveFinalCopyAction,
@@ -98,6 +102,12 @@ export default async function PreviewPage({
     quora: "Quora",
   }
   const communityPlatforms = new Set(["quora", "reddit"])
+  const canVerifyManualUrl = supportsVerifiedManualPublishUrl(fc.platform)
+  const isMedium = fc.platform === "medium"
+  const imageRequiredForPlatform = requiresImageForPost(fc.platform)
+  const charLimit = getPlatformCharLimit(fc.platform as CampaignPlatform)
+  const charCount = countCharsForPlatform(fc.platform as CampaignPlatform, fc.body || "")
+  const withinLimit = charLimit === null || charCount <= charLimit
   const bulkSaveLabel = communityPlatforms.has(fc.platform)
     ? "שמור רק ל-Quora/Reddit של המוצר"
     : "שמור לכל הפלטפורמות (חוץ מ-Quora/Reddit)"
@@ -149,6 +159,21 @@ export default async function PreviewPage({
         <p><strong>שפה:</strong> {fc.language === "he" ? "עברית" : "English"}</p>
         <p><strong>סטטוס:</strong> {fc.status}</p>
         <p><strong>ולידציה:</strong> {fc.validation_status ?? "לא נבדק"}</p>
+        <p>
+          <strong>מגבלת תווים:</strong>{" "}
+          {charLimit === null ? (
+            <span className="text-muted-foreground">ללא הגבלה — טקסט ארוך מותר</span>
+          ) : (
+            <>
+              {charCount}/{charLimit}{" "}
+              {withinLimit ? (
+                <span className="font-semibold text-green-700">✓ בתוך המגבלה</span>
+              ) : (
+                <span className="font-semibold text-red-700">✗ חורג ({charCount - charLimit} תווים מעל) — צריך גרסה מקוצרת</span>
+              )}
+            </>
+          )}
+        </p>
         {program ? (
           <p><strong>תוכנית שותפים:</strong> {program.network} · {program.status} · {program.affiliate_link}</p>
         ) : null}
@@ -209,11 +234,43 @@ export default async function PreviewPage({
               className="mx-auto max-h-[500px] w-auto object-contain"
             />
           </div>
+          {imageRequiredForPlatform ? (
+            <p className="text-xs text-amber-700">
+              {platformNames[fc.platform] ?? fc.platform}: חובה לפרסם עם תמונה אמיתית. פרסום בלי תמונה אסור.
+            </p>
+          ) : null}
+          {isMedium ? (
+            <p className="text-xs text-amber-700">
+              Medium: חובה לפרסם את הפוסט עם תמונה אמיתית. בלי תמונה לא מאשרים ולא מסמנים published.
+            </p>
+          ) : null}
+          {isMedium ? (
+            <p className="text-xs text-amber-700">
+              Medium הוא manual-only. אסור לפרסם אותו דרך טופס או Browser Helper.
+            </p>
+          ) : null}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+        <>
+          <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           אין תמונה למוצר הזה
-        </div>
+          </div>
+          {imageRequiredForPlatform ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              {platformNames[fc.platform] ?? fc.platform}: אי אפשר לאשר או לפרסם בלי תמונה.
+            </div>
+          ) : null}
+          {isMedium ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              אין תמונה למוצר הזה. ב-Medium אי אפשר לאשר או לפרסם בלי תמונה.
+            </div>
+          ) : null}
+          {isMedium ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Medium הוא manual-only. אין לפרסם אותו דרך טופס או Browser Helper.
+            </div>
+          ) : null}
+        </>
       )}
 
       {product?.video_url ? (
@@ -260,6 +317,28 @@ export default async function PreviewPage({
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">טקסט הפוסט</h2>
+        {charLimit === null ? (
+          <p className="text-xs text-muted-foreground">
+            {platformNames[fc.platform] ?? fc.platform}: ללא מגבלת תווים — אפשר טקסט ארוך.
+          </p>
+        ) : (
+          <div
+            className={cn(
+              "rounded-md border p-2 text-xs",
+              withinLimit
+                ? "border-green-300 bg-green-50 text-green-900"
+                : "border-red-300 bg-red-50 text-red-900",
+            )}
+          >
+            {platformNames[fc.platform] ?? fc.platform}: מגבלה {charLimit} תווים · כרגע {charCount}
+            {withinLimit
+              ? " ✓"
+              : ` ✗ חורג ב-${charCount - charLimit} תווים — קצר את הטקסט לפני אישור`}
+            {(fc.platform === "x_twitter" || fc.platform === "mastodon" || fc.platform === "threads")
+              ? " (קישור נספר כ-23 תווים)"
+              : ""}
+          </div>
+        )}
         <form>
           <input type="hidden" name="finalCopyId" value={fc.id} />
           <textarea
@@ -305,7 +384,7 @@ export default async function PreviewPage({
         <div className="rounded-lg border border-green-400 bg-green-50 p-4 text-sm font-semibold text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300">
           ✓ פוסט זה מסומן כפורסם. הוא לא בתור הפרסום ולא יתפרסם שוב.
         </div>
-      ) : (
+      ) : canVerifyManualUrl ? (
         <form
           action={markPublishedByOperatorAction}
           className="flex flex-wrap items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-4 dark:bg-green-950 dark:border-green-800"
@@ -315,19 +394,29 @@ export default async function PreviewPage({
             פרסמת את הפוסט הזה ידנית?
           </h3>
           <p className="w-full text-xs text-green-700 dark:text-green-400">
-            לחיצה תסמן אותו כפורסם — הוא יצא מתור הפרסום ולא יתפרסם שוב. אפשר להדביק את קישור הפוסט (לא חובה).
+            Manual publish reconciliation now requires a real live URL. Without a verified platform URL, no Published Record will be created.
           </p>
+          {isMedium ? (
+            <p className="w-full text-xs text-green-700 dark:text-green-400">
+              Medium requires a real image in the published story before this item can be reconciled as published.
+            </p>
+          ) : null}
           <input
             type="url"
             name="liveUrl"
             dir="ltr"
-            placeholder="קישור לפוסט שפרסמת (אופציונלי)"
+            required
+            placeholder="https://..."
             className="min-w-0 flex-1 rounded border bg-background px-3 py-2 text-sm"
           />
           <Button type="submit" size="lg" variant="default">
             ✓ פורסם על ידי מני
           </Button>
         </form>
+      ) : (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          Manual URL verification is not enabled for this platform yet.
+        </div>
       )}
 
       <div className="flex flex-wrap gap-3 rounded-lg border border-blue-300 bg-blue-50 p-4 dark:bg-blue-950 dark:border-blue-800">

@@ -30,10 +30,17 @@ final_copy
 
 ## Platform Rules
 
+- New platform copy must be based on an existing `final_copies` row for the same product and language when one exists.
+- Do not invent a new structure or placeholder copy for a platform if usable product copy already exists.
+- If no source copy exists for that product/language, report that the source is missing and get explicit approval before writing new copy.
+- Placeholder instructions such as "video structure" are not valid final copy.
+- Every non-video platform post must include a real image before approval and publish. Text-only publish on those platforms is forbidden.
 - Quora: no direct affiliate links.
 - Reddit: verify subreddit/community rules before publish readiness.
+- Quora and Reddit: bridge URL only, but still require a real image before publish.
 - TikTok: video/script only, no text-post publishing.
 - LinkedIn: official/API/session-safe path only.
+- Medium: manual-only. Do not publish through browser forms/helpers.
 - Substack: no MENI copy/paste fallback; keep blocked until a safe executor exists.
 
 ## Secrets

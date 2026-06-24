@@ -7,11 +7,11 @@ export const SYSTEME_IO_MEDIUM_FINAL_LINK =
 const DISCLOSURE =
   "Affiliate disclosure: This article includes an affiliate link. If you visit Systeme.io through the link and later choose a paid plan, I may earn a commission at no extra cost to you."
 
-const CTA_SECTION = `## Call to Action
+function buildMediumCtaSection(finalLink: string) {
+  return `## Call to Action
 
-To see the current features, plan details, and setup options, try Systeme.io here:
-
-${SYSTEME_IO_MEDIUM_FINAL_LINK}`
+To see the current features, plan details, and setup options, try Systeme.io here: ${finalLink}`
+}
 
 const INTERNAL_NOTE_PATTERNS = [
   /no fake personal experience[^\n]*/i,
@@ -36,6 +36,47 @@ const INCOME_OR_GUARANTEE_PATTERNS = [
   /\bearn\s+\$?\d+/i,
   /\bmake\s+\$?\d+/i,
 ]
+
+function stripUrlsForLanguageCheck(value: string) {
+  return value.replace(/https?:\/\/\S+/g, " ")
+}
+
+function countPattern(value: string, pattern: RegExp) {
+  return value.match(pattern)?.length ?? 0
+}
+
+function hasLanguageMismatch(body: string, language?: string) {
+  if (!language) return false
+
+  const normalized = stripUrlsForLanguageCheck(body)
+  const hebrewChars = countPattern(normalized, /[\u0590-\u05FF]/g)
+  const latinChars = countPattern(normalized, /[A-Za-z]/g)
+
+  if (language === "en") return hebrewChars >= 8
+  if (language === "he") return hebrewChars < 8 && latinChars >= 20
+  return false
+}
+
+function appendLanguageValidation(
+  validation: FinalContentValidation,
+  input: { body: string; language?: string },
+): FinalContentValidation {
+  const languageMatchesDeclared = !hasLanguageMismatch(input.body, input.language)
+  if (languageMatchesDeclared) return validation
+
+  const blockingReasons = validation.blockingReasons.includes("languageMismatch")
+    ? validation.blockingReasons
+    : [...validation.blockingReasons, "languageMismatch"]
+
+  return {
+    validationStatus: "blocked",
+    blockingReasons,
+    checks: {
+      ...validation.checks,
+      languageMatchesDeclared: false,
+    },
+  }
+}
 
 export function buildFinalContentHash(input: {
   title: string
@@ -83,7 +124,7 @@ export function cleanupMediumArticle(input: {
     )
   }
 
-  body = normalizeBlankLines(`${DISCLOSURE}\n\n${body}\n\n${CTA_SECTION.replace(SYSTEME_IO_MEDIUM_FINAL_LINK, finalLink)}`)
+  body = normalizeBlankLines(`${DISCLOSURE}\n\n${body}\n\n${buildMediumCtaSection(finalLink)}`)
 
   return { title, body }
 }
@@ -136,7 +177,7 @@ export function validateFinalCopyForPlatform(input: {
   language?: string
 }): FinalContentValidation {
   if (LONG_FORM_PLATFORMS.has(input.platform) && input.language !== "he") {
-    return validateFinalMediumArticle(input)
+    return appendLanguageValidation(validateFinalMediumArticle(input), input)
   }
 
   const body = input.body.trim()
@@ -166,11 +207,11 @@ export function validateFinalCopyForPlatform(input: {
   if (!checks.noIncomeOrGuaranteeClaim) blockingReasons.push("incomeOrGuaranteeClaim")
   if (body.length < 10) blockingReasons.push("bodyTooShort")
 
-  return {
+  return appendLanguageValidation({
     validationStatus: blockingReasons.length ? "blocked" : "valid",
     blockingReasons,
     checks,
-  }
+  }, input)
 }
 
 function removeDisclosureLines(body: string) {
