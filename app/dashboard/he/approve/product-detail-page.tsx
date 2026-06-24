@@ -10,9 +10,9 @@ import type { CampaignPlatform } from "@/types/campaign-workflow"
 import { cn } from "@/lib/utils"
 
 import {
-  addMissingPlatformPostsAction,
   approveAllReadyPostsForProductAction,
   approveFinalCopyAction,
+  createMissingDraftsForProductAction,
   deleteProductVideoAction,
   updateFinalCopyBodyAction,
   uploadProductImageAction,
@@ -172,8 +172,9 @@ export async function ProductDetailPage({ productId, backHref }: { productId: st
 
       {/* bulk actions */}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-3">
-        <form action={addMissingPlatformPostsAction}>
+        <form action={createMissingDraftsForProductAction}>
           <input type="hidden" name="productId" value={product.id} />
+          <input type="hidden" name="redirectTo" value={backHref + "/" + product.id} />
           <Button type="submit" size="sm" variant="secondary">הוסף פלטפורמות חסרות</Button>
         </form>
         <form action={approveAllReadyPostsForProductAction} className="flex flex-wrap items-end gap-2">

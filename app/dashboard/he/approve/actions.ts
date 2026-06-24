@@ -826,15 +826,23 @@ async function createBlankDraftsForMissingPlatforms(productId: string) {
   const supabase = getServiceRoleSupabase()
   const { data: existingRows, error } = await supabase
     .from("final_copies")
-    .select("platform, source_content_id")
+    .select("platform, language, source_content_id")
     .eq("product_id", productId)
   if (error) throw new Error(error.message)
 
-  const existing = (existingRows ?? []) as Array<{ platform: CampaignPlatform; source_content_id: string | null }>
-  const existingPlatforms = new Set(existing.map((row) => row.platform))
+  const existing = (existingRows ?? []) as Array<{ platform: CampaignPlatform; language: string | null; source_content_id: string | null }>
+  const existingKeys = new Set(
+    existing.map((row) => `${row.platform}::${(row.language ?? "he") === "he" ? "he" : "en"}`),
+  )
 
-  const missingPlatforms = ALL_POST_PLATFORMS.filter((platform) => !existingPlatforms.has(platform))
-  if (missingPlatforms.length === 0) return { created: 0 }
+  // Every platform must have BOTH a Hebrew and an English draft. Fill whatever is missing.
+  const missing: Array<{ platform: CampaignPlatform; language: "he" | "en" }> = []
+  for (const platform of ALL_POST_PLATFORMS) {
+    for (const language of ["he", "en"] as const) {
+      if (!existingKeys.has(`${platform}::${language}`)) missing.push({ platform, language })
+    }
+  }
+  if (missing.length === 0) return { created: 0 }
 
   const sourceContentId =
     existing.find((row) => row.source_content_id)?.source_content_id ??
@@ -848,8 +856,8 @@ async function createBlankDraftsForMissingPlatforms(productId: string) {
   }
 
   let created = 0
-  for (const platform of missingPlatforms) {
-    const contentHash = hashCampaignContent([productId, sourceContentId, platform, "blank-draft"])
+  for (const { platform, language } of missing) {
+    const contentHash = hashCampaignContent([productId, sourceContentId, platform, language, "blank-draft"])
     const { data: adaptation, error: adaptationError } = await supabase
       .from("platform_adaptations")
       .insert({
@@ -872,7 +880,7 @@ async function createBlankDraftsForMissingPlatforms(productId: string) {
       source_content_id: sourceContentId,
       platform_adaptation_id: adaptation.id,
       platform,
-      language: "he",
+      language,
       title: "",
       body: "",
       content_hash: contentHash,
