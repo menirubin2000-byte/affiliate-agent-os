@@ -25,8 +25,26 @@ import { requiresImageForPost, requiresVideoForPost } from "@/lib/post-media-pol
 import { getServiceRoleSupabase } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 
-function fail(reason: string): never {
-  redirect(`/dashboard/he/approve?error=${encodeURIComponent(reason)}`)
+function fail(reason: string, redirectPath = "/dashboard/he/approve"): never {
+  redirect(`${redirectPath}?error=${encodeURIComponent(reason)}`)
+}
+
+function getApprovalRedirectPath(formData: FormData, fallback = "/dashboard/he/approve") {
+  const value = String(formData.get("redirectTo") ?? "").trim()
+  if (!value.startsWith("/dashboard/he/approve")) return fallback
+  return value
+}
+
+function redirectWithParams(
+  redirectPath: string,
+  params: Record<string, string | number | undefined>,
+): never {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue
+    search.set(key, String(value))
+  }
+  redirect(`${redirectPath}?${search.toString()}`)
 }
 
 const NORMAL_POST_PLATFORMS: CampaignPlatform[] = [
@@ -37,7 +55,6 @@ const NORMAL_POST_PLATFORMS: CampaignPlatform[] = [
   "substack",
   "pinterest",
   "x_twitter",
-  "mastodon",
   "threads",
 ]
 
@@ -692,6 +709,20 @@ async function createMissingLanguageFinalCopiesForProduct(productId: string) {
   return { created, skipped }
 }
 
+async function completeMissingFinalCopiesForProduct(productId: string) {
+  const englishCoverage = await createMissingEnglishFinalCopiesForProduct(productId)
+  const missingLanguageCoverage = await createMissingLanguageFinalCopiesForProduct(productId)
+
+  return {
+    englishCreated: englishCoverage.created,
+    englishSkipped: englishCoverage.skipped,
+    languagesCreated: missingLanguageCoverage.created,
+    languagesSkipped: missingLanguageCoverage.skipped,
+    totalCreated: englishCoverage.created + missingLanguageCoverage.created,
+    totalSkipped: englishCoverage.skipped + missingLanguageCoverage.skipped,
+  }
+}
+
 export async function approveFinalCopyAction(formData: FormData) {
   const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
   if (!finalCopyId) fail("missing_final_copy_id")
@@ -788,44 +819,122 @@ export async function createTranslatedFinalCopyAction(formData: FormData) {
   }
 }
 
+// Create a BLANK, editable draft for every platform that has no final_copy yet.
+// This guarantees the operator can always open and edit a draft per platform —
+// even when there is no auto-generated content or affiliate link to seed it from.
+async function createBlankDraftsForMissingPlatforms(productId: string) {
+  const supabase = getServiceRoleSupabase()
+  const { data: existingRows, error } = await supabase
+    .from("final_copies")
+    .select("platform, source_content_id")
+    .eq("product_id", productId)
+  if (error) throw new Error(error.message)
+
+  const existing = (existingRows ?? []) as Array<{ platform: CampaignPlatform; source_content_id: string | null }>
+  const existingPlatforms = new Set(existing.map((row) => row.platform))
+
+  const missingPlatforms = ALL_POST_PLATFORMS.filter((platform) => !existingPlatforms.has(platform))
+  if (missingPlatforms.length === 0) return { created: 0 }
+
+  const sourceContentId =
+    existing.find((row) => row.source_content_id)?.source_content_id ??
+    (await getOrCreatePrimarySourceContentId(productId))
+
+  const program = await loadPrimaryAffiliateProgram(productId).catch(() => null)
+  let affiliateLink: string | null = program?.affiliate_link?.trim() || null
+  if (!affiliateLink) {
+    const product = await loadProductMediaForWorkflow(productId).catch(() => null)
+    affiliateLink = product?.affiliate_url?.trim() || null
+  }
+
+  let created = 0
+  for (const platform of missingPlatforms) {
+    const contentHash = hashCampaignContent([productId, sourceContentId, platform, "blank-draft"])
+    const { data: adaptation, error: adaptationError } = await supabase
+      .from("platform_adaptations")
+      .insert({
+        source_content_id: sourceContentId,
+        product_id: productId,
+        platform,
+        title: "",
+        body: "",
+        content_hash: contentHash,
+        campaign_approval_status: "campaign_approved",
+      })
+      .select("id")
+      .single()
+    if (adaptationError || !adaptation) continue
+
+    const { error: insertError } = await supabase.from("final_copies").insert({
+      product_id: productId,
+      affiliate_program_id: program?.id ?? null,
+      affiliate_link: affiliateLink,
+      source_content_id: sourceContentId,
+      platform_adaptation_id: adaptation.id,
+      platform,
+      language: "he",
+      title: "",
+      body: "",
+      content_hash: contentHash,
+      version: 1,
+      status: "draft_internal",
+      validation_status: "blocked",
+      blocking_reasons: ["טיוטה ריקה — מלא טקסט ושמור"],
+    })
+    if (!insertError) created += 1
+  }
+  return { created }
+}
+
 export async function createMissingDraftsForProductAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
-  if (!productId) fail("missing_product_id")
+  const redirectPath = getApprovalRedirectPath(formData)
+  if (!productId) fail("missing_product_id", redirectPath)
 
   try {
     assertIntegrationConfigured("supabase")
-    const result = await createMissingEnglishFinalCopiesForProduct(productId)
-    if (result.created === 0) fail("no_new_missing_drafts_created")
+    // Best-effort: seed real English content where the system can. Never block on it.
+    let seeded = 0
+    try {
+      const result = await createMissingEnglishFinalCopiesForProduct(productId)
+      seeded = result.created
+    } catch {
+      seeded = 0
+    }
+    // Always guarantee a blank editable draft for any platform still missing.
+    const blanks = await createBlankDraftsForMissingPlatforms(productId)
+    if (seeded + blanks.created === 0) fail("no_new_missing_drafts_created", redirectPath)
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
-    fail(error instanceof Error ? error.message : "create_missing_drafts_failed")
+    fail(error instanceof Error ? error.message : "create_missing_drafts_failed", redirectPath)
   }
 
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/he")
   revalidatePath("/dashboard/he/approve")
   revalidatePath("/dashboard/he/all-posts")
-  redirect("/dashboard/he/approve?approved=product_drafts_created")
+  redirectWithParams(redirectPath, { approved: "product_drafts_created" })
 }
 
 export async function generateMissingLanguageContentForProductAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
-  if (!productId) fail("missing_product_id")
+  const redirectPath = getApprovalRedirectPath(formData)
+  if (!productId) fail("missing_product_id", redirectPath)
 
   try {
     assertIntegrationConfigured("supabase")
     const result = await createMissingLanguageFinalCopiesForProduct(productId)
-    if (result.created === 0) fail("no_missing_language_content_created")
+    if (result.created === 0) fail("no_missing_language_content_created", redirectPath)
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
-    fail(error instanceof Error ? error.message : "generate_missing_language_content_failed")
+    fail(error instanceof Error ? error.message : "generate_missing_language_content_failed", redirectPath)
   }
 
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/he")
   revalidatePath("/dashboard/he/approve")
   revalidatePath("/dashboard/he/all-posts")
-  redirect("/dashboard/he/approve?approved=product_languages_created")
+  redirectWithParams(redirectPath, { approved: "product_languages_created" })
 }
 
 export async function approveAllReadyPostsForProductAction(formData: FormData) {
@@ -863,12 +972,13 @@ export async function approveAllReadyPostsForProductAction(formData: FormData) {
 }
 
 export async function approveSelectedPostsAction(formData: FormData) {
+  const redirectPath = getApprovalRedirectPath(formData)
   const selectedIds = Array.from(
     new Set(formData.getAll("finalCopyIds").map((value) => String(value ?? "").trim()).filter(Boolean)),
   )
   const confirmation = String(formData.get("confirmation") ?? "").trim()
 
-  if (selectedIds.length === 0) fail("no_posts_selected")
+  if (selectedIds.length === 0) fail("no_posts_selected", redirectPath)
 
   try {
     assertIntegrationConfigured("supabase")
@@ -880,18 +990,12 @@ export async function approveSelectedPostsAction(formData: FormData) {
       .in("id", selectedIds)
       .eq("status", "ready_for_operator_approval")
       .eq("validation_status", "valid")
-    if (error) fail(error.message)
-    if (!readyCopies?.length) fail("no_selected_ready_posts")
+    if (error) fail(error.message, redirectPath)
+    if (!readyCopies?.length) fail("no_selected_ready_posts", redirectPath)
 
     for (const copy of readyCopies as Array<{ id: string }>) {
       await approveFinalCopy(copy.id)
     }
-
-    const params = new URLSearchParams({
-      approved: "selected_posts_approved",
-      approvedCount: String(readyCopies.length),
-      skipped: String(selectedIds.length - readyCopies.length),
-    })
 
     revalidatePath("/dashboard")
     revalidatePath("/dashboard/he")
@@ -899,10 +1003,14 @@ export async function approveSelectedPostsAction(formData: FormData) {
     revalidatePath("/dashboard/he/schedule")
     revalidatePath("/dashboard/he/publish-ready")
     revalidatePath("/dashboard/he/content-review")
-    redirect(`/dashboard/he/approve?${params.toString()}`)
+    redirectWithParams(redirectPath, {
+      approved: "selected_posts_approved",
+      approvedCount: readyCopies.length,
+      skipped: selectedIds.length - readyCopies.length,
+    })
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
-    fail(error instanceof Error ? error.message : "approve_selected_posts_failed")
+    fail(error instanceof Error ? error.message : "approve_selected_posts_failed", redirectPath)
   }
 }
 
@@ -1011,6 +1119,53 @@ export async function updateAllProductPostsBodyAction(formData: FormData) {
 
   revalidatePath("/dashboard/he/approve")
   redirect(`/dashboard/he/approve/preview/${finalCopyId}?approved=all_posts_updated`)
+}
+
+export async function updateSelectedProductPostsBodyAction(formData: FormData) {
+  const redirectPath = getApprovalRedirectPath(formData)
+  const selectedIds = Array.from(
+    new Set(formData.getAll("finalCopyIds").map((value) => String(value ?? "").trim()).filter(Boolean)),
+  )
+  const body = String(formData.get("body") ?? "")
+
+  if (selectedIds.length === 0) fail("no_posts_selected", redirectPath)
+  if (!body.trim()) fail("missing_body", redirectPath)
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const { data: copies, error } = await supabase
+      .from("final_copies")
+      .select("id, product_id, status")
+      .in("id", selectedIds)
+    if (error) fail(error.message, redirectPath)
+    if (!copies?.length) fail("selected_posts_not_found", redirectPath)
+
+    const editableCopies = copies.filter((copy) => copy.status !== "published_verified")
+    if (!editableCopies.length) fail("cannot_edit_published_post", redirectPath)
+
+    const productIds = new Set(editableCopies.map((copy) => copy.product_id))
+    if (productIds.size > 1) fail("selected_posts_must_belong_to_one_product", redirectPath)
+
+    const { error: updateError } = await supabase
+      .from("final_copies")
+      .update({ body })
+      .in("id", editableCopies.map((copy) => copy.id))
+    if (updateError) fail(updateError.message, redirectPath)
+
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/he")
+    revalidatePath("/dashboard/he/approve")
+    revalidatePath("/dashboard/he/all-posts")
+    redirectWithParams(redirectPath, {
+      approved: "selected_posts_updated",
+      updatedCount: editableCopies.length,
+      skipped: selectedIds.length - editableCopies.length,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "update_selected_posts_failed", redirectPath)
+  }
 }
 
 export async function uploadProductImageAction(formData: FormData) {
@@ -1257,9 +1412,10 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
   const requestedPlatforms = getRequestedPlatforms(formData)
   const languageInput = String(formData.get("language") ?? "he").trim()
   const language = languageInput === "en" ? "en" : "he"
+  const redirectPath = getApprovalRedirectPath(formData)
 
-  if (!productId) fail("missing_product_id")
-  if (requestedPlatforms.length === 0) fail("no_platform_selected")
+  if (!productId) fail("missing_product_id", redirectPath)
+  if (requestedPlatforms.length === 0) fail("no_platform_selected", redirectPath)
 
   try {
     assertIntegrationConfigured("supabase")
@@ -1274,8 +1430,8 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       `)
       .eq("product_id", productId)
       .order("updated_at", { ascending: false })
-    if (existingError) fail(existingError.message)
-    if (!existing?.length) fail("no_existing_posts_to_copy_from")
+    if (existingError) fail(existingError.message, redirectPath)
+    if (!existing?.length) fail("no_existing_posts_to_copy_from", redirectPath)
 
     const existingCopies = existing as FinalCopyTemplateRow[]
     const dedupeCandidates = existingCopies
@@ -1301,7 +1457,7 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
         skipped: String(skippedCount),
       })
       revalidatePath("/dashboard/he/approve")
-      redirect(`/dashboard/he/approve?${params.toString()}`)
+      redirect(`${redirectPath}?${params.toString()}`)
     }
 
     let createdCount = 0
@@ -1325,31 +1481,66 @@ export async function addSelectedPlatformPostAction(formData: FormData) {
       created: String(createdCount),
       skipped: String(skippedCount),
     })
-    redirect(`/dashboard/he/approve?${params.toString()}`)
+    redirect(`${redirectPath}?${params.toString()}`)
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
-    fail(error instanceof Error ? error.message : "add_selected_platform_failed")
+    fail(error instanceof Error ? error.message : "add_selected_platform_failed", redirectPath)
   }
 }
 
 export async function addAllMissingPlatformPostsForProductAction(formData: FormData) {
   const productId = String(formData.get("productId") ?? "").trim()
-  const languageInput = String(formData.get("language") ?? "he").trim()
-  const language = languageInput === "en" ? "en" : "he"
+  const redirectPath = getApprovalRedirectPath(formData)
 
-  if (!productId) fail("missing_product_id")
+  if (!productId) fail("missing_product_id", redirectPath)
 
   try {
-    const nextFormData = new FormData()
-    nextFormData.set("productId", productId)
-    nextFormData.set("language", language)
-    for (const platform of ALL_POST_PLATFORMS) {
-      nextFormData.append("platforms", platform)
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const { data: existingRows, error: existingError } = await supabase
+      .from("final_copies")
+      .select("id, platform, language, status")
+      .eq("product_id", productId)
+      .order("updated_at", { ascending: false })
+    if (existingError) fail(existingError.message, redirectPath)
+
+    const missingBefore = buildMissingPlatformLanguageDrafts({
+      existingFinalCopies: ((existingRows ?? []) as Array<{
+        id: string
+        platform: CampaignPlatform
+        language: string | null
+        status: string
+      }>).map((row) => ({
+        id: row.id,
+        productId,
+        platform: row.platform,
+        language: row.language,
+        status: row.status,
+      })),
+    }).length
+
+    const result = await completeMissingFinalCopiesForProduct(productId)
+    if (result.totalCreated === 0) {
+      if (missingBefore === 0) {
+        redirectWithParams(redirectPath, { approved: "product_missing_already_complete" })
+      }
+      fail("no_missing_product_content_created", redirectPath)
     }
-    await addSelectedPlatformPostAction(nextFormData)
+
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/he")
+    revalidatePath("/dashboard/he/approve")
+    revalidatePath("/dashboard/he/all-posts")
+    redirectWithParams(redirectPath, {
+      approved: "product_missing_completed",
+      created: result.totalCreated,
+      platformsCreated: result.englishCreated,
+      languagesCreated: result.languagesCreated,
+      skipped: result.totalSkipped,
+    })
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
-    fail(error instanceof Error ? error.message : "add_all_missing_platforms_failed")
+    fail(error instanceof Error ? error.message : "add_all_missing_platforms_failed", redirectPath)
   }
 }
 
