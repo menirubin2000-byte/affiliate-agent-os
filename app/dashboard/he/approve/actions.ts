@@ -1075,12 +1075,7 @@ export async function updateFinalCopyBodyAction(formData: FormData) {
   try {
     assertIntegrationConfigured("supabase")
     const supabase = getServiceRoleSupabase()
-    const { data: fc } = await supabase
-      .from("final_copies")
-      .select("status")
-      .eq("id", finalCopyId)
-      .single()
-    if (fc?.status === "published_verified") fail("cannot_edit_published_post")
+    // No edit lock: MENI (the owner) can edit any post, including published ones.
     const { error } = await supabase
       .from("final_copies")
       .update({ body })
@@ -1109,7 +1104,6 @@ export async function updateAllProductPostsBodyAction(formData: FormData) {
       .eq("id", finalCopyId)
       .single()
     if (!fc) fail("post_not_found")
-    if (fc.status === "published_verified") fail("cannot_edit_published_post")
     const platformGroup = getBulkEditPlatformGroup(fc.platform)
 
     const { error } = await supabase
@@ -1118,7 +1112,6 @@ export async function updateAllProductPostsBodyAction(formData: FormData) {
       .eq("product_id", fc.product_id)
       .eq("language", fc.language)
       .in("platform", platformGroup)
-      .neq("status", "published_verified")
     if (error) fail(error.message)
   } catch (error) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
@@ -1149,9 +1142,7 @@ export async function updateSelectedProductPostsBodyAction(formData: FormData) {
     if (error) fail(error.message, redirectPath)
     if (!copies?.length) fail("selected_posts_not_found", redirectPath)
 
-    const editableCopies = copies.filter((copy) => copy.status !== "published_verified")
-    if (!editableCopies.length) fail("cannot_edit_published_post", redirectPath)
-
+    const editableCopies = copies
     const productIds = new Set(editableCopies.map((copy) => copy.product_id))
     if (productIds.size > 1) fail("selected_posts_must_belong_to_one_product", redirectPath)
 
