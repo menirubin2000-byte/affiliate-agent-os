@@ -572,7 +572,7 @@ async function createTranslatedFinalCopyForId(finalCopyId: string) {
     .single()
   if (fcError) throw new Error(fcError.message)
   if (!fc) throw new Error("post_not_found")
-  if (fc.status === "published_verified") throw new Error("cannot_translate_published_post")
+  // No translate lock — published posts can be translated too.
 
   const targetLanguage = oppositeLanguage(fc.language)
   const { data: existing, error: existingError } = await supabase
@@ -952,14 +952,13 @@ export async function approveAllReadyPostsForProductAction(formData: FormData) {
 
   try {
     assertIntegrationConfigured("supabase")
-    assertMeniConfirmToken(confirmation)
+    // No confirmation token and no validation gate — MENI approves with one click.
     const supabase = getServiceRoleSupabase()
     const { data: readyCopies, error } = await supabase
       .from("final_copies")
       .select("id")
       .eq("product_id", productId)
       .eq("status", "ready_for_operator_approval")
-      .eq("validation_status", "valid")
       .order("updated_at", { ascending: false })
     if (error) fail(error.message)
     if (!readyCopies?.length) fail("no_ready_posts_for_product")
@@ -990,14 +989,13 @@ export async function approveSelectedPostsAction(formData: FormData) {
 
   try {
     assertIntegrationConfigured("supabase")
-    assertMeniConfirmToken(confirmation)
+    // No confirmation token and no validation gate — MENI approves with one click.
     const supabase = getServiceRoleSupabase()
     const { data: readyCopies, error } = await supabase
       .from("final_copies")
       .select("id")
       .in("id", selectedIds)
       .eq("status", "ready_for_operator_approval")
-      .eq("validation_status", "valid")
     if (error) fail(error.message, redirectPath)
     if (!readyCopies?.length) fail("no_selected_ready_posts", redirectPath)
 
@@ -1034,7 +1032,7 @@ export async function deleteFinalCopyAction(formData: FormData) {
       .select("status")
       .eq("id", finalCopyId)
       .single()
-    if (fc?.status === "published_verified") fail("cannot_delete_published_post")
+    // No delete lock — MENI can remove any post, including published.
     const { error } = await supabase.from("final_copies").delete().eq("id", finalCopyId)
     if (error) fail(error.message)
   } catch (error) {
