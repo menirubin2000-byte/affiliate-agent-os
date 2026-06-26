@@ -4,7 +4,6 @@ import { notFound } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { countCharsForPlatform, getPlatformCharLimit } from "@/lib/platform-char-limits"
-import { MENI_CONFIRM_HEBREW_TOKEN, MENI_CONFIRM_TOKEN } from "@/lib/draft-approval-workflow"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 import { cn } from "@/lib/utils"
@@ -12,6 +11,7 @@ import { cn } from "@/lib/utils"
 import {
   approveAllReadyPostsForProductAction,
   approveFinalCopyAction,
+  approveSelectedPostsAction,
   createMissingDraftsForProductAction,
   deleteProductVideoAction,
   updateFinalCopyBodyAction,
@@ -75,7 +75,10 @@ function PostEditor({ post, label }: { post: PostRow | undefined; label: string 
     <form className="space-y-2 rounded-lg border bg-background/60 p-3">
       <input type="hidden" name="finalCopyId" value={post.id} />
       <div className="flex items-center justify-between text-xs">
-        <span className="font-medium">{label}</span>
+        <label className="flex items-center gap-1.5 font-medium">
+          <input type="checkbox" name="finalCopyIds" value={post.id} form="approve-selected-form" className="h-4 w-4" />
+          {label}
+        </label>
         <span className="flex items-center gap-2">
           <Badge variant={post.status === "operator_approved" ? "default" : "outline"}>{statusLabel(post.status)}</Badge>
           <span className="text-muted-foreground">{limit === null ? `${count} תווים` : `${count}/${limit}`}</span>
@@ -179,13 +182,14 @@ export async function ProductDetailPage({ productId, backHref }: { productId: st
           <input type="hidden" name="redirectTo" value={backHref + "/" + product.id} />
           <Button type="submit" size="sm" variant="secondary">הוסף פלטפורמות חסרות</Button>
         </form>
-        <form action={approveAllReadyPostsForProductAction} className="flex flex-wrap items-end gap-2">
+        <form action={approveAllReadyPostsForProductAction}>
           <input type="hidden" name="productId" value={product.id} />
-          <label className="grid gap-1 text-xs text-muted-foreground">
-            אישור מני
-            <input name="confirmation" placeholder={`${MENI_CONFIRM_HEBREW_TOKEN} / ${MENI_CONFIRM_TOKEN}`} className="h-9 rounded-md border bg-background px-3 text-sm text-foreground" />
-          </label>
-          <Button type="submit" size="sm">✓ אשר את כל המוכנים ({readyCount})</Button>
+          <Button type="submit" size="sm" variant="outline">✓ אשר את כל המוכנים ({readyCount})</Button>
+        </form>
+        <form id="approve-selected-form" action={approveSelectedPostsAction}>
+          <input type="hidden" name="productId" value={product.id} />
+          <input type="hidden" name="redirectTo" value={backHref + "/" + product.id} />
+          <Button type="submit" size="sm">✓ אשר מסומנים</Button>
         </form>
       </div>
 
