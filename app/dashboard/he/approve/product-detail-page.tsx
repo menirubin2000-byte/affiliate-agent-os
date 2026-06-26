@@ -68,7 +68,9 @@ function PostEditor({ post, label }: { post: PostRow | undefined; label: string 
   }
   const limit = getPlatformCharLimit(post.platform)
   const count = countCharsForPlatform(post.platform, post.body ?? "")
-  const editable = post.status !== "published_verified"
+  // No edit lock: every post is always editable, including published ones.
+  // MENI does not want to be blocked from editing his own posts.
+  const editable = true
   return (
     <form className="space-y-2 rounded-lg border bg-background/60 p-3">
       <input type="hidden" name="finalCopyId" value={post.id} />
