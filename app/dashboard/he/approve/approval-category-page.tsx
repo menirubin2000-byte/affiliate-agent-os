@@ -19,6 +19,7 @@ import {
   addAllMissingPlatformPostsForProductAction,
   approveSelectedPostsAction,
   createMissingDraftsForProductAction,
+  toggleProductSuspendedAction,
   updateSelectedProductPostsBodyAction,
 } from "./actions"
 
@@ -222,31 +223,39 @@ export async function ApprovalCategoryPage({
             .map((product) => {
               const suspended = suspendedProductIds.has(product.productId)
               return (
-                <Link
+                <div
                   key={product.productId}
-                  href={`${basePath}/${product.productId}`}
                   className={cn(
-                    "block rounded-xl border bg-card p-4 transition hover:border-primary hover:bg-muted/30",
-                    suspended && "opacity-60 grayscale",
+                    "flex flex-col rounded-xl border bg-card p-4 transition hover:border-primary",
+                    suspended && "opacity-70 grayscale",
                   )}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold leading-tight">{product.productName}</h2>
-                    {suspended ? (
-                      <Badge variant="destructive">מושעה</Badge>
-                    ) : product.category ? (
-                      <Badge variant="secondary">{product.category}</Badge>
-                    ) : null}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                    <span>טיוטות: <strong>{product.finalCopiesCount}</strong></span>
-                    <span className="text-blue-600">מוכנים: <strong>{product.pendingApprovalCount}</strong></span>
-                    <span className="text-emerald-600">מאושרים: <strong>{product.approvedCount}</strong></span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {suspended ? "מושעה — לא זמין בישראל. לחץ לניהול ←" : "לחץ לפתיחת דף המוצר עם כל הפלטפורמות ←"}
-                  </p>
-                </Link>
+                  <Link href={`${basePath}/${product.productId}`} className="block">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold leading-tight">{product.productName}</h2>
+                      {suspended ? (
+                        <Badge variant="destructive">מושעה</Badge>
+                      ) : product.category ? (
+                        <Badge variant="secondary">{product.category}</Badge>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                      <span>טיוטות: <strong>{product.finalCopiesCount}</strong></span>
+                      <span className="text-blue-600">מוכנים: <strong>{product.pendingApprovalCount}</strong></span>
+                      <span className="text-emerald-600">מאושרים: <strong>{product.approvedCount}</strong></span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {suspended ? "מושעה — לא זמין בישראל." : "לחץ לפתיחת דף המוצר עם כל הפלטפורמות ←"}
+                    </p>
+                  </Link>
+                  <form action={toggleProductSuspendedAction} className="mt-3">
+                    <input type="hidden" name="productId" value={product.productId} />
+                    <input type="hidden" name="redirectTo" value={basePath} />
+                    <Button type="submit" size="sm" variant={suspended ? "secondary" : "destructive"} className="w-full">
+                      {suspended ? "↩ החזר לפעילות" : "⏸ השעה מוצר"}
+                    </Button>
+                  </form>
+                </div>
               )
             })}
         </section>
