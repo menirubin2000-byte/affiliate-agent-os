@@ -14,6 +14,7 @@ import {
   approveSelectedPostsAction,
   createMissingDraftsForProductAction,
   deleteProductVideoAction,
+  requeuePublishedPostAction,
   toggleProductSuspendedAction,
   updateFinalCopyBodyAction,
   uploadProductImageAction,
@@ -97,9 +98,15 @@ function PostEditor({ post, label }: { post: PostRow | undefined; label: string 
           <Button type="submit" size="sm" variant="outline" formAction={updateFinalCopyBodyAction}>
             שמור
           </Button>
-          <Button type="submit" size="sm" formAction={approveFinalCopyAction}>
-            ✓ אשר
-          </Button>
+          {post.status === "published_verified" ? (
+            <Button type="submit" size="sm" variant="secondary" formAction={requeuePublishedPostAction}>
+              ↻ פרסם שוב
+            </Button>
+          ) : (
+            <Button type="submit" size="sm" formAction={approveFinalCopyAction}>
+              ✓ אשר
+            </Button>
+          )}
         </div>
       ) : null}
     </form>

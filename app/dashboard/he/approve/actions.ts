@@ -1117,6 +1117,29 @@ export async function toggleProductSuspendedAction(formData: FormData) {
   redirect(redirectTo)
 }
 
+// Re-queue an already-published post: flip its status back to operator_approved
+// so the engine picks it up again on the next run. Manual, one post at a time.
+export async function requeuePublishedPostAction(formData: FormData) {
+  const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
+  if (!finalCopyId) fail("missing_final_copy_id")
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const { error } = await supabase
+      .from("final_copies")
+      .update({ status: "operator_approved" })
+      .eq("id", finalCopyId)
+    if (error) fail(error.message)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "requeue_failed")
+  }
+
+  revalidatePath("/dashboard/he/approve")
+  revalidatePath("/dashboard/he/all-posts")
+}
+
 export async function updateFinalCopyBodyAction(formData: FormData) {
   const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
   const body = String(formData.get("body") ?? "")
