@@ -14,6 +14,7 @@ import {
   approveSelectedPostsAction,
   createMissingDraftsForProductAction,
   deleteProductVideoAction,
+  toggleProductSuspendedAction,
   updateFinalCopyBodyAction,
   uploadProductImageAction,
 } from "./actions"
@@ -111,10 +112,11 @@ export async function ProductDetailPage({ productId, backHref }: { productId: st
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, name, image_url, image_url_he, video_url, video_status")
+    .select("id, name, status, image_url, image_url_he, video_url, video_status")
     .eq("id", productId)
     .single()
   if (!product) return notFound()
+  const isSuspended = product.status === "suspended"
 
   const { data: postsData } = await supabase
     .from("final_copies")
@@ -132,12 +134,24 @@ export async function ProductDetailPage({ productId, backHref }: { productId: st
     <div dir="rtl" className="space-y-6 text-right">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{product.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{product.name}</h1>
+            {isSuspended ? <Badge variant="destructive">מושעה — לא זמין בישראל</Badge> : null}
+          </div>
           <p className="text-sm text-muted-foreground">מוכנים לאישור: {readyCount} · מאושרים: {approvedCount}</p>
         </div>
-        <Link href={backHref} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-          חזרה לרשימת המוצרים
-        </Link>
+        <div className="flex items-center gap-2">
+          <form action={toggleProductSuspendedAction}>
+            <input type="hidden" name="productId" value={product.id} />
+            <input type="hidden" name="redirectTo" value={backHref + "/" + product.id} />
+            <Button type="submit" size="sm" variant={isSuspended ? "secondary" : "destructive"}>
+              {isSuspended ? "החזר לפעילות" : "השעה מוצר"}
+            </Button>
+          </form>
+          <Link href={backHref} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            חזרה לרשימת המוצרים
+          </Link>
+        </div>
       </div>
 
       {/* media */}

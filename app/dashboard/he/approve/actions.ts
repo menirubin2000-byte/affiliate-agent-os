@@ -1080,6 +1080,43 @@ export async function deleteProductAction(formData: FormData) {
   redirect("/dashboard/he/approve?approved=product_deleted")
 }
 
+// Suspend a product that's no longer available (e.g. delisted in Israel).
+// Toggles products.status between "suspended" and "active". Suspended products
+// stay in the DB (posts untouched) but are flagged in the work list so MENI
+// doesn't keep working on something he can't sell. Reversible.
+export async function toggleProductSuspendedAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "").trim()
+  const redirectTo = String(formData.get("redirectTo") ?? "/dashboard/he/approve").trim()
+  if (!productId) fail("missing_product_id", redirectTo)
+
+  try {
+    assertIntegrationConfigured("supabase")
+    const supabase = getServiceRoleSupabase()
+    const { data: product, error: readError } = await supabase
+      .from("products")
+      .select("status")
+      .eq("id", productId)
+      .single()
+    if (readError) fail(readError.message, redirectTo)
+    if (!product) fail("product_not_found", redirectTo)
+
+    const nextStatus = product.status === "suspended" ? "active" : "suspended"
+    const { error } = await supabase
+      .from("products")
+      .update({ status: nextStatus })
+      .eq("id", productId)
+    if (error) fail(error.message, redirectTo)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error
+    fail(error instanceof Error ? error.message : "toggle_suspended_failed", redirectTo)
+  }
+
+  revalidatePath("/dashboard")
+  revalidatePath("/dashboard/he/approve")
+  revalidatePath("/dashboard/products")
+  redirect(redirectTo)
+}
+
 export async function updateFinalCopyBodyAction(formData: FormData) {
   const finalCopyId = String(formData.get("finalCopyId") ?? "").trim()
   const body = String(formData.get("body") ?? "")

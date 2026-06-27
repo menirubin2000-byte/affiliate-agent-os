@@ -119,7 +119,7 @@ export async function ApprovalCategoryPage({
     )
   }
 
-  const [workflowRows, overview, finalCopiesResult] = await Promise.all([
+  const [workflowRows, overview, finalCopiesResult, productStatusResult] = await Promise.all([
     getDraftApprovalWorkflowProducts(),
     getPlatformRoutingOverview(),
     getServiceRoleSupabase()
@@ -128,7 +128,14 @@ export async function ApprovalCategoryPage({
       .in("status", POST_STATUSES)
       .order("updated_at", { ascending: false })
       .limit(5000),
+    getServiceRoleSupabase().from("products").select("id, status"),
   ])
+
+  const suspendedProductIds = new Set(
+    (productStatusResult.data ?? [])
+      .filter((row) => row.status === "suspended")
+      .map((row) => row.id as string),
+  )
 
   if (finalCopiesResult.error) {
     throw new Error(finalCopiesResult.error.message)
@@ -210,24 +217,38 @@ export async function ApprovalCategoryPage({
         </Card>
       ) : (
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => (
-            <Link
-              key={product.productId}
-              href={`${basePath}/${product.productId}`}
-              className="block rounded-xl border bg-card p-4 transition hover:border-primary hover:bg-muted/30"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h2 className="font-semibold leading-tight">{product.productName}</h2>
-                {product.category ? <Badge variant="secondary">{product.category}</Badge> : null}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                <span>טיוטות: <strong>{product.finalCopiesCount}</strong></span>
-                <span className="text-blue-600">מוכנים: <strong>{product.pendingApprovalCount}</strong></span>
-                <span className="text-emerald-600">מאושרים: <strong>{product.approvedCount}</strong></span>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">לחץ לפתיחת דף המוצר עם כל הפלטפורמות ←</p>
-            </Link>
-          ))}
+          {[...products]
+            .sort((a, b) => Number(suspendedProductIds.has(a.productId)) - Number(suspendedProductIds.has(b.productId)))
+            .map((product) => {
+              const suspended = suspendedProductIds.has(product.productId)
+              return (
+                <Link
+                  key={product.productId}
+                  href={`${basePath}/${product.productId}`}
+                  className={cn(
+                    "block rounded-xl border bg-card p-4 transition hover:border-primary hover:bg-muted/30",
+                    suspended && "opacity-60 grayscale",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="font-semibold leading-tight">{product.productName}</h2>
+                    {suspended ? (
+                      <Badge variant="destructive">מושעה</Badge>
+                    ) : product.category ? (
+                      <Badge variant="secondary">{product.category}</Badge>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                    <span>טיוטות: <strong>{product.finalCopiesCount}</strong></span>
+                    <span className="text-blue-600">מוכנים: <strong>{product.pendingApprovalCount}</strong></span>
+                    <span className="text-emerald-600">מאושרים: <strong>{product.approvedCount}</strong></span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {suspended ? "מושעה — לא זמין בישראל. לחץ לניהול ←" : "לחץ לפתיחת דף המוצר עם כל הפלטפורמות ←"}
+                  </p>
+                </Link>
+              )
+            })}
         </section>
       )}
     </div>
