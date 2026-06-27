@@ -351,11 +351,15 @@ export default async function PreviewPage({
             <Button type="submit" size="sm" variant="outline" formAction={updateFinalCopyBodyAction}>
               שמור לפוסט הזה בלבד
             </Button>
-            <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
-              {bulkSaveLabel}
-            </Button>
+            {fc.platform !== "x_twitter" && (
+              <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
+                {bulkSaveLabel}
+              </Button>
+            )}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{bulkSaveNote}</p>
+          {fc.platform !== "x_twitter" && (
+            <p className="mt-2 text-xs text-muted-foreground">{bulkSaveNote}</p>
+          )}
         </form>
       </div>
 
