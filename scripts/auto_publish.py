@@ -61,11 +61,11 @@ CLAUDE_REWRITE_SIGNATURES = [
 
 # Per-platform daily cap (avoid spam flags). YouTube is also bounded by API quota (~6/day).
 DAILY_CAP = {
-    "youtube": 5,
-    "facebook_page": 8,
-    "instagram_professional": 8,
-    "x_twitter": 8,
-    "linkedin": 8,
+    "youtube": 3,
+    "facebook_page": 3,
+    "instagram_professional": 3,
+    "x_twitter": 3,
+    "linkedin": 3,
 }
 
 def now_iso():
@@ -213,7 +213,11 @@ def pub_x(fc, image_url):
 # Mastodon removed 2026-06-22 per MENI — API token + platform deleted.
 
 def pub_linkedin(fc, image_url):
-    T, URN = ENV["LINKEDIN_ACCESS_TOKEN"], ENV["LINKEDIN_MEMBER_URN"]
+    # Publish to the company Page when LINKEDIN_ORG_URN is set (e.g. urn:li:organization:127954085),
+    # otherwise fall back to the personal profile. Posting to a Page needs a token with
+    # w_organization_social / rw_organization_admin scope.
+    T = ENV["LINKEDIN_ACCESS_TOKEN"]
+    URN = ENV.get("LINKEDIN_ORG_URN") or ENV["LINKEDIN_MEMBER_URN"]
     H = {"Authorization": "Bearer " + T, "Content-Type": "application/json", "X-Restli-Protocol-Version": "2.0.0"}
     reg = json.load(urllib.request.urlopen(urllib.request.Request(
         "https://api.linkedin.com/v2/assets?action=registerUpload",
@@ -229,9 +233,65 @@ def pub_linkedin(fc, image_url):
     rr = urllib.request.urlopen(urllib.request.Request("https://api.linkedin.com/v2/ugcPosts", data=json.dumps(post).encode(), headers=H), timeout=60)
     return "https://www.linkedin.com/feed/update/" + rr.headers.get("x-restli-id")
 
+def pub_x_video(fc, video_url):
+    # Chunked video upload (INIT -> APPEND -> FINALIZE -> wait for processing) then tweet.
+    body = fc["body"] or ""
+    if tco_len(body) > 280:
+        raise RuntimeError("body over 280 chars")
+    from requests_oauthlib import OAuth1Session
+    xo = OAuth1Session(ENV["X_CONSUMER_KEY"], client_secret=ENV["X_CONSUMER_SECRET"],
+                       resource_owner_key=ENV["X_ACCESS_TOKEN"], resource_owner_secret=ENV["X_ACCESS_TOKEN_SECRET"])
+    data = dl(video_url)
+    UP = "https://upload.twitter.com/1.1/media/upload.json"
+    init = xo.post(UP, data={"command": "INIT", "total_bytes": len(data), "media_type": "video/mp4", "media_category": "tweet_video"})
+    if init.status_code not in (200, 201, 202):
+        raise RuntimeError("INIT %d %s" % (init.status_code, init.text[:120]))
+    mid = init.json()["media_id_string"]
+    seg, CH = 0, 4 * 1024 * 1024
+    for i in range(0, len(data), CH):
+        ap = xo.post(UP, data={"command": "APPEND", "media_id": mid, "segment_index": seg}, files={"media": data[i:i + CH]})
+        if ap.status_code not in (200, 201, 204):
+            raise RuntimeError("APPEND %d %s" % (ap.status_code, ap.text[:120]))
+        seg += 1
+    fin = xo.post(UP, data={"command": "FINALIZE", "media_id": mid})
+    if fin.status_code not in (200, 201):
+        raise RuntimeError("FINALIZE %d %s" % (fin.status_code, fin.text[:120]))
+    info = fin.json().get("processing_info")
+    waited = 0
+    while info and info.get("state") in ("pending", "in_progress"):
+        w = int(info.get("check_after_secs", 5)); time.sleep(w); waited += w
+        if waited > 300:
+            raise RuntimeError("x video processing timeout")
+        info = xo.get(UP, params={"command": "STATUS", "media_id": mid}).json().get("processing_info")
+    if info and info.get("state") == "failed":
+        raise RuntimeError("x video processing failed: " + str(info.get("error")))
+    rr = xo.post("https://api.twitter.com/2/tweets", json={"text": body, "media": {"media_ids": [mid]}})
+    if rr.status_code != 201:
+        raise RuntimeError("%d %s" % (rr.status_code, rr.text[:120]))
+    return "https://x.com/MENIRUBINqs/status/" + rr.json()["data"]["id"]
+
+def pub_linkedin_video(fc, video_url):
+    T = ENV["LINKEDIN_ACCESS_TOKEN"]
+    URN = ENV.get("LINKEDIN_ORG_URN") or ENV["LINKEDIN_MEMBER_URN"]
+    H = {"Authorization": "Bearer " + T, "Content-Type": "application/json", "X-Restli-Protocol-Version": "2.0.0"}
+    reg = json.load(urllib.request.urlopen(urllib.request.Request(
+        "https://api.linkedin.com/v2/assets?action=registerUpload",
+        data=json.dumps({"registerUploadRequest": {"recipes": ["urn:li:digitalmediaRecipe:feedshare-video"], "owner": URN,
+            "serviceRelationships": [{"relationshipType": "OWNER", "identifier": "urn:li:userGeneratedContent"}]}}).encode(), headers=H), timeout=30))
+    up = reg["value"]["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
+    asset = reg["value"]["asset"]
+    urllib.request.urlopen(urllib.request.Request(up, data=dl(video_url),
+        headers={"Authorization": "Bearer " + T, "Content-Type": "application/octet-stream"}, method="PUT"), timeout=600)
+    post = {"author": URN, "lifecycleState": "PUBLISHED",
+            "specificContent": {"com.linkedin.ugc.ShareContent": {"shareCommentary": {"text": strip_md_headers(fc["body"])},
+                "shareMediaCategory": "VIDEO", "media": [{"status": "READY", "media": asset}]}},
+            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"}}
+    rr = urllib.request.urlopen(urllib.request.Request("https://api.linkedin.com/v2/ugcPosts", data=json.dumps(post).encode(), headers=H), timeout=60)
+    return "https://www.linkedin.com/feed/update/" + rr.headers.get("x-restli-id")
+
 # 2026-06-24 — MENI: STOP the publishing engine until the whole system is sorted out.
 # While True, the engine publishes NOTHING even if run. Set to False only on MENI's explicit go.
-ENGINE_DISABLED = True
+ENGINE_DISABLED = False  # 2026-06-27 — MENI: enable scheduled publishing (7:00, cap 3/platform, video on all 5)
 
 def run():
     print("=== auto_publish (smart media distribution)", now_iso(), "===")
@@ -254,9 +314,8 @@ def run():
         return has_video, (pr.get("video_url") if has_video else None), img
     for fc in rows:
         p = fc["platform"]
-        body_text = fc.get("body") or ""
-        if any(sig in body_text for sig in CLAUDE_REWRITE_SIGNATURES):
-            skipped.setdefault("claude-rewritten", "BLOCKED — body was written/rewritten by Claude, not MENI's approved text"); continue
+        # 2026-06-27 — MENI: remove the disclosure-signature block. His own approved posts
+        # (incl. the English translations) carry that line; the engine must publish them.
         if p in NO_API:
             skipped.setdefault(p, NO_API[p]); continue
         if cap_used[p] >= DAILY_CAP.get(p, 8):
@@ -282,10 +341,14 @@ def run():
                 else:
                     skipped.setdefault(p, "no media"); continue
             elif p in ("x_twitter", "linkedin"):
-                if not image_url:
-                    skipped.setdefault(p, "no image"); continue
-                live = {"x_twitter": pub_x, "linkedin": pub_linkedin}[p](fc, image_url)
-                media = image_url
+                if has_video:
+                    live = {"x_twitter": pub_x_video, "linkedin": pub_linkedin_video}[p](fc, video_url)
+                    media = video_url
+                elif image_url:
+                    live = {"x_twitter": pub_x, "linkedin": pub_linkedin}[p](fc, image_url)
+                    media = image_url
+                else:
+                    skipped.setdefault(p, "no media"); continue
             else:
                 skipped.setdefault(p, "no publisher"); continue
             sb_record(fc, live, media)
