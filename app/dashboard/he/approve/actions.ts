@@ -72,13 +72,24 @@ const NON_PUBLISHED_FINAL_COPY_STATUSES = new Set<string>([
   "published_verified",
 ])
 
-// Two bulk-edit groups only: community (Quora/Reddit — special no-direct-link
-// rules) and general (everything else, including video). Editing one group
-// never touches the other.
+// Platforms that are INDEPENDENT — each has its own length/format (Twitter 280,
+// Pinterest 500, Threads, plus community Quora/Reddit). "Save to all platforms"
+// must NEVER touch these — saving them the same long text destroys them and
+// forces MENI to redo the work. Bulk-save on one of these saves ONLY itself.
+const INDEPENDENT_POST_PLATFORMS: CampaignPlatform[] = [
+  "x_twitter",
+  "pinterest",
+  "threads",
+  "quora",
+  "reddit",
+]
+
+// "Save to all platforms" only spans the long, identical-format platforms:
+// Facebook, Instagram, LinkedIn, Medium, Substack, YouTube, TikTok.
 const GENERAL_POST_PLATFORMS: CampaignPlatform[] = [
   ...NORMAL_POST_PLATFORMS,
   ...VIDEO_POST_PLATFORMS,
-]
+].filter((platform) => !INDEPENDENT_POST_PLATFORMS.includes(platform))
 
 // Every platform the "add missing platforms" action can create for a product —
 // normal social, video (YouTube/TikTok) and community (Quora/Reddit). Community
@@ -111,7 +122,11 @@ type FinalCopyTemplateRow = {
 }
 
 function getBulkEditPlatformGroup(platform: string): CampaignPlatform[] {
-  if (COMMUNITY_POST_PLATFORMS.includes(platform as CampaignPlatform)) return COMMUNITY_POST_PLATFORMS
+  // Independent platforms (Twitter/Pinterest/Threads/Quora/Reddit) only ever
+  // save to themselves — bulk-save must not spill their text onto others.
+  if (INDEPENDENT_POST_PLATFORMS.includes(platform as CampaignPlatform)) {
+    return [platform as CampaignPlatform]
+  }
   return GENERAL_POST_PLATFORMS
 }
 

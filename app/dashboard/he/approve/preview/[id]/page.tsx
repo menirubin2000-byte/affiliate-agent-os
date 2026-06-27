@@ -101,19 +101,19 @@ export default async function PreviewPage({
     reddit: "Reddit",
     quora: "Quora",
   }
-  const communityPlatforms = new Set(["quora", "reddit"])
+  // Independent platforms have their own length/format — never offer "save to
+  // all platforms" here, it would overwrite and destroy the others.
+  const independentPlatforms = new Set(["x_twitter", "pinterest", "threads", "quora", "reddit"])
+  const showBulkSave = !independentPlatforms.has(fc.platform)
   const canVerifyManualUrl = supportsVerifiedManualPublishUrl(fc.platform)
   const isMedium = fc.platform === "medium"
   const imageRequiredForPlatform = requiresImageForPost(fc.platform)
   const charLimit = getPlatformCharLimit(fc.platform as CampaignPlatform)
   const charCount = countCharsForPlatform(fc.platform as CampaignPlatform, fc.body || "")
   const withinLimit = charLimit === null || charCount <= charLimit
-  const bulkSaveLabel = communityPlatforms.has(fc.platform)
-    ? "שמור רק ל-Quora/Reddit של המוצר"
-    : "שמור לכל הפלטפורמות (חוץ מ-Quora/Reddit)"
-  const bulkSaveNote = communityPlatforms.has(fc.platform)
-    ? "קבוצה נפרדת: משנה רק את Quora ו-Reddit, לא נוגע בשאר."
-    : "משנה את כל הפלטפורמות כולל YouTube/TikTok. לא כולל Quora/Reddit."
+  const bulkSaveLabel = "שמור לפלטפורמות הארוכות (פייסבוק/אינסטגרם/לינקדאין/Medium/Substack/YouTube/TikTok)"
+  const bulkSaveNote =
+    "משנה רק את הפלטפורמות הארוכות הזהות. לא נוגע ב-Twitter/Pinterest/Threads/Quora/Reddit — לכל אחת מהן אורך משלה ושומרים אותה בנפרד."
 
   return (
     <div dir="rtl" className="mx-auto max-w-3xl space-y-6 p-6 text-right">
@@ -351,13 +351,13 @@ export default async function PreviewPage({
             <Button type="submit" size="sm" variant="outline" formAction={updateFinalCopyBodyAction}>
               שמור לפוסט הזה בלבד
             </Button>
-            {fc.platform !== "x_twitter" && (
+            {showBulkSave && (
               <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
                 {bulkSaveLabel}
               </Button>
             )}
           </div>
-          {fc.platform !== "x_twitter" && (
+          {showBulkSave && (
             <p className="mt-2 text-xs text-muted-foreground">{bulkSaveNote}</p>
           )}
         </form>
