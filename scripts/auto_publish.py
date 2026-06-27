@@ -304,6 +304,14 @@ def run():
     todays = sb_get("published_records?verified_at=gte.%sT00:00:00Z&select=platform" % today_key())
     import collections
     cap_used = collections.Counter(r["platform"] for r in todays)
+    # 2026-06-27 — MENI: posts are RECURRING (rב-פעמי), not one-time. After publishing we keep
+    # them operator_approved so they go out again on future runs. To avoid spamming the same post,
+    # rotate: publish the LEAST-recently-published first (never-published posts come first).
+    last_pub = {}
+    for rec in sb_get("published_records?select=final_copy_id,verified_at&order=verified_at.asc&limit=20000"):
+        if rec.get("final_copy_id"):
+            last_pub[rec["final_copy_id"]] = rec.get("verified_at") or ""
+    rows.sort(key=lambda fc: last_pub.get(fc["id"], ""))  # "" (never published) sorts first
     done, skipped = collections.Counter(), {}
     def media_for(fc):
         pr = products.get(fc["product_id"]) or {}
@@ -352,7 +360,8 @@ def run():
             else:
                 skipped.setdefault(p, "no publisher"); continue
             sb_record(fc, live, media)
-            sb_patch_status(fc["id"], "published_verified")
+            # RECURRING: keep status operator_approved so the post publishes again on a later
+            # run (rotation handled by last_pub ordering above). Do NOT demote to published_verified.
             done[p] += 1
             cap_used[p] += 1
             print("OK  [%s] %s -> %s" % (p, (fc["title"] or "")[:32], live))
