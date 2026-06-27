@@ -44,7 +44,6 @@ NO_API = {
     "substack": "no publish API",
     "pinterest": "app in trial, pins:write not granted",
     "tiktok": "video app pending approval",
-    "threads": "no user token",
     "quora": "community / browser only",
     "reddit": "community / browser only",
 }
@@ -66,6 +65,7 @@ DAILY_CAP = {
     "instagram_professional": 3,
     "x_twitter": 3,
     "linkedin": 3,
+    "threads": 3,
 }
 
 def now_iso():
@@ -289,6 +289,41 @@ def pub_linkedin_video(fc, video_url):
     rr = urllib.request.urlopen(urllib.request.Request("https://api.linkedin.com/v2/ugcPosts", data=json.dumps(post).encode(), headers=H), timeout=60)
     return "https://www.linkedin.com/feed/update/" + rr.headers.get("x-restli-id")
 
+def pub_threads(fc, media_url, is_video):
+    # Threads Graph API: create a media container, wait for processing, then publish.
+    T = ENV["THREADS_ACCESS_TOKEN"]
+    UID = ENV["THREADS_USER_ID"]
+    text = (fc["body"] or "")[:500]
+    params = {"access_token": T, "text": text}
+    if is_video and media_url:
+        params["media_type"] = "VIDEO"; params["video_url"] = media_url
+    elif media_url:
+        params["media_type"] = "IMAGE"; params["image_url"] = media_url
+    else:
+        params["media_type"] = "TEXT"
+    c = json.load(urllib.request.urlopen(urllib.request.Request(
+        "https://graph.threads.net/v1.0/%s/threads" % UID,
+        data=urllib.parse.urlencode(params).encode()), timeout=180))
+    cid = c["id"]
+    if params["media_type"] != "TEXT":
+        for _ in range(40):
+            st = json.load(urllib.request.urlopen(urllib.request.Request(
+                "https://graph.threads.net/v1.0/%s?fields=status&access_token=%s" % (cid, T)), timeout=30))
+            s = st.get("status")
+            if s == "FINISHED": break
+            if s == "ERROR": raise RuntimeError("threads media processing error")
+            time.sleep(3)
+    pub = json.load(urllib.request.urlopen(urllib.request.Request(
+        "https://graph.threads.net/v1.0/%s/threads_publish" % UID,
+        data=urllib.parse.urlencode({"creation_id": cid, "access_token": T}).encode()), timeout=120))
+    pid = pub.get("id")
+    try:
+        perm = json.load(urllib.request.urlopen(urllib.request.Request(
+            "https://graph.threads.net/v1.0/%s?fields=permalink&access_token=%s" % (pid, T)), timeout=30))
+        return perm.get("permalink") or ("https://www.threads.net/@rubinmeni/post/" + str(pid))
+    except Exception:
+        return "https://www.threads.net/@rubinmeni"
+
 # 2026-06-24 — MENI: STOP the publishing engine until the whole system is sorted out.
 # While True, the engine publishes NOTHING even if run. Set to False only on MENI's explicit go.
 ENGINE_DISABLED = False  # 2026-06-27 — MENI: enable scheduled publishing (7:00, cap 3/platform, video on all 5)
@@ -355,6 +390,13 @@ def run():
                 elif image_url:
                     live = {"x_twitter": pub_x, "linkedin": pub_linkedin}[p](fc, image_url)
                     media = image_url
+                else:
+                    skipped.setdefault(p, "no media"); continue
+            elif p == "threads":
+                if has_video:
+                    live, media = pub_threads(fc, video_url, True), video_url
+                elif image_url:
+                    live, media = pub_threads(fc, image_url, False), image_url
                 else:
                     skipped.setdefault(p, "no media"); continue
             else:
