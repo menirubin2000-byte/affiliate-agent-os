@@ -412,6 +412,12 @@ def run():
             print("FAIL[%s] %s : %s" % (p, (fc["title"] or "")[:28], str(e)[:100]))
     print("\nPUBLISHED:", dict(done))
     print("SKIPPED  :", skipped)
+    try:
+        logdir = os.path.join(ROOT, "logs"); os.makedirs(logdir, exist_ok=True)
+        with open(os.path.join(logdir, "auto_publish.log"), "a", encoding="utf-8") as lf:
+            lf.write("%s  PUBLISHED=%s  SKIPPED=%s\n" % (now_iso(), dict(done), {k: v for k, v in skipped.items()}))
+    except Exception:
+        pass
 
 if __name__ == "__main__":
     run()
