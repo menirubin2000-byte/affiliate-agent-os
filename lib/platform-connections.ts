@@ -113,10 +113,15 @@ export function buildLinkedInConnectionUpsert(input: {
   expiresIn: number
   connectedBy: string
   now?: Date
+  tokenEncryptionKey?: string
 }): LinkedInConnectionUpsert {
   const now = input.now ?? new Date()
   const expiresAt = input.expiresIn
     ? new Date(now.getTime() + input.expiresIn * 1000).toISOString()
+    : null
+  const encryptionSecret = input.tokenEncryptionKey ?? getServerTokenEncryptionSecret()
+  const encryptedAccessToken = input.accessToken && encryptionSecret
+    ? encryptSecret(input.accessToken, encryptionSecret)
     : null
 
   return {
@@ -132,7 +137,10 @@ export function buildLinkedInConnectionUpsert(input: {
     metadata: {
       source: "official_linkedin_oauth",
       raw_token_stored: false,
-      publishing_enabled: false,
+      encrypted_token_stored: Boolean(encryptedAccessToken),
+      publishing_enabled: Boolean(encryptedAccessToken),
+      encrypted_access_token: encryptedAccessToken,
+      token_expires_at: expiresAt,
       member_urn: input.memberUrn || null,
     },
   }
