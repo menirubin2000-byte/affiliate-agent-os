@@ -371,6 +371,10 @@ def run():
         p = fc["platform"]
         # 2026-06-27 — MENI: remove the disclosure-signature block. His own approved posts
         # (incl. the English translations) carry that line; the engine must publish them.
+        # HARD GUARD (2026-06-28) — MENI: NEVER publish a post without an affiliate/marketing
+        # link. A linkless post is pure damage (no commission). Skip it.
+        if "http://" not in (fc.get("body") or "") and "https://" not in (fc.get("body") or ""):
+            skipped.setdefault(p + " (no link)", "BLOCKED — post has no affiliate link"); continue
         if p in NO_API:
             skipped.setdefault(p, NO_API[p]); continue
         if cap_used[p] >= DAILY_CAP.get(p, 8):
