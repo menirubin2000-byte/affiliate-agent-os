@@ -4,7 +4,10 @@ import { notFound } from "next/navigation"
 import { buttonVariants } from "@/components/ui/button"
 import { Button } from "@/components/ui/button"
 import { supportsVerifiedManualPublishUrl } from "@/lib/manual-publish-reconciliation"
+import { requiresImageForPost } from "@/lib/post-media-policy"
+import { getPlatformCharLimit, countCharsForPlatform } from "@/lib/platform-char-limits"
 import { getServiceRoleSupabase, isSupabaseConfigured } from "@/lib/supabase/server"
+import type { CampaignPlatform } from "@/types/campaign-workflow"
 import { cn } from "@/lib/utils"
 import {
   approveFinalCopyAction,
@@ -98,15 +101,19 @@ export default async function PreviewPage({
     reddit: "Reddit",
     quora: "Quora",
   }
-  const communityPlatforms = new Set(["quora", "reddit"])
+  // Independent platforms have their own length/format — never offer "save to
+  // all platforms" here, it would overwrite and destroy the others.
+  const independentPlatforms = new Set(["x_twitter", "pinterest", "threads", "quora", "reddit"])
+  const showBulkSave = !independentPlatforms.has(fc.platform)
   const canVerifyManualUrl = supportsVerifiedManualPublishUrl(fc.platform)
   const isMedium = fc.platform === "medium"
-  const bulkSaveLabel = communityPlatforms.has(fc.platform)
-    ? "שמור רק ל-Quora/Reddit של המוצר"
-    : "שמור לכל הפלטפורמות (חוץ מ-Quora/Reddit)"
-  const bulkSaveNote = communityPlatforms.has(fc.platform)
-    ? "קבוצה נפרדת: משנה רק את Quora ו-Reddit, לא נוגע בשאר."
-    : "משנה את כל הפלטפורמות כולל YouTube/TikTok. לא כולל Quora/Reddit."
+  const imageRequiredForPlatform = requiresImageForPost(fc.platform)
+  const charLimit = getPlatformCharLimit(fc.platform as CampaignPlatform)
+  const charCount = countCharsForPlatform(fc.platform as CampaignPlatform, fc.body || "")
+  const withinLimit = charLimit === null || charCount <= charLimit
+  const bulkSaveLabel = "שמור לפלטפורמות הארוכות (פייסבוק/אינסטגרם/לינקדאין/Medium/Substack/YouTube/TikTok)"
+  const bulkSaveNote =
+    "משנה רק את הפלטפורמות הארוכות הזהות. לא נוגע ב-Twitter/Pinterest/Threads/Quora/Reddit — לכל אחת מהן אורך משלה ושומרים אותה בנפרד."
 
   return (
     <div dir="rtl" className="mx-auto max-w-3xl space-y-6 p-6 text-right">
@@ -152,6 +159,21 @@ export default async function PreviewPage({
         <p><strong>שפה:</strong> {fc.language === "he" ? "עברית" : "English"}</p>
         <p><strong>סטטוס:</strong> {fc.status}</p>
         <p><strong>ולידציה:</strong> {fc.validation_status ?? "לא נבדק"}</p>
+        <p>
+          <strong>מגבלת תווים:</strong>{" "}
+          {charLimit === null ? (
+            <span className="text-muted-foreground">ללא הגבלה — טקסט ארוך מותר</span>
+          ) : (
+            <>
+              {charCount}/{charLimit}{" "}
+              {withinLimit ? (
+                <span className="font-semibold text-green-700">✓ בתוך המגבלה</span>
+              ) : (
+                <span className="font-semibold text-red-700">✗ חורג ({charCount - charLimit} תווים מעל) — צריך גרסה מקוצרת</span>
+              )}
+            </>
+          )}
+        </p>
         {program ? (
           <p><strong>תוכנית שותפים:</strong> {program.network} · {program.status} · {program.affiliate_link}</p>
         ) : null}
@@ -212,9 +234,19 @@ export default async function PreviewPage({
               className="mx-auto max-h-[500px] w-auto object-contain"
             />
           </div>
+          {imageRequiredForPlatform ? (
+            <p className="text-xs text-amber-700">
+              {platformNames[fc.platform] ?? fc.platform}: חובה לפרסם עם תמונה אמיתית. פרסום בלי תמונה אסור.
+            </p>
+          ) : null}
           {isMedium ? (
             <p className="text-xs text-amber-700">
               Medium: חובה לפרסם את הפוסט עם תמונה אמיתית. בלי תמונה לא מאשרים ולא מסמנים published.
+            </p>
+          ) : null}
+          {isMedium ? (
+            <p className="text-xs text-amber-700">
+              Medium הוא manual-only. אסור לפרסם אותו דרך טופס או Browser Helper.
             </p>
           ) : null}
         </div>
@@ -223,9 +255,19 @@ export default async function PreviewPage({
           <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           אין תמונה למוצר הזה
           </div>
+          {imageRequiredForPlatform ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              {platformNames[fc.platform] ?? fc.platform}: אי אפשר לאשר או לפרסם בלי תמונה.
+            </div>
+          ) : null}
           {isMedium ? (
             <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
               אין תמונה למוצר הזה. ב-Medium אי אפשר לאשר או לפרסם בלי תמונה.
+            </div>
+          ) : null}
+          {isMedium ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Medium הוא manual-only. אין לפרסם אותו דרך טופס או Browser Helper.
             </div>
           ) : null}
         </>
@@ -275,6 +317,28 @@ export default async function PreviewPage({
 
       <div className="space-y-2">
         <h2 className="text-lg font-semibold">טקסט הפוסט</h2>
+        {charLimit === null ? (
+          <p className="text-xs text-muted-foreground">
+            {platformNames[fc.platform] ?? fc.platform}: ללא מגבלת תווים — אפשר טקסט ארוך.
+          </p>
+        ) : (
+          <div
+            className={cn(
+              "rounded-md border p-2 text-xs",
+              withinLimit
+                ? "border-green-300 bg-green-50 text-green-900"
+                : "border-red-300 bg-red-50 text-red-900",
+            )}
+          >
+            {platformNames[fc.platform] ?? fc.platform}: מגבלה {charLimit} תווים · כרגע {charCount}
+            {withinLimit
+              ? " ✓"
+              : ` ✗ חורג ב-${charCount - charLimit} תווים — קצר את הטקסט לפני אישור`}
+            {(fc.platform === "x_twitter" || fc.platform === "mastodon" || fc.platform === "threads")
+              ? " (קישור נספר כ-23 תווים)"
+              : ""}
+          </div>
+        )}
         <form>
           <input type="hidden" name="finalCopyId" value={fc.id} />
           <textarea
@@ -287,11 +351,15 @@ export default async function PreviewPage({
             <Button type="submit" size="sm" variant="outline" formAction={updateFinalCopyBodyAction}>
               שמור לפוסט הזה בלבד
             </Button>
-            <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
-              {bulkSaveLabel}
-            </Button>
+            {showBulkSave && (
+              <Button type="submit" size="sm" variant="default" formAction={updateAllProductPostsBodyAction}>
+                {bulkSaveLabel}
+              </Button>
+            )}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{bulkSaveNote}</p>
+          {showBulkSave && (
+            <p className="mt-2 text-xs text-muted-foreground">{bulkSaveNote}</p>
+          )}
         </form>
       </div>
 

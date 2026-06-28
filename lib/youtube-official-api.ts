@@ -234,6 +234,56 @@ export async function exchangeYouTubeAuthorizationCode(input: {
   return payload
 }
 
+/**
+ * Auto-refresh: exchange a stored refresh_token for a fresh access_token.
+ * Google access tokens last ~1 hour; the refresh_token (from the one-time
+ * offline consent) mints new ones forever, so the operator never re-authorizes.
+ */
+export async function refreshYouTubeAccessToken(input: {
+  refreshToken: string
+  env?: NodeJS.ProcessEnv
+  fetchImpl?: typeof fetch
+}): Promise<YouTubeOAuthTokenResponse> {
+  const env = input.env ?? process.env
+  const fetchImpl = input.fetchImpl ?? fetch
+  const clientId = value(env, "YOUTUBE_CLIENT_ID")
+  const clientSecret = value(env, "YOUTUBE_CLIENT_SECRET")
+
+  if (!clientId || !clientSecret) {
+    throw new Error("YouTube OAuth refresh configuration is missing.")
+  }
+  if (!input.refreshToken) {
+    throw new Error("Missing YouTube refresh token.")
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: input.refreshToken,
+    client_id: clientId,
+    client_secret: clientSecret,
+  })
+
+  const response = await fetchImpl(YOUTUBE_TOKEN_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  })
+
+  const payload = (await response.json()) as YouTubeOAuthTokenResponse
+  if (!response.ok) {
+    throw new Error(
+      payload.error_description || payload.error || "YouTube OAuth token refresh failed.",
+    )
+  }
+  // Google often omits refresh_token on refresh responses — preserve the original.
+  if (!payload.refresh_token) {
+    payload.refresh_token = input.refreshToken
+  }
+  return payload
+}
+
 export async function fetchYouTubeConnectedChannel(input: {
   accessToken: string
   fetchImpl?: typeof fetch

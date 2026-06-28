@@ -7,6 +7,8 @@ export const IMAGE_REQUIRED_PLATFORMS: CampaignPlatform[] = [
   "linkedin",
   "medium",
   "substack",
+  "quora",
+  "reddit",
   "x_twitter",
 ]
 

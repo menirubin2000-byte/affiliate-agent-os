@@ -44,7 +44,8 @@ export async function getDraftApprovalWorkflowProducts() {
     supabase
       .from("products")
       .select("id, name, status, affiliate_url")
-      .eq("status", "active")
+      // include suspended so they stay visible in the work list (greyed + toggleable)
+      .in("status", ["active", "suspended"])
       .order("updated_at", { ascending: false }),
     supabase
       .from("content_drafts")

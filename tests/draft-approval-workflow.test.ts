@@ -85,8 +85,55 @@ test("bulk create skips existing platform/language content", () => {
   ])
 })
 
+test("published platform-language content stays visible and is not recreated", () => {
+  const missing = buildMissingPlatformLanguageDrafts({
+    existingFinalCopies: [
+      {
+        id: "fc-en-medium-published",
+        productId: "product-1",
+        platform: "medium",
+        language: "en",
+        status: "published_verified",
+      },
+    ],
+    platforms: ["medium", "linkedin"],
+    languages: ["en"],
+  })
+
+  assert.deepEqual(missing, [{ platform: "linkedin", language: "en" }])
+})
+
+test("selected platform batch only creates missing items for the chosen language", () => {
+  const missing = buildMissingPlatformLanguageDrafts({
+    existingFinalCopies: [
+      {
+        id: "fc-en-medium",
+        productId: "product-1",
+        platform: "medium",
+        language: "en",
+        status: "ready_for_operator_approval",
+      },
+      {
+        id: "fc-he-reddit",
+        productId: "product-1",
+        platform: "reddit",
+        language: "he",
+        status: "needs_system_fix",
+      },
+    ],
+    platforms: ["medium", "reddit", "quora"],
+    languages: ["he"],
+  })
+
+  assert.deepEqual(missing, [
+    { platform: "medium", language: "he" },
+    { platform: "quora", language: "he" },
+  ])
+})
+
 test("bulk approve requires MENI_CONFIRM", () => {
   assert.throws(() => assertMeniConfirmToken(""), /MENI_CONFIRM/)
   assert.throws(() => assertMeniConfirmToken("meni_confirm"), /MENI_CONFIRM/)
   assert.doesNotThrow(() => assertMeniConfirmToken(MENI_CONFIRM_TOKEN))
+  assert.doesNotThrow(() => assertMeniConfirmToken("מאושר"))
 })

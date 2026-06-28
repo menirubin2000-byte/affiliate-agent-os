@@ -56,6 +56,8 @@ const platformTargetFieldNames: Record<CampaignPlatform, string> = {
   youtube: "target_youtube",
   quora: "target_quora",
   reddit: "target_reddit",
+  mastodon: "target_mastodon",
+  threads: "target_threads",
 }
 
 export default async function DashboardSettingsPage({

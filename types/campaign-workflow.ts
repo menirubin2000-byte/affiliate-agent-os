@@ -10,6 +10,8 @@ export type CampaignPlatform =
   | "pinterest"
   | "x_twitter"
   | "youtube"
+  | "mastodon"
+  | "threads"
 
 export type AutoQualityStatus = "pending" | "auto_quality_passed" | "blocked"
 

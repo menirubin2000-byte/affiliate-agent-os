@@ -18,6 +18,19 @@ const linkedinCapability = getLinkedInOfficialApiCapability()
 const pinterestCapability = getPinterestOfficialApiCapability()
 const youtubeCapability = getYouTubeOfficialApiCapability()
 
+const IMAGE_RULE_NOTE =
+  "Do not publish a post without a real image/visual asset."
+const VIDEO_RULE_NOTE =
+  "Do not publish a video-first post without the required video asset."
+
+function withImageRule(notes: string) {
+  return `${notes} ${IMAGE_RULE_NOTE}`
+}
+
+function withVideoRule(notes: string) {
+  return `${notes} ${VIDEO_RULE_NOTE}`
+}
+
 export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
   {
     platform: "linkedin",
@@ -34,11 +47,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     affiliateContentPolicy: "allowed_with_disclosure",
     affiliatePolicyNotes:
-      "Affiliate and sponsored content must be disclosed. LinkedIn supports Sponsored Content labels for paid posts.",
+      withImageRule(
+        "Affiliate and sponsored content must be disclosed. LinkedIn supports Sponsored Content labels for paid posts.",
+      ),
     safeExecutorPath: "official_api_only",
     browserHelperAllowed: false,
     browserHelperNotes:
-      "Use the LinkedIn REST API (Posts endpoint). MCP browser is the fallback until API image upload is implemented.",
+      withImageRule(
+        "Use the LinkedIn REST API (Posts endpoint). MCP browser is the fallback until API image upload is implemented.",
+      ),
     blockers: linkedinCapability.configured
       ? []
       : linkedinCapability.missingKeys.map((k) => `missing_${k.toLowerCase()}`),
@@ -67,11 +84,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     affiliateContentPolicy: "allowed_with_disclosure",
     affiliatePolicyNotes:
-      "Commercial or affiliate content must clearly disclose its commercial nature and remain eligible under Meta policies.",
+      withImageRule(
+        "Commercial or affiliate content must clearly disclose its commercial nature and remain eligible under Meta policies.",
+      ),
     safeExecutorPath: "official_api_only",
     browserHelperAllowed: false,
     browserHelperNotes:
-      "Use the official Pages API after Meta app review and OAuth. Do not automate Facebook composer UI.",
+      withImageRule(
+        "Use the official Pages API after Meta app review and OAuth. Do not automate Facebook composer UI.",
+      ),
     blockers: [
       "meta_app_not_configured",
       "facebook_page_not_connected",
@@ -100,11 +121,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     affiliateContentPolicy: "allowed_with_disclosure",
     affiliatePolicyNotes:
-      "Affiliate-link content should use Instagram's Paid partnership label and comply with branded-content eligibility.",
+      withImageRule(
+        "Affiliate-link content should use Instagram's Paid partnership label and comply with branded-content eligibility.",
+      ),
     safeExecutorPath: "official_api_only",
     browserHelperAllowed: false,
     browserHelperNotes:
-      "Use the official Instagram API. Do not automate the Instagram composer or disclosure controls through the browser.",
+      withImageRule(
+        "Use the official Instagram API. Do not automate the Instagram composer or disclosure controls through the browser.",
+      ),
     blockers: [
       "meta_instagram_app_not_configured",
       "instagram_professional_account_not_connected",
@@ -135,11 +160,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     affiliateContentPolicy: "allowed_with_disclosure",
     affiliatePolicyNotes:
-      "Affiliate Pins are allowed when original, useful, transparent, and non-spammy. Commercial nature and link behavior must be disclosed.",
+      withImageRule(
+        "Affiliate Pins are allowed when original, useful, transparent, and non-spammy. Commercial nature and link behavior must be disclosed.",
+      ),
     safeExecutorPath: "official_api_only",
     browserHelperAllowed: false,
     browserHelperNotes:
-      "Use the official Pinterest API after app approval. A visual asset and destination board are required.",
+      withImageRule(
+        "Use the official Pinterest API after app approval. A visual asset and destination board are required.",
+      ),
     operatorProfileUrl: PINTEREST_OPERATOR_PROFILE_URL,
     blockers: [
       ...(pinterestCapability.connected ? [] : [PINTEREST_CURRENT_BLOCKING_REASON]),
@@ -176,11 +205,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     affiliateContentPolicy: "allowed_with_disclosure",
     affiliatePolicyNotes:
-      "Affiliate links and discount-code content are treated as paid partnership content on X. Organic posts must use the Paid Partnership disclosure, and the API supports the paid_partnership field.",
+      withImageRule(
+        "Affiliate links and discount-code content are treated as paid partnership content on X. Organic posts must use the Paid Partnership disclosure, and the API supports the paid_partnership field.",
+      ),
     safeExecutorPath: "official_api_only",
     browserHelperAllowed: false,
     browserHelperNotes:
-      "Use X API v2 POST /2/tweets with OAuth user access. Do not automate the X composer through the browser.",
+      withImageRule(
+        "Use X API v2 POST /2/tweets with OAuth user access. Do not automate the X composer through the browser.",
+      ),
     blockers: [
       "x_oauth_not_configured",
       "x_access_token_missing",
@@ -211,11 +244,15 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     affiliateContentPolicy: "allowed_with_disclosure",
     affiliatePolicyNotes:
-      "Affiliate content is allowed, but excessive affiliate-only posting can violate spam policy. Commercial relationships require disclosure and paid-promotion handling where applicable.",
+      withVideoRule(
+        "Affiliate content is allowed, but excessive affiliate-only posting can violate spam policy. Commercial relationships require disclosure and paid-promotion handling where applicable.",
+      ),
     safeExecutorPath: "official_api_only",
     browserHelperAllowed: false,
     browserHelperNotes:
-      "Use the YouTube Data API with a real video asset. Unverified API projects upload videos as private until audited.",
+      withVideoRule(
+        "Use the YouTube Data API with a real video asset. Unverified API projects upload videos as private until audited.",
+      ),
     blockers: [
       ...(youtubeCapability.oauthAppConfigured ? [] : [YOUTUBE_CURRENT_BLOCKING_REASON]),
       ...(youtubeCapability.invalidReasons.includes(YOUTUBE_API_ACCESS_BLOCKING_REASON)
@@ -234,6 +271,58 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
       "https://developers.google.com/youtube/v3/docs/videos",
       "https://support.google.com/youtube/answer/9054257?hl=en-GB",
       "https://support.google.com/youtube/answer/154235?hl=en",
+    ],
+    checkedAt: CHECKED_AT,
+  },
+  {
+    platform: "mastodon",
+    label: "Mastodon",
+    apiAvailability: "official_api_available",
+    connectionStatus: "connected",
+    requiredAccountType:
+      "A Mastodon account on any instance (mastodon.social), with a developer application access token.",
+    requiredPermissions: ["read", "write:statuses", "write:media"],
+    affiliateContentPolicy: "allowed_with_disclosure",
+    affiliatePolicyNotes: withImageRule(
+      "Affiliate links are allowed with clear disclosure. Mastodon access tokens do not expire — connect once, permanent. 500-character limit.",
+    ),
+    safeExecutorPath: "official_api_only",
+    browserHelperAllowed: false,
+    browserHelperNotes: withImageRule(
+      "Publish via POST /api/v1/statuses with media uploaded through /api/v2/media. No browser automation needed.",
+    ),
+    operatorProfileUrl: "https://mastodon.social/@Rubin001",
+    blockers: [],
+    nextOperatorAction: "Connected. Generate or approve drafts, then publish approved posts with an image.",
+    sourceUrls: [
+      "https://docs.joinmastodon.org/methods/statuses/",
+      "https://docs.joinmastodon.org/methods/media/",
+    ],
+    checkedAt: CHECKED_AT,
+  },
+  {
+    platform: "threads",
+    label: "Threads",
+    apiAvailability: "official_api_available",
+    connectionStatus: "requires_official_connection",
+    requiredAccountType:
+      "A Threads account linked to Instagram, with a Threads API app and a long-lived user access token.",
+    requiredPermissions: ["threads_basic", "threads_content_publish"],
+    affiliateContentPolicy: "allowed_with_disclosure",
+    affiliatePolicyNotes: withImageRule(
+      "Affiliate links allowed with disclosure. Long-lived token (~60 days, refreshable). 500-character limit.",
+    ),
+    safeExecutorPath: "official_api_only",
+    browserHelperAllowed: false,
+    browserHelperNotes: withImageRule(
+      "Publish via the Threads API two-step flow: create a media container then publish it. No browser automation.",
+    ),
+    operatorProfileUrl: "https://www.threads.com/@rubinmeni",
+    blockers: ["threads_user_token_missing"],
+    nextOperatorAction: "Generate a Threads user token (User Token Generator) for the connected tester account, then publish approved posts with an image.",
+    sourceUrls: [
+      "https://developers.facebook.com/docs/threads/posts",
+      "https://developers.facebook.com/docs/threads/get-started",
     ],
     checkedAt: CHECKED_AT,
   },
