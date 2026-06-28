@@ -293,7 +293,19 @@ def pub_threads(fc, media_url, is_video):
     # Threads Graph API: create a media container, wait for processing, then publish.
     T = ENV["THREADS_ACCESS_TOKEN"]
     UID = ENV["THREADS_USER_ID"]
-    text = (fc["body"] or "")[:500]
+    # Threads hard limit is 500 chars. If the post is longer, NEVER drop the link:
+    # keep the trailing URL and trim the body text around it.
+    full = fc["body"] or ""
+    if len(full) <= 500:
+        text = full
+    else:
+        m = re.search(r"https?://\S+", full)
+        link = m.group(0) if m else ""
+        if link:
+            keep = 500 - len(link) - 2
+            text = full[:keep].rstrip() + "\n" + link
+        else:
+            text = full[:500]
     params = {"access_token": T, "text": text}
     if is_video and media_url:
         params["media_type"] = "VIDEO"; params["video_url"] = media_url
