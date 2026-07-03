@@ -1735,3 +1735,30 @@ export async function addMissingPostsForAllProductsAction() {
   revalidatePath("/dashboard/he/approve")
   redirect(`/dashboard/he/approve?approved=all_products_posts_added`)
 }
+
+// Save the product's hashtags (per language). Appended by the engine at publish time,
+// never rewrites the approved post body itself.
+export async function saveProductHashtagsAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "").trim()
+  const redirectTo = String(formData.get("redirectTo") ?? "/dashboard/he/approve")
+  const parseTags = (raw: string) =>
+    Array.from(
+      new Set(
+        String(raw)
+          .split(/[\s,]+/)
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .map((t) => (t.startsWith("#") ? t : `#${t}`)),
+      ),
+    ).slice(0, 15)
+  if (!productId) redirect(redirectTo)
+  const hashtags = {
+    he: parseTags(String(formData.get("hashtags_he") ?? "")),
+    en: parseTags(String(formData.get("hashtags_en") ?? "")),
+  }
+  const supabase = getServiceRoleSupabase()
+  const { error } = await supabase.from("products").update({ hashtags }).eq("id", productId)
+  if (error) throw new Error(error.message)
+  revalidatePath("/dashboard/he/approve")
+  redirect(redirectTo)
+}

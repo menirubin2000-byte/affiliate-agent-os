@@ -15,6 +15,7 @@ import {
   createMissingDraftsForProductAction,
   deleteProductVideoAction,
   requeuePublishedPostAction,
+  saveProductHashtagsAction,
   toggleProductSuspendedAction,
   updateFinalCopyBodyAction,
   uploadProductImageAction,
@@ -119,11 +120,12 @@ export async function ProductDetailPage({ productId, backHref }: { productId: st
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, name, status, image_url, image_url_he, video_url, video_status")
+    .select("id, name, status, image_url, image_url_he, video_url, video_status, hashtags")
     .eq("id", productId)
     .single()
   if (!product) return notFound()
   const isSuspended = product.status === "suspended"
+  const tags = (product.hashtags ?? {}) as { he?: string[]; en?: string[] }
 
   const { data: postsData } = await supabase
     .from("final_copies")
@@ -195,6 +197,38 @@ export async function ProductDetailPage({ productId, backHref }: { productId: st
           <VideoUploadClient productId={product.id} />
         </div>
       </div>
+
+      {/* hashtags */}
+      <form action={saveProductHashtagsAction} className="space-y-3 rounded-lg border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">האשטגים — מתווספים אוטומטית בסוף כל פוסט בפרסום</h2>
+          <Button type="submit" size="sm" variant="outline">שמור האשטגים</Button>
+        </div>
+        <input type="hidden" name="productId" value={product.id} />
+        <input type="hidden" name="redirectTo" value={backHref + "/" + product.id} />
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            עברית
+            <textarea
+              name="hashtags_he"
+              dir="auto"
+              defaultValue={(tags.he ?? []).join(" ")}
+              placeholder="#המלצה #גאדג'טים ..."
+              className="min-h-[70px] w-full rounded-md border bg-muted/20 p-2 text-sm"
+            />
+          </label>
+          <label className="grid gap-1 text-xs text-muted-foreground">
+            English
+            <textarea
+              name="hashtags_en"
+              dir="ltr"
+              defaultValue={(tags.en ?? []).join(" ")}
+              placeholder="#TechGadgets #ProductReview ..."
+              className="min-h-[70px] w-full rounded-md border bg-muted/20 p-2 text-sm"
+            />
+          </label>
+        </div>
+      </form>
 
       {/* bulk actions */}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-3">
