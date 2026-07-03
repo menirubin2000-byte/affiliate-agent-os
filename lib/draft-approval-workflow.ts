@@ -2,6 +2,7 @@ import { CAMPAIGN_PLATFORMS } from "@/lib/platform-policy"
 import type { CampaignPlatform } from "@/types/campaign-workflow"
 
 export const MENI_CONFIRM_TOKEN = "MENI_CONFIRM"
+export const MENI_CONFIRM_HEBREW_TOKEN = "מאושר"
 
 export type ApprovalWorkflowStatusLabel =
   | "no_drafts_created"
@@ -175,8 +176,9 @@ export function buildMissingPlatformLanguageDrafts(input: {
 }
 
 export function assertMeniConfirmToken(value: string | null | undefined) {
-  if ((value ?? "").trim() !== MENI_CONFIRM_TOKEN) {
-    throw new Error("MENI_CONFIRM is required before bulk approval.")
+  const token = (value ?? "").trim()
+  if (token !== MENI_CONFIRM_TOKEN && token !== MENI_CONFIRM_HEBREW_TOKEN) {
+    throw new Error("MENI_CONFIRM or מאושר is required before bulk approval.")
   }
 }
 

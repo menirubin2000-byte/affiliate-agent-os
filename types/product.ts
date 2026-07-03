@@ -8,6 +8,9 @@ export interface Product {
   category: string | null
   affiliateLink: string
   affiliateUrl: string
+  imageUrl?: string | null
+  imageUrlHe?: string | null
+  videoUrl?: string | null
   price: number | null
   commissionRate: number | null
   notes: string | null
@@ -27,6 +30,9 @@ export interface CreateProductInput {
   category?: string | null
   affiliateLink?: string
   affiliateUrl: string
+  imageUrl?: string | null
+  imageUrlHe?: string | null
+  videoUrl?: string | null
   price?: number | null
   commissionRate?: number | null
   notes?: string | null

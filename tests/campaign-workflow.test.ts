@@ -147,6 +147,18 @@ test("reddit without public review URL is blocked", () => {
   assert.equal(quality.blockers.includes("missing_public_review_url"), true)
 })
 
+test("medium is manual-only and still requires a real image", () => {
+  const policy = evaluatePlatformPolicy({
+    platform: "medium",
+    includesAffiliateLink: true,
+  })
+
+  assert.equal(policy.status, "allowed")
+  assert.equal(policy.publishMode, "manual")
+  assert.equal(policy.notes.includes("manual-only"), true)
+  assert.equal(policy.notes.includes("real image"), true)
+})
+
 test("content hash is stable for unchanged source/adaptation content", () => {
   const first = hashCampaignContent(["product-1", "linkedin", "Title", "Body"])
   const second = hashCampaignContent([" product-1 ", "linkedin", "Title", "Body"])

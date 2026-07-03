@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { revalidateBlockedFinalCopies } from "@/lib/content-review-db"
 import { getSupabaseReadiness } from "@/lib/env"
 import { listPlatformConnections } from "@/lib/platform-connections-db"
+import { ensureYouTubeConnectionFresh } from "@/lib/youtube-access"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import { isSupabaseConfigured } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
@@ -15,6 +16,11 @@ import { cn } from "@/lib/utils"
 import { PlatformRegistryTable, PlatformRoutingStats, RoutingNavActions } from "./platform-routing-view"
 
 export const dynamic = "force-dynamic"
+
+const HOME_RULES_WARNING_TITLE = "לפני פרסום חובה לקרוא את הכללים באדום למעלה"
+const HOME_RULES_WARNING_DESCRIPTION =
+  "אסור לפרסם פוסט לא מאושר. לפני כל פרסום, אישור או סקריפט חובה לפתוח את דף הכללים ולעבור עליו."
+const HOME_RULES_WARNING_CTA = "פתח כללים לפני פרסום"
 
 export default async function HebrewDashboardPage() {
   if (!isSupabaseConfigured()) {
@@ -35,6 +41,9 @@ export default async function HebrewDashboardPage() {
   }
 
   await revalidateBlockedFinalCopies().catch(() => {})
+  // Keep the YouTube token fresh so the status card never shows "expired":
+  // refreshes via the stored refresh_token if needed, then the read below is current.
+  await ensureYouTubeConnectionFresh().catch(() => {})
   const [overview, connections] = await Promise.all([
     getPlatformRoutingOverview(),
     listPlatformConnections(),
@@ -60,6 +69,18 @@ export default async function HebrewDashboardPage() {
         description="מסך מפעיל נקי: מה פעיל, מה חסר, מה ממתין לאישור, ומה הפעולה הבאה. כל המספרים מתעדכנים ישירות מ-Supabase. MENI לא מקבל משימות העתקה, הדבקה או איסוף URL."
         actions={<RoutingNavActions />}
       />
+
+      <Card className="border-destructive/50 bg-destructive/10">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle className="text-destructive">{HOME_RULES_WARNING_TITLE}</CardTitle>
+            <CardDescription>{HOME_RULES_WARNING_DESCRIPTION}</CardDescription>
+          </div>
+          <Link href="/dashboard/he/claude-rules" className={cn(buttonVariants({ variant: "destructive" }))}>
+            {HOME_RULES_WARNING_CTA}
+          </Link>
+        </CardHeader>
+      </Card>
 
       <Card className="border-destructive/40 bg-destructive/5">
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">

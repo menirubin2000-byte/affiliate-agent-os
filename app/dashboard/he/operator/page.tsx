@@ -1,3 +1,4 @@
+import { RulesWarningCards } from "@/components/dashboard/rules-warning-cards"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getSupabaseReadiness } from "@/lib/env"
@@ -43,6 +44,7 @@ export default async function HebrewOperatorRoutingPage() {
         actions={<RoutingNavActions />}
       />
 
+      <RulesWarningCards />
       <PlatformRoutingStats overview={overview} />
       <PlatformRoutingProductTable overview={overview} />
       <PlatformRouteMatrix overview={overview} />

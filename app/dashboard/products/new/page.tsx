@@ -16,8 +16,8 @@ export default async function NewProductPage(props: {
     <>
       <PageHeader
         eyebrow="Catalog"
-        title="Add product"
-        description="Create a product record that can generate review and social drafts."
+        title="Quick product intake"
+        description="Create a product and, when a finished post is provided, send all platform copies straight to MENI approval."
         actions={
           <Link
             href="/dashboard/products"

@@ -10,6 +10,7 @@ import {
   LINKEDIN_CURRENT_BLOCKING_REASON,
 } from "@/lib/linkedin-official-api"
 import { supportsVerifiedManualPublishUrl } from "@/lib/manual-publish-reconciliation"
+import { requiresImageForPost } from "@/lib/post-media-policy"
 import { getPlatformRoutingOverview } from "@/lib/platform-routing-db"
 import { listPublishJobsForHebrewDashboard } from "@/lib/publish-jobs-db"
 import { cn, formatDateTime } from "@/lib/utils"
@@ -93,6 +94,10 @@ function canRecordManualPublishUrl(job: {
     supportsVerifiedManualPublishUrl(job.platform) &&
     (job.status === "pending_operator_confirmation" || job.status === "waiting_url_verification")
   )
+}
+
+function shouldWarnImageRequired(platform: string) {
+  return requiresImageForPost(platform)
 }
 
 function blockerLabel(reason: string) {
@@ -184,6 +189,9 @@ export default async function HebrewPublishReadyPage({
           <CardTitle>כלל עבודה</CardTitle>
           <CardDescription>
             MENI מאשר בלבד. אם אין executor או API בטוח, הפריט נשאר חסום ומוצג עם סיבה. Published Record נוצר רק אחרי URL חי מאומת.
+          </CardDescription>
+          <CardDescription>
+            אסור לפרסם פוסט בלי תמונה אמיתית בכל פלטפורמה שאינה וידאו-first. Medium הוא manual-only ואסור לפרסם אותו דרך טופס או Browser Helper.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -318,12 +326,22 @@ export default async function HebrewPublishReadyPage({
                         ? "מנוע הפרסום מוכן לפעולה סופית. MENI מאשר פעולה בלבד; אין העתקה, אין הדבקה ואין טיפול URL."
                         : "הפריט מאושר אך עוד לא הגיע זמן הפרסום לפי מדיניות התזמון."}
                     </p>
+                    {isScheduledJobDue(job) && shouldWarnImageRequired(job.platform) ? (
+                      <p className="text-xs text-amber-700">
+                        {platformLabels[job.platform] ?? job.platform}: חובה לפרסם עם תמונה אמיתית. פרסום בלי תמונה אסור.
+                      </p>
+                    ) : null}
                     {isScheduledJobDue(job) && job.platform === "medium" ? (
                       <p className="text-xs text-amber-700">
                         Medium: חובה לפרסם עם תמונה אמיתית בתוך הפוסט לפני האישור הסופי.
                       </p>
                     ) : null}
-                    {isScheduledJobDue(job) && (job.platform === "medium" || job.platform === "substack") ? (
+                    {isScheduledJobDue(job) && job.platform === "medium" ? (
+                      <p className="text-xs text-amber-700">
+                        Medium: אסור לפרסם דרך טופס/Browser Helper. פרסום Medium נעשה ידנית בלבד ואז רושמים כאן את ה-URL החי.
+                      </p>
+                    ) : null}
+                    {isScheduledJobDue(job) && job.platform === "substack" ? (
                       <form action={confirmPreparedPublishJobAction}>
                         <input type="hidden" name="jobId" value={job.id} />
                         <Button type="submit">אשר פעולה סופית</Button>

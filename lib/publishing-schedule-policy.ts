@@ -34,6 +34,8 @@ export const DEFAULT_PLATFORM_DAILY_TARGETS: Record<CampaignPlatform, number> = 
   youtube: 1,
   quora: 0,
   reddit: 0,
+  mastodon: 0,
+  threads: 2,
 }
 
 export const PUBLISHING_SCHEDULE_POLICY: PublishingSchedulePolicyConfig = {

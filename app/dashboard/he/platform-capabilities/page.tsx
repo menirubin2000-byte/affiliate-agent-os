@@ -93,6 +93,15 @@ export default async function PlatformCapabilitiesPage() {
         />
       </section>
 
+      <Card className="border-amber-300 bg-amber-50">
+        <CardHeader>
+          <CardTitle>כללי פרסום מחייבים</CardTitle>
+          <CardDescription>
+            אסור לפרסם פוסט בלי תמונה אמיתית בכל פלטפורמה שאינה וידאו-first. ב-YouTube וב-TikTok חובה נכס וידאו אמיתי. Medium הוא manual-only ואסור לפרסם אותו דרך טופס או Browser Helper.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
       <section className="space-y-4">
         {capabilities.map((capability) => {
           const isLinkedIn = capability.platform === "linkedin"

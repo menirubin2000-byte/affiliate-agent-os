@@ -192,6 +192,10 @@ function hasTargetKeyword(combined: string, targetKeyword: string | null) {
 
 function minimumLengthForPlatform(platform: CampaignPlatform) {
   if (platform === "tiktok") return 180
+  // X/Twitter caps at 280 chars, so the minimum must stay well under that.
+  if (platform === "x_twitter") return 100
+  // Mastodon / Threads cap at 500 chars.
+  if (platform === "mastodon" || platform === "threads") return 120
   if (
     platform === "linkedin" ||
     platform === "quora" ||
@@ -219,6 +223,14 @@ function isPlatformCompatible(platform: CampaignPlatform, body: string) {
   }
   if (platform === "instagram_professional") {
     return body.length <= 2200
+  }
+  if (platform === "x_twitter") {
+    // X/Twitter non-premium hard limit: 280 characters per post.
+    return body.length <= 280
+  }
+  if (platform === "mastodon" || platform === "threads") {
+    // Mastodon and Threads both cap posts at 500 characters.
+    return body.length <= 500
   }
   return true
 }

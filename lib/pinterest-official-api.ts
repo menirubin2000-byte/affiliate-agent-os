@@ -62,3 +62,65 @@ export function getPinterestOfficialApiCapability(
     blockingReason,
   }
 }
+
+export const PINTEREST_TOKEN_ENDPOINT = "https://api.pinterest.com/v5/oauth/token"
+
+export type PinterestOAuthTokenResponse = {
+  access_token?: string
+  refresh_token?: string
+  token_type?: string
+  expires_in?: number
+  refresh_token_expires_in?: number
+  scope?: string
+  error?: string
+  message?: string
+}
+
+/**
+ * Auto-refresh: exchange a stored Pinterest refresh_token for a fresh access_token.
+ * Pinterest access tokens expire (trial/standard); the refresh_token from the
+ * one-time OAuth mints new ones, so the operator never re-keys Pinterest again.
+ * Requires PINTEREST_CLIENT_ID (or APP_ID) + PINTEREST_APP_SECRET for Basic auth.
+ */
+export async function refreshPinterestAccessToken(input: {
+  refreshToken: string
+  env?: NodeJS.ProcessEnv
+  fetchImpl?: typeof fetch
+}): Promise<PinterestOAuthTokenResponse> {
+  const env = input.env ?? process.env
+  const fetchImpl = input.fetchImpl ?? fetch
+  const clientId = (env.PINTEREST_CLIENT_ID ?? env.PINTEREST_APP_ID ?? "").trim()
+  const clientSecret = (env.PINTEREST_APP_SECRET ?? "").trim()
+
+  if (!clientId || !clientSecret) {
+    throw new Error("Pinterest OAuth refresh configuration is missing (CLIENT_ID/APP_SECRET).")
+  }
+  if (!input.refreshToken) {
+    throw new Error("Missing Pinterest refresh token.")
+  }
+
+  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64")
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: input.refreshToken,
+  })
+
+  const response = await fetchImpl(PINTEREST_TOKEN_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${basic}`,
+    },
+    body,
+  })
+
+  const payload = (await response.json()) as PinterestOAuthTokenResponse
+  if (!response.ok) {
+    throw new Error(payload.message || payload.error || "Pinterest token refresh failed.")
+  }
+  // Pinterest may not rotate the refresh token — preserve the original if absent.
+  if (!payload.refresh_token) {
+    payload.refresh_token = input.refreshToken
+  }
+  return payload
+}

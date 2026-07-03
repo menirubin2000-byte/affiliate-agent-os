@@ -44,7 +44,20 @@ test("Quora and Reddit require public review bridge URLs before READY", () => {
     })
 
     assert.equal(rule.publishMediaMode, "bridge_url_only")
+    assert.equal(rule.imageRequired, true)
     assert.equal(readiness.mediaReady, false)
     assert.deepEqual(readiness.blockingReasons, ["bridge_url_required"])
+  }
+})
+
+test("Quora and Reddit stay blocked without an image even before bridge URL handling", () => {
+  for (const platform of ["quora", "reddit"]) {
+    const readiness = evaluatePlatformMediaReadiness(platform, {
+      imageStatus: "missing",
+      videoStatus: "ready",
+    })
+
+    assert.equal(readiness.mediaReady, false)
+    assert.deepEqual(readiness.blockingReasons, ["bridge_url_required", "image_required_for_ready"])
   }
 })

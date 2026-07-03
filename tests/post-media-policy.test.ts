@@ -4,7 +4,7 @@ import test from "node:test"
 import { evaluatePostMediaGate, requiresImageForPost, validateLanguageMediaConsistency } from "@/lib/post-media-policy"
 
 test("visual platforms require an image before publishing", () => {
-  for (const platform of ["facebook_page", "instagram_professional", "pinterest", "linkedin", "medium", "substack", "x_twitter"]) {
+  for (const platform of ["facebook_page", "instagram_professional", "pinterest", "linkedin", "medium", "substack", "quora", "reddit", "x_twitter"]) {
     const gate = evaluatePostMediaGate({ platform })
     assert.equal(gate.imageRequired, true)
     assert.equal(gate.mediaReady, false)
@@ -35,10 +35,12 @@ test("product image can satisfy visual platform gate", () => {
   assert.equal(gate.imageSource, "product.image_url")
 })
 
-test("Quora and Reddit do not use the visual image gate", () => {
-  assert.equal(requiresImageForPost("quora"), false)
-  assert.equal(evaluatePostMediaGate({ platform: "quora" }).mediaReady, true)
-  assert.equal(evaluatePostMediaGate({ platform: "reddit" }).mediaStatus, "not_required")
+test("Quora and Reddit now require a real image before publish", () => {
+  assert.equal(requiresImageForPost("quora"), true)
+  assert.equal(requiresImageForPost("reddit"), true)
+  assert.equal(evaluatePostMediaGate({ platform: "quora" }).mediaReady, false)
+  assert.equal(evaluatePostMediaGate({ platform: "quora" }).mediaStatus, "missing_image")
+  assert.equal(evaluatePostMediaGate({ platform: "reddit" }).blockingReason, "image_required_for_ready")
 })
 
 // ---------------------------------------------------------------------------

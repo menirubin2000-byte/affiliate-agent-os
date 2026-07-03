@@ -1,25 +1,21 @@
 .git
 .next
+.vercel
 node_modules
-
-# Local operator media/raw captures. Assets used by the app are stored in Supabase Storage.
-תמונות מוצרים
-media
+.claude
+.local
 tmp
-
-# Large local artifacts.
-*.mp4
-*.mov
-*.avi
-*.mkv
-*.webm
+docs
+tests
+browser-extension
+publish-ready
+scripts
+תמונות מוצרים
 *.zip
-*.tgz
-*.tar
-*.7z
-*.rar
-
-# Local-only logs and exports.
-*.log
-*.tmp
-audit-out.txt
+*.pdf
+.env*
+*.bak
+*.bak-*
+facebook-pages.private.json
+client_secret_*.json
+*.txt
