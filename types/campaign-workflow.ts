@@ -12,6 +12,7 @@ export type CampaignPlatform =
   | "youtube"
   | "mastodon"
   | "threads"
+  | "tumblr"
 
 export type AutoQualityStatus = "pending" | "auto_quality_passed" | "blocked"
 

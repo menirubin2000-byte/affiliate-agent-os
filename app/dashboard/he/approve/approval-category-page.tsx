@@ -67,6 +67,7 @@ const PLATFORM_OPTIONS: Array<{ key: CampaignPlatform; label: string }> = [
   { key: "quora", label: "Quora" },
   { key: "reddit", label: "Reddit" },
   { key: "threads", label: "Threads" },
+  { key: "tumblr", label: "Tumblr" },
 ]
 
 const POST_STATUSES = [

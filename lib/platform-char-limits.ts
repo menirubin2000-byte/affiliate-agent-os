@@ -27,6 +27,7 @@ export const PLATFORM_CHAR_LIMITS: Record<string, number | null> = {
   substack: null,
   quora: null,
   reddit: null,
+  tumblr: null, // long-form blog post, no strict limit
 }
 
 const URL_WEIGHTED_PLATFORMS = new Set(["x_twitter", "mastodon", "threads"])

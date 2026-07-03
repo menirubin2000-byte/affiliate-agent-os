@@ -47,6 +47,7 @@ export const IMAGE_REQUIRED_FOR_READY = [
   "x_twitter",
   "mastodon",
   "threads",
+  "tumblr",
 ] as const
 
 export const VIDEO_REQUIRED_FOR_READY = ["tiktok", "youtube"] as const

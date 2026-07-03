@@ -99,6 +99,11 @@ export const PLATFORM_QUEUE_PRIORITY: Record<CampaignPlatform, { priority: numbe
     label: "Meta social reach",
     reason: "Threads (via Meta) reaches a large audience for short image + link posts once the token is connected.",
   },
+  tumblr: {
+    priority: 95,
+    label: "long-form blog reach",
+    reason: "Tumblr hosts long-form image + link posts with no strict length limit once the OAuth token is connected.",
+  },
 }
 
 export function isAutoQueuePlatform(platform: CampaignPlatform) {

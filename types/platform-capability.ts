@@ -7,6 +7,7 @@ export type ResearchedPlatform =
   | "youtube"
   | "mastodon"
   | "threads"
+  | "tumblr"
 
 export type PlatformApiAvailability = "official_api_available" | "no_official_publish_api"
 

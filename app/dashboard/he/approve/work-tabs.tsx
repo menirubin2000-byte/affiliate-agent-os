@@ -28,6 +28,7 @@ const PLATFORMS: Array<{ key: string; label: string }> = [
   { key: "quora", label: "Quora" },
   { key: "reddit", label: "Reddit" },
   { key: "threads", label: "Threads" },
+  { key: "tumblr", label: "Tumblr" },
 ]
 
 export type WorkPost = {

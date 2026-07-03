@@ -56,6 +56,7 @@ const NORMAL_POST_PLATFORMS: CampaignPlatform[] = [
   "pinterest",
   "x_twitter",
   "threads",
+  "tumblr",
 ]
 
 const COMMUNITY_POST_PLATFORMS: CampaignPlatform[] = ["quora", "reddit"]
@@ -80,6 +81,7 @@ const INDEPENDENT_POST_PLATFORMS: CampaignPlatform[] = [
   "x_twitter",
   "pinterest",
   "threads",
+  "tumblr",
   "quora",
   "reddit",
 ]

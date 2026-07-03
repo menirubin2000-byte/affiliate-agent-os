@@ -326,6 +326,30 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     ],
     checkedAt: CHECKED_AT,
   },
+  {
+    platform: "tumblr",
+    label: "Tumblr",
+    apiAvailability: "official_api_available",
+    connectionStatus: "requires_official_connection",
+    requiredAccountType:
+      "A Tumblr blog with a registered Tumblr OAuth app (Consumer Key + Secret) and an OAuth2 access token.",
+    requiredPermissions: ["write"],
+    affiliateContentPolicy: "allowed_with_disclosure",
+    affiliatePolicyNotes: withImageRule(
+      "Affiliate links allowed with disclosure. Tumblr posts support rich text, photos and video with no strict length limit.",
+    ),
+    safeExecutorPath: "official_api_only",
+    browserHelperAllowed: false,
+    browserHelperNotes: withImageRule(
+      "Publish via the Tumblr API createPost (NPF) endpoint. No browser automation.",
+    ),
+    operatorProfileUrl: "https://www.tumblr.com/dashboard",
+    blockers: ["tumblr_oauth_token_missing"],
+    nextOperatorAction:
+      "Register a Tumblr OAuth app for the Consumer Key + Secret, generate an access token, then connect it and publish approved posts with an image.",
+    sourceUrls: ["https://www.tumblr.com/docs/en/api/v2"],
+    checkedAt: CHECKED_AT,
+  },
 ]
 
 export function getPlatformCapabilities() {

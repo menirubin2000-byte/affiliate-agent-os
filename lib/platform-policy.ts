@@ -19,6 +19,7 @@ export const CAMPAIGN_PLATFORMS: CampaignPlatform[] = [
   "youtube",
   "mastodon",
   "threads",
+  "tumblr",
 ]
 
 interface PolicyInput {
@@ -55,6 +56,7 @@ const PLATFORM_POLICY_SOURCE: Record<CampaignPlatform, string> = {
   youtube: "https://developers.google.com/youtube/v3/docs/videos/insert",
   mastodon: "https://docs.joinmastodon.org/methods/statuses/",
   threads: "https://developers.facebook.com/docs/threads/posts",
+  tumblr: "https://www.tumblr.com/docs/en/api/v2",
 }
 
 function withImageRule(notes: string) {

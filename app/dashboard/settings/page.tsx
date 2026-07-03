@@ -58,6 +58,7 @@ const platformTargetFieldNames: Record<CampaignPlatform, string> = {
   reddit: "target_reddit",
   mastodon: "target_mastodon",
   threads: "target_threads",
+  tumblr: "target_tumblr",
 }
 
 export default async function DashboardSettingsPage({

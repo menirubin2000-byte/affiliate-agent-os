@@ -36,6 +36,7 @@ export const DEFAULT_PLATFORM_DAILY_TARGETS: Record<CampaignPlatform, number> = 
   reddit: 0,
   mastodon: 0,
   threads: 2,
+  tumblr: 2,
 }
 
 export const PUBLISHING_SCHEDULE_POLICY: PublishingSchedulePolicyConfig = {
