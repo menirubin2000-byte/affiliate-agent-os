@@ -147,7 +147,7 @@ export default async function HebrewContentReviewPage({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant={validation.validationStatus === "valid" ? "default" : "destructive"}>
-                    {validation.validationStatus === "valid" ? "עבר בדיקות" : "חסום"}
+                    {validation.validationStatus === "valid" ? "עבר בדיקות" : "דורש תיקון"}
                   </Badge>
                   <Badge variant={finalCopy.status === "operator_approved" ? "default" : "outline"}>
                     {finalCopy.status === "operator_approved" ? "אושר על ידי MENI" : "ממתין לאישור MENI"}
@@ -174,7 +174,7 @@ export default async function HebrewContentReviewPage({
                 </>
               ) : (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-                  הקופי הסופי חסום. המערכת לא מציגה טקסט גולמי ל-MENI לתיקון. ראה חסימות ובקש תיקון מערכת.
+                  הקופי הסופי דורש תיקון. המערכת לא מציגה טקסט גולמי ל-MENI לתיקון. ראה סיבות ובקש תיקון מערכת.
                 </div>
               )}
             </CardContent>
@@ -190,7 +190,7 @@ export default async function HebrewContentReviewPage({
                 {Object.entries(validation.checks).map(([key, passed]) => (
                   <div key={key} className="flex items-center justify-between gap-3 rounded-lg border p-2 text-sm">
                     <span>{checkLabels[key] ?? key}</span>
-                    <Badge variant={passed ? "default" : "destructive"}>{passed ? "עבר" : "חסום"}</Badge>
+                    <Badge variant={passed ? "default" : "destructive"}>{passed ? "עבר" : "דורש תיקון"}</Badge>
                   </div>
                 ))}
               </CardContent>
@@ -198,7 +198,7 @@ export default async function HebrewContentReviewPage({
 
             <Card>
               <CardHeader>
-                <CardTitle>חסימות</CardTitle>
+                <CardTitle>סיבות לתיקון</CardTitle>
                 <CardDescription>קופי לא תקין לא ניתן לאישור.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -209,7 +209,7 @@ export default async function HebrewContentReviewPage({
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-muted-foreground">אין חסימות.</p>
+                  <p className="text-sm text-muted-foreground">אין סיבות לתיקון.</p>
                 )}
               </CardContent>
             </Card>

@@ -48,9 +48,9 @@ export function PlatformRoutingStats({ overview }: { overview: PlatformRoutingOv
         detail="MENI לוחץ אשר / דחה / דרוש תיקון."
       />
       <StatCard
-        label="חסומים"
+        label="דורש פעולה"
         value={String(overview.counts.blocked)}
-        detail="חסימת מדיניות, executor, קישור או תוכן."
+        detail="פריטים שצריכים טיפול לפני המשך."
       />
     </section>
   )
@@ -81,7 +81,7 @@ export function PlatformRoutingProductTable({
               <th className="px-3 py-2 font-medium">קטגוריה</th>
               <th className="px-3 py-2 font-medium">Affiliate</th>
               <th className="px-3 py-2 font-medium">פורסם</th>
-              <th className="px-3 py-2 font-medium">חסומים</th>
+              <th className="px-3 py-2 font-medium">דורש פעולה</th>
               <th className="px-3 py-2 font-medium">פעולה הבאה</th>
             </tr>
           </thead>

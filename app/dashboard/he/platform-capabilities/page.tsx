@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic"
 const connectionLabels: Record<PlatformConnectionStatus, string> = {
   requires_official_connection: "נדרש חיבור רשמי",
   connected: "מחובר",
-  blocked: "חסום",
+  blocked: "דורש פעולה",
 }
 
 const affiliateLabels: Record<AffiliateContentPolicy, string> = {
@@ -49,7 +49,7 @@ function getXConnectionStatus(connection: PlatformConnection | null): StoredConn
 
 function getXBlockingReason(status: StoredConnectionStatus) {
   if (status === "api_access_not_ready") {
-    return "חסום - X_API_ACCESS_READY=false. החשבון יכול להיות מחובר, אבל פרסום דרך X API נשאר כבוי עד שיש גישת API/קרדיטים פעילים."
+    return "דורש פעולה - X_API_ACCESS_READY=false. החשבון יכול להיות מחובר, אבל פרסום דרך X API נשאר כבוי עד שיש גישת API/קרדיטים פעילים."
   }
   if (status === "requires_reconnect") {
     return "דורש חיבור מחדש - תוקף החיבור פג או שהמערכת צריכה OAuth חדש."
@@ -57,7 +57,7 @@ function getXBlockingReason(status: StoredConnectionStatus) {
   if (status === "not_connected") {
     return "לא מחובר - MENI צריך ללחוץ על חבר X רשמי ולהשלים OAuth."
   }
-  return "מחובר, אבל פרסום עדיין חסום עד ש-X_API_ACCESS_READY=true והמערכת תקבל אישור מפורש להפעלת פרסום."
+  return "מחובר, אבל פרסום עדיין דורש פעולה עד ש-X_API_ACCESS_READY=true והמערכת תקבל אישור מפורש להפעלת פרסום."
 }
 
 export default async function PlatformCapabilitiesPage() {
@@ -107,6 +107,14 @@ export default async function PlatformCapabilitiesPage() {
           const isLinkedIn = capability.platform === "linkedin"
           const isX = capability.platform === "x_twitter"
           const isYouTube = capability.platform === "youtube"
+          const displayConnectionStatus =
+            isLinkedIn && linkedinStoredStatus === "connected"
+              ? "connected"
+              : capability.connectionStatus
+          const displayBlockers =
+            isLinkedIn && linkedinStoredStatus === "connected"
+              ? []
+              : capability.blockers
 
           return (
             <Card key={capability.platform}>
@@ -118,7 +126,9 @@ export default async function PlatformCapabilitiesPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge>API רשמי קיים</Badge>
-                    <Badge variant="destructive">{connectionLabels[capability.connectionStatus]}</Badge>
+                    <Badge variant={displayConnectionStatus === "connected" ? "secondary" : "outline"}>
+                      {connectionLabels[displayConnectionStatus]}
+                    </Badge>
                     <Badge variant="outline">{affiliateLabels[capability.affiliateContentPolicy]}</Badge>
                     {isX ? <Badge variant="secondary">{xStoredStatusLabels[xStoredStatus]}</Badge> : null}
                     {isYouTube ? <Badge variant="secondary">{xStoredStatusLabels[youtubeStoredStatus]}</Badge> : null}
@@ -151,7 +161,7 @@ export default async function PlatformCapabilitiesPage() {
 
                 <div className="grid gap-4 lg:grid-cols-2">
                   <ListBlock title="הרשאות נדרשות" items={capability.requiredPermissions} />
-                  <ListBlock title="חסמים נוכחיים" items={capability.blockers} destructive />
+                  <ListBlock title="דורש פעולה" items={displayBlockers} destructive={displayBlockers.length > 0} />
                 </div>
 
                 <div className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-sm">
@@ -214,7 +224,7 @@ function LinkedInConnectionPanel({ status }: { status: StoredConnectionStatus })
     not_connected: "לא מחובר — לחץ חבר LinkedIn רשמי להשלמת OAuth.",
     connected: "מחובר דרך OAuth. מוכן לפרסום דרך LinkedIn REST API.",
     requires_reconnect: "דורש חיבור מחדש — תוקף הטוקן פג.",
-    api_access_not_ready: "אפליקציית Developer קיימת אבל חסר access token.",
+    api_access_not_ready: "אפליקציית Developer קיימת אבל צריך להשלים access token.",
   }
   return (
     <div className="rounded-lg border bg-muted/20 p-4 text-sm">
@@ -271,7 +281,7 @@ function XConnectionPanel({
 
 function getYouTubeBlockingReason(status: StoredConnectionStatus) {
   if (status === "api_access_not_ready") {
-    return "חסום - YOUTUBE_API_ACCESS_READY=false. הערוץ יכול להיות מחובר, אבל פרסום דרך YouTube API נשאר כבוי עד שהגישה מאושרת ויש וידאו אמיתי."
+    return "דורש פעולה - YOUTUBE_API_ACCESS_READY=false. הערוץ יכול להיות מחובר, אבל פרסום דרך YouTube API נשאר כבוי עד שהגישה מאושרת ויש וידאו אמיתי."
   }
   if (status === "requires_reconnect") {
     return "דורש חיבור מחדש - תוקף OAuth פג או שהמערכת צריכה אישור Google חדש."
@@ -279,7 +289,7 @@ function getYouTubeBlockingReason(status: StoredConnectionStatus) {
   if (status === "not_connected") {
     return "לא מחובר - MENI צריך ללחוץ על חבר YouTube רשמי ולהשלים OAuth מול Google."
   }
-  return "מחובר דרך Google OAuth. פרסום מותר רק ל-Final Copy מאושר עם וידאו אמיתי ו-URL חי מאומת."
+  return "מחובר דרך Google OAuth. פרסום עדיין דורש פעולה עד שיש Final Copy מאושר עם וידאו אמיתי ואישור מפורש."
 }
 
 function YouTubeConnectionPanel({

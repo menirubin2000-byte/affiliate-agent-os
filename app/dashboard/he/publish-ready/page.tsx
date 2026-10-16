@@ -43,8 +43,8 @@ const platformLabels: Record<string, string> = {
 const statusLabels: Record<PublishJobStatus, string> = {
   pending_meni_approval: "ממתין לאישור MENI",
   approved_waiting_executor: "מאושר וממתין למנוע פרסום",
-  blocked_executor_not_connected: "חסום - מנוע פרסום לא מחובר",
-  blocked_policy: "חסום - מדיניות פלטפורמה",
+  blocked_executor_not_connected: "דורש פעולה - מנוע פרסום לא מחובר",
+  blocked_policy: "דורש פעולה - מדיניות פלטפורמה",
   requires_auth: "דרוש חיבור חשבון",
   pending_operator_confirmation: "ממתין לאישור פעולה סופית",
   waiting_media: "דורש תמונה לפני פרסום",
@@ -78,7 +78,7 @@ function jobStatusLabel(job: { status: PublishJobStatus; blockingReason: string 
     job.status === "blocked_executor_not_connected" &&
     job.blockingReason === LINKEDIN_CURRENT_BLOCKING_REASON
   ) {
-    return "חסום - נדרש חיבור LinkedIn רשמי"
+    return "דורש פעולה - נדרש חיבור LinkedIn רשמי"
   }
 
   return statusLabels[job.status]
@@ -108,7 +108,7 @@ function blockerLabel(reason: string) {
     two_factor_required: "דרוש 2FA",
     passkey_required: "דרוש Passkey",
     executor_waiting_final_confirmation: "המנוע מילא תוכן וממתין לאישור פעולה סופית",
-    substack_editor_automation_timeout: "Substack חסום בגלל timeout בעורך",
+    substack_editor_automation_timeout: "Substack דורש פעולה בגלל timeout בעורך",
     reddit_direct_tracking_links_prohibited: "Reddit לא מאפשר affiliate/campaign/direct tracking link בגוף הפוסט",
     bridge_url_required: "Quora/Reddit דורשים public_review_url או bridge_url בלבד",
     quora_no_direct_affiliate_links: "Quora לא מאפשר קישור אפיליאייט ישיר",
@@ -154,7 +154,7 @@ export default async function HebrewPublishReadyPage({
       <PageHeader
         eyebrow="ביצוע פרסום"
         title="מצב פרסום"
-        description="המסך הזה לא נותן למני משימות העתקה, הדבקה, פתיחת פלטפורמה או הכנסת URL. הוא מציג רק מצב ביצוע, חסימות וכפתור אישור פעולה סופית כשמנוע הפרסום מוכן."
+        description="המסך הזה לא נותן למני משימות העתקה, הדבקה, פתיחת פלטפורמה או הכנסת URL. הוא מציג רק מצב ביצוע, פעולות נדרשות וכפתור אישור פעולה סופית כשמנוע הפרסום מוכן."
         actions={<RoutingNavActions />}
       />
 
@@ -188,7 +188,7 @@ export default async function HebrewPublishReadyPage({
         <CardHeader>
           <CardTitle>כלל עבודה</CardTitle>
           <CardDescription>
-            MENI מאשר בלבד. אם אין executor או API בטוח, הפריט נשאר חסום ומוצג עם סיבה. Published Record נוצר רק אחרי URL חי מאומת.
+            MENI מאשר בלבד. אם אין executor או API בטוח, הפריט נשאר דורש פעולה ומוצג עם סיבה. Published Record נוצר רק אחרי URL חי מאומת.
           </CardDescription>
           <CardDescription>
             אסור לפרסם פוסט בלי תמונה אמיתית בכל פלטפורמה שאינה וידאו-first. Medium הוא manual-only ואסור לפרסם אותו דרך טופס או Browser Helper.
@@ -223,7 +223,7 @@ export default async function HebrewPublishReadyPage({
             <CardTitle>
               {linkedinCapability.configured
                 ? "LinkedIn API רשמי מוכן"
-                : "חסום - נדרש חיבור LinkedIn רשמי"}
+                : "דורש פעולה - נדרש חיבור LinkedIn רשמי"}
             </CardTitle>
             <CardDescription>
               LinkedIn נשאר official API only. אין שימוש באוטומציית דפדפן לא רשמית ואין משימת העתקה/הדבקה ל-MENI.

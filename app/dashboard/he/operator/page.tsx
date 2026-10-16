@@ -40,7 +40,7 @@ export default async function HebrewOperatorRoutingPage() {
       <PageHeader
         eyebrow="ניתוב מרכזי"
         title="דשבורד מפעיל"
-        description="כאן רואים את כל המוצרים וכל הפלטפורמות לפי מצב אמיתי: מוכן לאישור, מוכן למנוע פרסום, חסום, או פורסם ואומת."
+        description="כאן רואים את כל המוצרים וכל הפלטפורמות לפי מצב אמיתי: מוכן לאישור, מוכן למנוע פרסום, דורש פעולה, או פורסם ואומת."
         actions={<RoutingNavActions />}
       />
 

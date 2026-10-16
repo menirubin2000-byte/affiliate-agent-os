@@ -324,7 +324,7 @@ export function HebrewDailyMaintenanceTask({
           <div className="rounded-lg border bg-card p-4">
             <h3 className="font-medium">משימות חסומות</h3>
             {blockedItems.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">אין חסימות קריטיות מזוהות כרגע.</p>
+              <p className="mt-2 text-sm text-muted-foreground">אין פעולות קריטיות מזוהות כרגע.</p>
             ) : (
               <ul className="mt-2 space-y-2 text-sm">
                 {blockedItems.slice(0, 8).map((item) => (

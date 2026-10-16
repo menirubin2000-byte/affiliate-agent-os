@@ -33,7 +33,7 @@ const platformLabels: Record<string, string> = {
 
 function qualityLabel(adaptation: PlatformAdaptation) {
   if (adaptation.autoQualityStatus === "auto_quality_passed") return "עבר בדיקת איכות"
-  if (adaptation.autoQualityStatus === "blocked") return "חסום בבדיקת איכות"
+  if (adaptation.autoQualityStatus === "blocked") return "דורש תיקון איכות"
   return "ממתין לבדיקה"
 }
 
@@ -45,8 +45,8 @@ function policyLabel(adaptation: PlatformAdaptation) {
 }
 
 function campaignStatus(product: CampaignWorkflowProduct) {
-  if (!product.hasLinkReadyProgram) return "חסום"
-  if (!product.affiliateLink?.trim()) return "חסום"
+  if (!product.hasLinkReadyProgram) return "דורש פעולה"
+  if (!product.affiliateLink?.trim()) return "דורש פעולה"
   if (!product.sourceContent) return "צריך מקור תוכן"
   if (product.approvedCampaign) return "קמפיין אושר"
   if (product.eligiblePlatforms.length > 0) return "מוכן לאישור קמפיין"
@@ -59,13 +59,13 @@ function campaignReason(product: CampaignWorkflowProduct) {
   if (!product.sourceContent) return "יש צורך ליצור Source Content מטיוטה מאושרת קיימת."
   if (product.approvedCampaign) return "הקמפיין אושר. פרסום עדיין דורש URL אמיתי לפני סימון Published."
   if (product.eligiblePlatforms.length > 0) return "יש פלטפורמות שעברו בדיקות ואפשר לאשר אותן בפעולה אחת."
-  return "אין פלטפורמות כשירות כרגע. בדוק חסימות איכות/מדיניות."
+  return "אין פלטפורמות כשירות כרגע. בדוק פעולות איכות/מדיניות נדרשות."
 }
 
 function badgeVariant(product: CampaignWorkflowProduct) {
   const status = campaignStatus(product)
   if (status === "מוכן לאישור קמפיין" || status === "קמפיין אושר") return "default" as const
-  if (status === "חסום") return "destructive" as const
+  if (status === "דורש פעולה") return "destructive" as const
   return "secondary" as const
 }
 
@@ -117,7 +117,7 @@ function CampaignCard({ product }: { product: CampaignWorkflowProduct }) {
             <Badge variant={badgeVariant(product)}>{campaignStatus(product)}</Badge>
             <Badge variant="outline">מוכן: {readyCount}</Badge>
             <Badge variant="outline">מאושר: {approvedCount}</Badge>
-            <Badge variant={blockedCount ? "destructive" : "secondary"}>חסום: {blockedCount}</Badge>
+            <Badge variant={blockedCount ? "destructive" : "secondary"}>דורש פעולה: {blockedCount}</Badge>
           </div>
         </div>
       </CardHeader>
@@ -139,7 +139,7 @@ function CampaignCard({ product }: { product: CampaignWorkflowProduct }) {
 
         {product.blockers.length ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-            חסימות: {product.blockers.join(", ")}
+            סיבות שדורשות פעולה: {product.blockers.join(", ")}
           </div>
         ) : null}
 
@@ -153,7 +153,7 @@ function CampaignCard({ product }: { product: CampaignWorkflowProduct }) {
             ) : product.approvedCampaign ? (
               <span>אין פלטפורמות חדשות לאישור. הקמפיין כבר אושר, ופרסום עדיין דורש URL חי מאומת.</span>
             ) : (
-              <span>אין פלטפורמות מוכנות לאישור כרגע. ראה חסימות איכות/מדיניות לכל פלטפורמה.</span>
+              <span>אין פלטפורמות מוכנות לאישור כרגע. ראה פעולות איכות/מדיניות נדרשות לכל פלטפורמה.</span>
             )}
           </div>
         ) : null}
@@ -264,7 +264,7 @@ export default async function HebrewCampaignsPage({
       <PageHeader
         eyebrow="אישור קמפיין מרוכז"
         title="Campaign Approval Queue"
-        description="מני מאשר קמפיין מוצר פעם אחת. המערכת מציגה מה מוכן, מה חסום, ומה חסר. פרסום אמיתי נחשב רק אחרי URL מאומת ב-Published Records."
+        description="מני מאשר קמפיין מוצר פעם אחת. המערכת מציגה מה מוכן, מה דורש פעולה, ומה חסר. פרסום אמיתי נחשב רק אחרי URL מאומת ב-Published Records."
         actions={
           <Link href="/dashboard/he/browser-control" className={cn(buttonVariants({ variant: "outline" }))}>
             שליטה בדפדפן
@@ -317,7 +317,7 @@ export default async function HebrewCampaignsPage({
           <Card>
             <CardHeader>
               <CardTitle>{blockedActiveProducts.length}</CardTitle>
-              <CardDescription>מוצרים פעילים חסומים</CardDescription>
+              <CardDescription>מוצרים פעילים שדורשים פעולה</CardDescription>
             </CardHeader>
           </Card>
           <Card>
@@ -359,7 +359,7 @@ export default async function HebrewCampaignsPage({
       {!loadError && blockedActiveProducts.length ? (
         <section className="space-y-3">
           <div>
-            <h2 className="text-lg font-semibold">פעילים אבל חסומים לפרסום אפיליאייט</h2>
+            <h2 className="text-lg font-semibold">פעילים אבל דורשים פעולה לפני פרסום אפיליאייט</h2>
             <p className="text-sm text-muted-foreground">
               מוצרים פעילים שלא נכנסים לקמפיין עד שיש תוכנית שותפים link_ready וקישור אפיליאייט אמיתי.
             </p>

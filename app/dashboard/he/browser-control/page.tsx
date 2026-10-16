@@ -46,7 +46,7 @@ export default async function HebrewBrowserControlPage() {
       <PageHeader
         eyebrow="Affiliate Agent OS Browser Helper"
         title="מנוע פרסום ודפדפן"
-        description="המסך מציג האם executor/browser helper מחובר, מה הוא רואה, ומה חסום. הוא לא מבקש מ-MENI להעתיק, להדביק או לאסוף URL."
+        description="המסך מציג האם executor/browser helper מחובר, מה הוא רואה, ומה דורש פעולה. הוא לא מבקש מ-MENI להעתיק, להדביק או לאסוף URL."
         actions={
           <Link href="/dashboard/he/publish-ready" className={cn(buttonVariants({ variant: "outline" }))}>
             מצב פרסום
@@ -100,7 +100,7 @@ export default async function HebrewBrowserControlPage() {
         <CardHeader>
           <CardTitle>תור executor</CardTitle>
           <CardDescription>
-            published_records נוצרים רק אחרי URL חי מאומת. Job חסום נשאר חסום עם סיבה במקום לעבור למני כעבודה ידנית.
+            published_records נוצרים רק אחרי URL חי מאומת. Job שדורש פעולה נשאר עם סיבה במקום לעבור למני כעבודה ידנית.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

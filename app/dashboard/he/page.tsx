@@ -211,7 +211,7 @@ export default async function HebrewDashboardPage() {
           ctaLabel="פתח יכולות"
         />
         <NextActionCard
-          title="חסומים אמיתיים"
+          title="דורש פעולה"
           count={totals.blocked}
           description="חסימת מדיניות, executor לא מחובר, או פלטפורמה מבוטלת. נדרש תיקון תפעולי."
           href="/dashboard/he/content-review"

@@ -8,7 +8,7 @@ import {
   INSTAGRAM_CURRENT_BLOCKING_REASON,
 } from "@/lib/meta-official-api"
 import { getPinterestOfficialApiCapability } from "@/lib/pinterest-official-api"
-import { getXPublishCapability, X_CURRENT_BLOCKING_REASON } from "@/lib/x-official-api"
+import { getXOfficialApiCapability, X_CURRENT_BLOCKING_REASON } from "@/lib/x-official-api"
 
 function getYouTubeApiReady(env: NodeJS.ProcessEnv = process.env) {
   const clientId = env.YOUTUBE_CLIENT_ID?.trim()
@@ -241,7 +241,7 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     approvalRequired: true,
     status: "active",
     directAffiliateLinksAllowed: true,
-    policySummary: "LinkedIn דרך MCP/browser helper. ה-Official API חסום ע\"י LinkedIn עד 100+ חיבורים, אבל זרימת הדפדפן זמינה.",
+    policySummary: "LinkedIn דרך MCP/browser helper. ה-Official API דורש תנאי LinkedIn עד 100+ חיבורים, אבל זרימת הדפדפן זמינה.",
     setupBlocker: null,
     requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
@@ -374,10 +374,10 @@ export const PLATFORM_ROUTING_DEFINITIONS: PlatformRoutingDefinition[] = [
     contentType: "פוסט קצר",
     publishMode: "official_api",
     approvalRequired: true,
-    status: getXPublishCapability().canPublish ? "active" : "pending_setup",
+    status: getXOfficialApiCapability().configured ? "active" : "pending_setup",
     directAffiliateLinksAllowed: true,
     policySummary: "נדרש OAuth רשמי ו-X API access ready.",
-    setupBlocker: getXPublishCapability().canPublish ? null : X_CURRENT_BLOCKING_REASON,
+    setupBlocker: getXOfficialApiCapability().configured ? null : X_CURRENT_BLOCKING_REASON,
     requiresCampaignLink: true,
     media: { textOnly: false, image: "required", video: "supported", notes: "חוק READY עסקי של AAOS: תמונה חובה לפני אישור/פרסום." },
   },
@@ -439,8 +439,8 @@ function refreshPlatformDefinitionStatus(def: PlatformRoutingDefinition): Platfo
     return { ...def, status: cap.publishReady ? "active" : "pending_setup", setupBlocker: cap.blockingReason }
   }
   if (def.key === "x_twitter") {
-    const cap = getXPublishCapability()
-    return { ...def, status: cap.canPublish ? "active" : "pending_setup", setupBlocker: cap.canPublish ? null : X_CURRENT_BLOCKING_REASON }
+    const cap = getXOfficialApiCapability()
+    return { ...def, status: cap.configured ? "active" : "pending_setup", setupBlocker: cap.configured ? null : X_CURRENT_BLOCKING_REASON }
   }
   if (def.key === "youtube") {
     const cap = getYouTubeApiReady()
@@ -634,7 +634,7 @@ function buildPlatformRoute(input: {
       finalCopy: latestFinalCopy,
       publishJob,
       publishedRecord: null,
-      nextActionHe: "לחבר נתיב רשמי או להשאיר חסום",
+      nextActionHe: "לחבר נתיב רשמי או להשאיר כדורש פעולה",
     })
   }
 
@@ -808,12 +808,12 @@ function routeFromPublishJob(
     },
     blocked_executor_not_connected: {
       state: "executor_blocked",
-      labelHe: "חסום - מנוע פרסום לא מחובר",
+      labelHe: "דורש פעולה - מנוע פרסום לא מחובר",
       nextActionHe: "לחבר executor רשמי; לא להעביר עבודה למני",
     },
     blocked_policy: {
       state: "policy_blocked",
-      labelHe: "חסום מדיניות",
+      labelHe: "דורש פעולת מדיניות",
       nextActionHe: "לא לפרסם עד שהמדיניות נפתרת",
     },
     requires_auth: {
@@ -944,8 +944,8 @@ function buildProductNextAction(input: { affiliateReady: boolean; routes: Platfo
   if (input.routes.some((route) => route.state === "running")) return "בביצוע"
   if (input.routes.some((route) => route.state === "waiting_url_verification")) return "ממתין לאימות URL"
   if (input.routes.some((route) => route.state === "missing_final_copy")) return "המערכת צריכה ליצור Final Copy"
-  if (input.routes.some((route) => route.state === "executor_blocked")) return "חסום - מנוע פרסום לא מחובר"
-  if (input.routes.some((route) => route.state === "policy_blocked")) return "חסום מדיניות"
+  if (input.routes.some((route) => route.state === "executor_blocked")) return "דורש פעולה - מנוע פרסום לא מחובר"
+  if (input.routes.some((route) => route.state === "policy_blocked")) return "דורש פעולת מדיניות"
   if (input.routes.some((route) => route.state === "published_verified")) return "פורסם - לעקוב אחרי ביצועים אמיתיים"
   return "אין פעולה"
 }
